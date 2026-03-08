@@ -5,19 +5,33 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  module   = "cjs"
 }
 
 datasource db {
   provider = "sqlite"
 }
 
-model User {
+model Tenant {
   id        String   @id @default(uuid())
   name      String
-  email     String   @unique
-  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  users User[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  code         String?  @unique
+  role         String
+  status       String   @default("active")
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
