@@ -2,9 +2,12 @@ import { Id } from '@core/domain/value-objects/id.vo';
 import { UserRole } from '@modules/users/domain/enums/user-role.enum';
 import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
 import { Email } from '@core/domain/value-objects/email.vo';
-import { Entity, EntityProps } from '@core/domain/entities/entity';
+import {
+  TenantEntity,
+  TenantEntityProps,
+} from '@core/domain/entities/tenant-entity';
 
-interface UserProps extends EntityProps {
+interface UserProps extends TenantEntityProps {
   name: string;
   email: Email;
   passwordHash: string;
@@ -20,7 +23,7 @@ interface NewUserProps extends Omit<
   password: string;
 }
 
-export class User extends Entity<UserProps> {
+export class User extends TenantEntity<UserProps> {
   private constructor(props: UserProps) {
     super(props);
   }
@@ -42,15 +45,11 @@ export class User extends Entity<UserProps> {
   }
 
   static rehydrate(props: UserProps): User {
-    const user = new User({ ...props });
+    const user = new User(props);
     return user;
   }
 
   // --------------- Getters ---------------
-
-  get id(): Id {
-    return this.props.id;
-  }
 
   get tenantId(): Id {
     return this.props.tenantId;
@@ -74,14 +73,6 @@ export class User extends Entity<UserProps> {
 
   get status(): UserStatus {
     return this.props.status;
-  }
-
-  get createdAt(): Date {
-    return this.props.createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt;
   }
 
   get code(): string | null {

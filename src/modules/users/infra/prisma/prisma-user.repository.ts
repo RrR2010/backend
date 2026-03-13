@@ -31,21 +31,25 @@ export class PrismaUserRepository implements UserRepository {
     });
     return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
   }
+
   async findAll(tenantId: string): Promise<User[]> {
     const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
       where: { tenantId },
     });
     return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
   }
-  async save(user: User): Promise<void> {
+
+  async save(user: User): Promise<User> {
     const bdUser = PrismaUserMapper.toPersistence(user);
     await this.prisma.user.upsert({
       where: { id: bdUser.id },
       update: bdUser,
       create: bdUser,
     });
+    return user;
   }
-  delete(id: string): Promise<void> {
+
+  async delete(id: string): Promise<void> {
     return this.prisma.user.delete({ where: { id } }).then(() => {});
   }
 }
