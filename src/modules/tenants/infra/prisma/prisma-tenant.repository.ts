@@ -1,9 +1,9 @@
 import { PrismaService } from '@core/infra/prisma/prisma.service';
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
-import { TenantRepository } from '@modules/tenant/domain/repositories/tenant.repository';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/repositories/tenant.repository';
 import { Injectable } from '@nestjs/common';
 import { Tenant as PrismaTenant } from '@prisma/client';
-import { TenantMapper as PrismaTenantMapper } from '@modules/tenant/infra/prisma/tenant-mapper';
+import { TenantMapper as PrismaTenantMapper } from '@modules/tenants/infra/prisma/tenant-mapper';
 
 @Injectable()
 export class PrismaTenantRepository implements TenantRepository {

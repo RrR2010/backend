@@ -1,4 +1,4 @@
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTenantResponseDto {
