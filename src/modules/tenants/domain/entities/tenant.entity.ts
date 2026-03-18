@@ -1,5 +1,5 @@
-import { Entity, EntityProps } from '@core/domain/entities/entity';
-import { Id } from '@core/domain/value-objects/id.vo';
+import { Entity, EntityProps } from '@core/domain/entity';
+import { Id } from '@core/domain/id.vo';
 import { TenantStatus } from '../enums/tenant-status';
 
 interface TenantProps extends EntityProps {

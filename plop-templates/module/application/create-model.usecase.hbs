@@ -1,0 +1,18 @@
+import { {{pascalCase singularName}} } from '@modules/{{camelCase pluralName}}/domain/{{kebabCase singularName}}.entity'
+import { Injectable } from "@nestjs/common";
+
+@Injectable()
+export class Create{{pascalCase singularName}}UseCase{
+  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}) {}
+
+  async execute(input: {
+    ...
+  }): Promise<{{pascalCase singularName}}> {
+    const {{camelCase singularName}} = await this.{{camelCase singularName}}Repository.save(
+      {{pascalCase singularName}}.create({
+        ...
+      })
+    )
+    return {{pascalCase singularName}}
+  }
+}

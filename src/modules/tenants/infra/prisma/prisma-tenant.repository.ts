@@ -1,4 +1,4 @@
-import { PrismaService } from '@core/infra/prisma/prisma.service';
+import { PrismaService } from '@core/infra/prisma.service';
 import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 import { TenantRepository } from '@modules/tenants/domain/repositories/tenant.repository';
 import { Injectable } from '@nestjs/common';

@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { CreateUserUseCase } from '../application/use-cases/create-user.usecase';
-import { ListUsersUseCase } from '../application/use-cases/list-users.usecase';
-import { CreateUserDto } from '@modules/users/interface/dto/create-user.dto';
-import { CreateUserResponseDto } from '@modules/users/interface/dto/create-user-response.dto';
+import { CreateUserUseCase } from '../application/create-user.usecase';
+import { ListUsersUseCase } from '../application/list-users.usecase';
+import { CreateUserDto } from '@modules/users/interface/create-user.dto';
+import { CreateUserResponseDto } from '@modules/users/interface/create-user-response.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Users')

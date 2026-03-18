@@ -8,10 +8,16 @@ eslint.config.mjs
 jest.config.ts
 nest-cli.json
 package.json
-plop-templates/module/application/use-cases/create-model.usecase.hbs
-plop-templates/module/domain/entities/module.entity.hbs
-plop-templates/module/domain/repositories/module.repository.hbs
-plop-templates/module/module.hbs
+plop-templates/module/application/create-model.usecase.hbs
+plop-templates/module/application/list-models.usecase.hbs
+plop-templates/module/domain/module.entity.hbs
+plop-templates/module/domain/module.repository.hbs
+plop-templates/module/infra/model-mapper.hbs
+plop-templates/module/infra/prisma-model.repository.hbs
+plop-templates/module/interface/create-model-response.dto.hbs
+plop-templates/module/interface/create-model.dto.hbs
+plop-templates/module/interface/model.controller.hbs
+plop-templates/module/model.module.hbs
 plopfile.js
 prisma.config.ts
 prisma/migrations/20260225015841_user_model/migration.sql
@@ -23,11 +29,11 @@ prisma/schema.prisma
 README.md
 repomix.config.json
 src/app.module.ts
-src/core/domain/entities/entity.ts
-src/core/domain/value-objects/email.vo.ts
-src/core/domain/value-objects/id.vo.ts
-src/core/infra/prisma/prisma.module.ts
-src/core/infra/prisma/prisma.service.ts
+src/core/domain/email.vo.ts
+src/core/domain/entity.ts
+src/core/domain/id.vo.ts
+src/core/infra/prisma.module.ts
+src/core/infra/prisma.service.ts
 src/core/utils/create-enum-mapper.ts
 src/main.ts
 src/modules/tenants/application/use-cases/create-tenant.usecase.ts
@@ -41,20 +47,19 @@ src/modules/tenants/interface/dto/create-tenant-response.dto.ts
 src/modules/tenants/interface/dto/create-tenant.dto.ts
 src/modules/tenants/interface/tenant.controller.ts
 src/modules/tenants/tenant.module.ts
-src/modules/tests/application/use-cases/create-test.usecase.ts
-src/modules/tests/domain/entities/test.entity.ts
-src/modules/users/application/use-cases/create-user.usecase.ts
-src/modules/users/application/use-cases/list-users.usecase.ts
-src/modules/users/domain/entities/user.entity.spec.ts
-src/modules/users/domain/entities/user.entity.ts
-src/modules/users/domain/enums/user-role.enum.ts
-src/modules/users/domain/enums/user-status.enum.ts
-src/modules/users/domain/errors/user.errors.ts
-src/modules/users/domain/repositories/user.repository.ts
-src/modules/users/infra/prisma/prisma-user.repository.ts
-src/modules/users/infra/prisma/user-mapper.ts
-src/modules/users/interface/dto/create-user-response.dto.ts
-src/modules/users/interface/dto/create-user.dto.ts
+src/modules/teste-de-pastas/domain/teste-de-pasta.entity.ts
+src/modules/users/application/create-user.usecase.ts
+src/modules/users/application/list-users.usecase.ts
+src/modules/users/domain/user-role.enum.ts
+src/modules/users/domain/user-status.enum.ts
+src/modules/users/domain/user.entity.spec.ts
+src/modules/users/domain/user.entity.ts
+src/modules/users/domain/user.errors.ts
+src/modules/users/domain/user.repository.ts
+src/modules/users/infra/prisma-user.repository.ts
+src/modules/users/infra/user-mapper.ts
+src/modules/users/interface/create-user-response.dto.ts
+src/modules/users/interface/create-user.dto.ts
 src/modules/users/interface/users.controller.ts
 src/modules/users/users.module.ts
 tsconfig.build.json
@@ -65,9 +70,9 @@ Files
 ================================================================
 
 ================
-File: plop-templates/module/application/use-cases/create-model.usecase.hbs
+File: plop-templates/module/application/create-model.usecase.hbs
 ================
-import { {{pascalCase singularName}} } from '@modules/{{camelCase pluralName}}/domain/entities/{{kebabCase singularName}}.entity'
+import { {{pascalCase singularName}} } from '@modules/{{camelCase pluralName}}/domain/{{kebabCase singularName}}.entity'
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
@@ -75,11 +80,11 @@ export class Create{{pascalCase singularName}}UseCase{
   constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}) {}
 
   async execute(input: {
-    param1: type1;
+    ...
   }): Promise<{{pascalCase singularName}}> {
     const {{camelCase singularName}} = await this.{{camelCase singularName}}Repository.save(
       {{pascalCase singularName}}.create({
-        param1: type1;
+        ...
       })
     )
     return {{pascalCase singularName}}
@@ -87,9 +92,14 @@ export class Create{{pascalCase singularName}}UseCase{
 }
 
 ================
-File: plop-templates/module/domain/entities/module.entity.hbs
+File: plop-templates/module/application/list-models.usecase.hbs
 ================
-import { Entity, EntityProps } from '@core/domain/entities/entity';
+
+
+================
+File: plop-templates/module/domain/module.entity.hbs
+================
+import { Entity, EntityProps } from '@core/domain/entity';
 
 interface {{pascalCase singularName}}Props extends EntityProps {
   ...
@@ -103,8 +113,8 @@ interface New{{pascalCase singularName}}Props extends Omit<
 }
 
 export class {{pascalCase singularName}} extends Entity<{{pascalCase singularName}}Props> {
-  private constructor(props: {{pascalCase singularName}}Props) {
-    super(props);
+  private constructor(params: {{pascalCase singularName}}Props) {
+    super(params);
   }
 
   // --------------- Factory Methods ---------------
@@ -129,9 +139,9 @@ export class {{pascalCase singularName}} extends Entity<{{pascalCase singularNam
 }
 
 ================
-File: plop-templates/module/domain/repositories/module.repository.hbs
+File: plop-templates/module/domain/module.repository.hbs
 ================
-import {{ pascalCase singleName }} from '@modules/{{kebabCase pluralName}}/domain/entities/{{kebabCase singleName}}.entity';
+import {{ pascalCase singleName }} from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singleName}}.entity';
 
 export abstract class {{ pascalCase singleName }}Repository {
   abstract findById(id: string): Promise<{{ pascalCase singleName }} | null>;
@@ -141,7 +151,32 @@ export abstract class {{ pascalCase singleName }}Repository {
 }
 
 ================
-File: plop-templates/module/module.hbs
+File: plop-templates/module/infra/model-mapper.hbs
+================
+
+
+================
+File: plop-templates/module/infra/prisma-model.repository.hbs
+================
+
+
+================
+File: plop-templates/module/interface/create-model-response.dto.hbs
+================
+
+
+================
+File: plop-templates/module/interface/create-model.dto.hbs
+================
+
+
+================
+File: plop-templates/module/interface/model.controller.hbs
+================
+
+
+================
+File: plop-templates/module/model.module.hbs
 ================
 import { Module } from '@nestjs/common';
 import {{pascalCase moduleName}}Service from './{{kebabCase moduleName}}.service';
@@ -153,150 +188,176 @@ import {{pascalCase moduleName}}Service from './{{kebabCase moduleName}}.service
 export class {{pascalCase moduleName}}Module {}
 
 ================
-File: prisma/migrations/20260313013325_implemented_basic_membership/migration.sql
+File: src/core/domain/email.vo.ts
 ================
-/*
-  Warnings:
+export class Email {
+  private constructor(private readonly _value: string) {}
 
-  - You are about to drop the column `tenantId` on the `User` table. All the data in the column will be lost.
-  - Added the required column `platformRole` to the `User` table without a default value. This is not possible if the table is not empty.
+  static from(value: string): Email {
+    if (!value) {
+      throw new Error('Email cannot be empty');
+    }
 
-*/
--- CreateTable
-CREATE TABLE "Membership" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "userId" TEXT NOT NULL,
-    "tenantId" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    CONSTRAINT "Membership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Membership_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
+    const normalizedValue = value.trim().toLowerCase();
 
--- RedefineTables
-PRAGMA defer_foreign_keys=ON;
-PRAGMA foreign_keys=OFF;
-CREATE TABLE "new_Tenant" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
-INSERT INTO "new_Tenant" ("createdAt", "id", "name", "status", "updatedAt") SELECT "createdAt", "id", "name", "status", "updatedAt" FROM "Tenant";
-DROP TABLE "Tenant";
-ALTER TABLE "new_Tenant" RENAME TO "Tenant";
-CREATE TABLE "new_User" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "passwordHash" TEXT NOT NULL,
-    "code" TEXT,
-    "role" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "platformRole" TEXT NOT NULL
-);
-INSERT INTO "new_User" ("code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt") SELECT "code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt" FROM "User";
-DROP TABLE "User";
-ALTER TABLE "new_User" RENAME TO "User";
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-CREATE UNIQUE INDEX "User_code_key" ON "User"("code");
-PRAGMA foreign_keys=ON;
-PRAGMA defer_foreign_keys=OFF;
+    if (!Email.isValid(normalizedValue)) {
+      throw new Error('Invalid email format');
+    }
 
-================
-File: src/core/utils/create-enum-mapper.ts
-================
-/**
- * Creates a bidirectional map between two string enums.
- *
- * Example:
- * const map = createEnumMapper({
- *   ACTIVE: UserStatus.ACTIVE,
- *   INACTIVE: UserStatus.INACTIVE,
- * });
- *
- * map.toDomain('ACTIVE') -> UserStatus.ACTIVE
- * map.toPersistence(UserStatus.ACTIVE) -> 'ACTIVE'
- */
-export function createEnumMapper<
-  TPrisma extends string,
-  TDomain extends string,
->(mapping: Record<TPrisma, TDomain>) {
-  const reverseMapping: Record<TDomain, TPrisma> = {} as Record<
-    TDomain,
-    TPrisma
-  >;
-
-  for (const key in mapping) {
-    const value = mapping[key];
-    reverseMapping[value] = key;
+    return new Email(normalizedValue);
   }
 
-  return {
-    toDomain(prismaValue: TPrisma): TDomain {
-      return mapping[prismaValue];
-    },
+  static isValid(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
 
-    toPersistence(domainValue: TDomain): TPrisma {
-      return reverseMapping[domainValue];
-    },
-  };
+  get value(): string {
+    return this._value;
+  }
+
+  equals(other: Email): boolean {
+    return this._value === other._value;
+  }
 }
 
 ================
-File: src/modules/tests/application/use-cases/create-test.usecase.ts
+File: src/core/domain/entity.ts
 ================
-import { Test } from '@modules/tests/domain/entities/test.entity'
-import { Injectable } from "@nestjs/common";
+import { Id } from '@core/domain/id.vo';
+
+export interface EntityProps {
+  id: Id;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export abstract class Entity<Props extends EntityProps> {
+  protected readonly props: Props;
+
+  protected constructor(props: Props) {
+    this.props = props;
+  }
+
+  // --------------- Getters ---------------
+  get id(): Id {
+    return this.props.id;
+  }
+
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+}
+
+================
+File: src/core/domain/id.vo.ts
+================
+import { randomUUID } from 'crypto';
+
+export class Id {
+  private constructor(private readonly _value: string) {}
+
+  static generate(): Id {
+    return new Id(randomUUID());
+  }
+
+  static from(value: string): Id {
+    if (!value || value.trim().length === 0) {
+      throw new Error('Id cannot be empty');
+    }
+    return new Id(value);
+  }
+
+  get value(): string {
+    return this._value;
+  }
+
+  equals(other: Id): boolean {
+    return this._value === other.value;
+  }
+}
+
+================
+File: src/core/infra/prisma.module.ts
+================
+import { Global, Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Global()
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService],
+})
+export class PrismaModule {}
+
+================
+File: src/core/infra/prisma.service.ts
+================
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClient } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
 @Injectable()
-export class CreateTestUseCase{
-  constructor(private readonly testRepository: Test) {}
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  constructor(config: ConfigService) {
+    const url = config.get<string>('DATABASE_URL');
 
-  async execute(input: {
-    param1: type1;
-  }): Promise<Test> {
-    const test = await this.testRepository.save(
-      Test.create({
-        param1: type1;
-      })
-    )
-    return Test
+    if (!url) {
+      throw new Error('DATABASE_URL is not defined');
+    }
+
+    const adapter = new PrismaBetterSqlite3({ url });
+
+    super({ adapter });
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.$connect();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.$disconnect();
   }
 }
 
 ================
-File: src/modules/tests/domain/entities/test.entity.ts
+File: src/modules/teste-de-pastas/domain/teste-de-pasta.entity.ts
 ================
-import { Entity, EntityProps } from '@core/domain/entities/entity';
+import { Entity, EntityProps } from '@core/domain/entity';
 
-interface TestProps extends EntityProps {
+interface TesteDePastaProps extends EntityProps {
   ...
 }
 
-interface NewTestProps extends Omit<
-  TestProps,
+interface NewTesteDePastaProps extends Omit<
+  TesteDePastaProps,
   'id' | 'createdAt' | 'updatedAt'
 > {
   ...
 }
 
-export class Test extends Entity<TestProps> {
-  private constructor(props: TestProps) {
-    super(props);
+export class TesteDePasta extends Entity<TesteDePastaProps> {
+  private constructor(params: TesteDePastaProps) {
+    super(params);
   }
 
   // --------------- Factory Methods ---------------
-  static create(params: NewTestProps): Test {
+  static create(params: NewTesteDePastaProps): TesteDePasta {
     
     return ...
   }
 
-  static rehydratate(params: TestProps): Test {
-    const test = new Test(params);
-    return test
+  static rehydratate(params: TesteDePastaProps): TesteDePasta {
+    const testeDePasta = new TesteDePasta(params);
+    return testeDePasta
   }
 
   // --------------- Getters ---------------
@@ -307,6 +368,469 @@ export class Test extends Entity<TestProps> {
 
   // --------------- Internal Methods ---------------
 
+}
+
+================
+File: src/modules/users/application/create-user.usecase.ts
+================
+import { Email } from '@core/domain/email.vo';
+import { Id } from '@core/domain/id.vo';
+import { User } from '@modules/users/domain/user.entity';
+import { UserRepository } from '@modules/users/domain/user.repository';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class CreateUserUseCase {
+  constructor(private readonly userRepository: UserRepository) {}
+
+  async execute(input: {
+    tenantId: string;
+    email: string;
+    password: string;
+    name: string;
+    code: string | null;
+  }): Promise<User> {
+    const user = await this.userRepository.save(
+      User.create({
+        tenantId: Id.from(input.tenantId),
+        email: Email.from(input.email),
+        password: input.password,
+        name: input.name,
+        code: input.code,
+      }),
+    );
+    return user;
+  }
+}
+
+================
+File: src/modules/users/application/list-users.usecase.ts
+================
+import { Injectable } from '@nestjs/common';
+import { UserRepository } from '@modules/users/domain/user.repository';
+
+@Injectable()
+export class ListUsersUseCase {
+  constructor(private readonly userRepository: UserRepository) {}
+
+  async execute(tenantId: string) {
+    return this.userRepository.findAll(tenantId);
+  }
+}
+
+================
+File: src/modules/users/domain/user-role.enum.ts
+================
+export enum UserPlatformRole {
+  ADMIN = 'ADMIN',
+  MEMBER = 'STAFF',
+  NONE = 'NONE',
+}
+
+================
+File: src/modules/users/domain/user-status.enum.ts
+================
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
+================
+File: src/modules/users/domain/user.entity.spec.ts
+================
+import { User } from '@modules/users/domain/user.entity';
+import { Email } from '@core/domain/email.vo';
+import { TenantId } from 'src/core/domain/value-objects/tentant-id.vo';
+import { UserPlatformRole } from '@modules/users/domain/user-role.enum';
+import { UserStatus } from '@modules/users/domain/user-status.enum';
+
+describe('User Entity', () => {
+  const tenantId = TenantId.from('tenant-1');
+  const email = Email.from('user@test.com');
+
+  function createUser() {
+    return User.create({
+      tenantId,
+      email,
+      name: 'Test User',
+      passwordHash: '',
+    });
+  }
+
+  it('should create user with default role MEMBER', () => {
+    const user = createUser();
+    expect(user.role).toBe(UserPlatformRole.MEMBER);
+  });
+
+  it('should create user with default status ACTIVE', () => {
+    const user = createUser();
+    expect(user.status).toBe(UserStatus.ACTIVE);
+  });
+
+  it('should promote to admin', () => {
+    const user = createUser();
+    user.promoteToAdmin();
+    expect(user.role).toBe(UserPlatformRole.ADMIN);
+  });
+
+  it('should demote to member', () => {
+    const user = createUser();
+    user.promoteToAdmin();
+    user.demoteToMember();
+    expect(user.role).toBe(UserPlatformRole.MEMBER);
+  });
+
+  it('should deactivate user', () => {
+    const user = createUser();
+    user.deactivate();
+    expect(user.status).toBe(UserStatus.INACTIVE);
+  });
+
+  it('should change email', () => {
+    const user = createUser();
+    const newEmail = Email.from('newemail@test.com');
+    user.changeEmail(newEmail);
+    expect(user.email).toBe(newEmail);
+  });
+
+  it('should change name', () => {
+    const user = createUser();
+    user.changeName('New Name');
+    expect(user.name).toBe('New Name');
+  });
+});
+
+================
+File: src/modules/users/domain/user.entity.ts
+================
+import { Id } from '@core/domain/id.vo';
+import { UserPlatformRole } from '@modules/users/domain/user-role.enum';
+import { UserStatus } from '@modules/users/domain/user-status.enum';
+import { Email } from '@core/domain/email.vo';
+import { Entity, EntityProps } from '@core/domain/entity';
+
+interface UserProps extends EntityProps {
+  name: string;
+  email: Email;
+  passwordHash: string;
+  status: UserStatus;
+  platformRole: UserPlatformRole;
+  code: string | null;
+}
+
+interface CreateUserProps extends Omit<
+  UserProps,
+  'id' | 'createdAt' | 'updatedAt' | 'status' | 'platformRole' | 'passwordHash'
+> {
+  password: string;
+}
+
+export class User extends Entity<UserProps> {
+  private constructor(props: UserProps) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+
+  static create(params: CreateUserProps): User {
+    const now = new Date();
+    const user = new User({
+      ...params,
+      id: Id.generate(),
+      createdAt: now,
+      updatedAt: now,
+      status: UserStatus.ACTIVE,
+      platformRole: UserPlatformRole.MEMBER,
+      passwordHash: params.password, // TODO: In a real app, hash this!
+    });
+    return user;
+  }
+
+  static rehydrate(params: UserProps): User {
+    const user = new User(params);
+    return user;
+  }
+
+  // --------------- Getters ---------------
+
+  get name(): string {
+    return this.props.name;
+  }
+
+  get email(): Email {
+    return this.props.email;
+  }
+
+  get passwordHash(): string {
+    return this.props.passwordHash;
+  }
+
+  get role(): UserPlatformRole {
+    return this.props.platformRole;
+  }
+
+  get status(): UserStatus {
+    return this.props.status;
+  }
+
+  get code(): string | null {
+    return this.props.code;
+  }
+
+  // --------------- Behaviours ---------------
+  changeName(newName: string) {
+    this.props.name = newName;
+    this.touch();
+  }
+
+  changeEmail(newEmail: Email) {
+    this.props.email = newEmail;
+    this.touch();
+  }
+
+  changePasswordHash(newPasswordHash: string) {
+    this.props.passwordHash = newPasswordHash;
+    this.touch();
+  }
+
+  promoteToAdmin() {
+    this.props.platformRole = UserPlatformRole.ADMIN;
+    this.touch();
+  }
+
+  demoteToMember() {
+    this.props.platformRole = UserPlatformRole.MEMBER;
+    this.touch();
+  }
+
+  deactivate() {
+    this.props.status = UserStatus.INACTIVE;
+    this.touch();
+  }
+
+  activate() {
+    this.props.status = UserStatus.ACTIVE;
+    this.touch();
+  }
+
+  changeCode(newCode: string) {
+    this.props.code = newCode;
+    this.touch();
+  }
+
+  // --------------- Internal Methods ---------------
+  touch() {
+    this.props.updatedAt = new Date();
+  }
+}
+
+================
+File: src/modules/users/domain/user.errors.ts
+================
+export class UserAlreadyActiveError extends Error {
+  constructor() {
+    super('User is already active');
+  }
+}
+
+export class UserAlreadyInactiveError extends Error {
+  constructor() {
+    super('User is already inactive');
+  }
+}
+
+export class UserAlreadyAdminError extends Error {
+  constructor() {
+    super('User is already an admin');
+  }
+}
+
+export class UserAlreadyMemberError extends Error {
+  constructor() {
+    super('User is already a member');
+  }
+}
+
+================
+File: src/modules/users/domain/user.repository.ts
+================
+import { User } from '@modules/users/domain/user.entity';
+
+export abstract class UserRepository {
+  abstract findById(id: string, tenantId: string): Promise<User | null>;
+  abstract findByEmail(email: string, tenantId: string): Promise<User | null>;
+  abstract findByName(name: string, tenantId: string): Promise<User[]>;
+  abstract findAll(tenantId: string): Promise<User[]>;
+  abstract save(user: User): Promise<User>;
+  abstract delete(id: string): Promise<void>;
+}
+
+================
+File: src/modules/users/infra/prisma-user.repository.ts
+================
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@core/infra/prisma.service';
+import { UserRepository } from '@modules/users/domain/user.repository';
+import { User } from '@modules/users/domain/user.entity';
+import { User as PrismaUser } from '@prisma/client';
+import { PrismaUserMapper } from '@modules/users/infra/user-mapper';
+
+@Injectable()
+export class PrismaUserRepository implements UserRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<User | null> {
+    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    if (!bdUser) return null;
+    return PrismaUserMapper.toDomain(bdUser);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!bdUser) return null;
+    return PrismaUserMapper.toDomain(bdUser);
+  }
+
+  async findByName(name: string): Promise<User[]> {
+    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
+      where: { name },
+    });
+    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
+  }
+
+  async findAll(): Promise<User[]> {
+    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
+      where: {},
+    });
+    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
+  }
+
+  async save(user: User): Promise<User> {
+    const bdUser = PrismaUserMapper.toPersistence(user);
+    await this.prisma.user.upsert({
+      where: { id: bdUser.id },
+      update: bdUser,
+      create: bdUser,
+    });
+    return user;
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.prisma.user.delete({ where: { id } }).then(() => {});
+  }
+}
+
+================
+File: src/modules/users/infra/user-mapper.ts
+================
+import { User as PrismaUser } from '@prisma/client';
+import { User } from '@modules/users/domain/user.entity';
+import { Email } from '@core/domain/email.vo';
+import { Id } from '@core/domain/id.vo';
+import { UserPlatformRole } from '@modules/users/domain/user-role.enum';
+import { UserStatus } from '@modules/users/domain/user-status.enum';
+import { UserStatus as PrismaUserStatus } from '@prisma/client';
+
+export class PrismaUserMapper {
+  static toDomain(bdUser: PrismaUser): User {
+    return User.rehydrate({
+      id: Id.from(bdUser.id),
+      name: bdUser.name,
+      email: Email.from(bdUser.email),
+      passwordHash: bdUser.passwordHash,
+      platformRole:
+        UserPlatformRole[bdUser.platformRole as keyof typeof UserPlatformRole],
+      code: bdUser.code,
+      status: UserStatus[bdUser.status as keyof typeof UserStatus],
+      createdAt: bdUser.createdAt,
+      updatedAt: bdUser.updatedAt,
+    });
+  }
+
+  static toPersistence(user: User) {
+    return {
+      id: user.id.value,
+      name: user.name,
+      email: user.email.value,
+      passwordHash: user.passwordHash,
+      platformRole: user.role,
+      code: user.code,
+      status: PrismaUserStatus[user.status as keyof typeof PrismaUserStatus],
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
+}
+
+================
+File: src/modules/users/interface/create-user-response.dto.ts
+================
+import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@modules/users/domain/user.entity';
+
+export class CreateUserResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  tenantId!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty()
+  role!: string;
+
+  @ApiProperty()
+  status!: string;
+
+  @ApiProperty({ required: false })
+  code!: string | null;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  static fromDomain(user: User): CreateUserResponseDto {
+    return {
+      id: user.id.value,
+      tenantId: user.tenantId.value,
+      name: user.name,
+      email: user.email.value,
+      role: user.role,
+      status: user.status,
+      code: user.code,
+      createdAt: user.createdAt,
+    };
+  }
+}
+
+================
+File: src/modules/users/interface/create-user.dto.ts
+================
+import { ApiProperty } from '@nestjs/swagger';
+
+export class CreateUserDto {
+  @ApiProperty()
+  tenantId!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty()
+  password!: string;
+
+  @ApiProperty({ required: false })
+  code!: string | null;
 }
 
 ================
@@ -344,45 +868,6 @@ File: nest-cli.json
     "deleteOutDir": true
   }
 }
-
-================
-File: plopfile.js
-================
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-// const path = require('path');
-
-module.exports = function (plop) {
-  plop.setGenerator('module', {
-    description:
-      'Create a new module that follows the Domain-Driven Design (DDD) pattern',
-    prompts: [
-      {
-        type: 'input',
-        name: 'singularName',
-        message: 'What is the singular name of the module?',
-      },
-      {
-        type: 'input',
-        name: 'pluralName',
-        message: 'What is the plural name?',
-      },
-    ],
-    actions: [
-      {
-        type: 'add',
-        path: 'src/modules/{{kebabCase pluralName}}/application/use-cases/create-{{kebabCase singularName}}.usecase.ts',
-        templateFile:
-          'plop-templates/module/application/use-cases/create-model.usecase.hbs',
-      },
-      {
-        type: 'add',
-        path: 'src/modules/{{kebabCase pluralName}}/domain/entities/{{kebabCase singularName}}.entity.ts',
-        templateFile: 'plop-templates/module/domain/entities/module.entity.hbs',
-      },
-    ],
-  });
-};
 
 ================
 File: prisma/migrations/20260225015841_user_model/migration.sql
@@ -460,6 +945,59 @@ CREATE TABLE "new_Tenant" (
 INSERT INTO "new_Tenant" ("createdAt", "id", "name", "updatedAt") SELECT "createdAt", "id", "name", "updatedAt" FROM "Tenant";
 DROP TABLE "Tenant";
 ALTER TABLE "new_Tenant" RENAME TO "Tenant";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
+
+================
+File: prisma/migrations/20260313013325_implemented_basic_membership/migration.sql
+================
+/*
+  Warnings:
+
+  - You are about to drop the column `tenantId` on the `User` table. All the data in the column will be lost.
+  - Added the required column `platformRole` to the `User` table without a default value. This is not possible if the table is not empty.
+
+*/
+-- CreateTable
+CREATE TABLE "Membership" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    CONSTRAINT "Membership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Membership_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Tenant" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+INSERT INTO "new_Tenant" ("createdAt", "id", "name", "status", "updatedAt") SELECT "createdAt", "id", "name", "status", "updatedAt" FROM "Tenant";
+DROP TABLE "Tenant";
+ALTER TABLE "new_Tenant" RENAME TO "Tenant";
+CREATE TABLE "new_User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "code" TEXT,
+    "role" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "platformRole" TEXT NOT NULL
+);
+INSERT INTO "new_User" ("code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt") SELECT "code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt" FROM "User";
+DROP TABLE "User";
+ALTER TABLE "new_User" RENAME TO "User";
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "User_code_key" ON "User"("code");
 PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;
 
@@ -620,112 +1158,43 @@ File: repomix.config.json
 }
 
 ================
-File: src/core/domain/value-objects/email.vo.ts
+File: src/core/utils/create-enum-mapper.ts
 ================
-export class Email {
-  private constructor(private readonly _value: string) {}
+/**
+ * Creates a bidirectional map between two string enums.
+ *
+ * Example:
+ * const map = createEnumMapper({
+ *   ACTIVE: UserStatus.ACTIVE,
+ *   INACTIVE: UserStatus.INACTIVE,
+ * });
+ *
+ * map.toDomain('ACTIVE') -> UserStatus.ACTIVE
+ * map.toPersistence(UserStatus.ACTIVE) -> 'ACTIVE'
+ */
+export function createEnumMapper<
+  TPrisma extends string,
+  TDomain extends string,
+>(mapping: Record<TPrisma, TDomain>) {
+  const reverseMapping: Record<TDomain, TPrisma> = {} as Record<
+    TDomain,
+    TPrisma
+  >;
 
-  static from(value: string): Email {
-    if (!value) {
-      throw new Error('Email cannot be empty');
-    }
-
-    const normalizedValue = value.trim().toLowerCase();
-
-    if (!Email.isValid(normalizedValue)) {
-      throw new Error('Invalid email format');
-    }
-
-    return new Email(normalizedValue);
+  for (const key in mapping) {
+    const value = mapping[key];
+    reverseMapping[value] = key;
   }
 
-  static isValid(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
+  return {
+    toDomain(prismaValue: TPrisma): TDomain {
+      return mapping[prismaValue];
+    },
 
-  get value(): string {
-    return this._value;
-  }
-
-  equals(other: Email): boolean {
-    return this._value === other._value;
-  }
-}
-
-================
-File: src/core/domain/value-objects/id.vo.ts
-================
-import { randomUUID } from 'crypto';
-
-export class Id {
-  private constructor(private readonly _value: string) {}
-
-  static generate(): Id {
-    return new Id(randomUUID());
-  }
-
-  static from(value: string): Id {
-    if (!value || value.trim().length === 0) {
-      throw new Error('Id cannot be empty');
-    }
-    return new Id(value);
-  }
-
-  get value(): string {
-    return this._value;
-  }
-
-  equals(other: Id): boolean {
-    return this._value === other.value;
-  }
-}
-
-================
-File: src/core/infra/prisma/prisma.module.ts
-================
-import { Global, Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-
-@Global()
-@Module({
-  providers: [PrismaService],
-  exports: [PrismaService],
-})
-export class PrismaModule {}
-
-================
-File: src/core/infra/prisma/prisma.service.ts
-================
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-
-@Injectable()
-export class PrismaService
-  extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
-  constructor(config: ConfigService) {
-    const url = config.get<string>('DATABASE_URL');
-
-    if (!url) {
-      throw new Error('DATABASE_URL is not defined');
-    }
-
-    const adapter = new PrismaBetterSqlite3({ url });
-
-    super({ adapter });
-  }
-
-  async onModuleInit(): Promise<void> {
-    await this.$connect();
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.$disconnect();
-  }
+    toPersistence(domainValue: TDomain): TPrisma {
+      return reverseMapping[domainValue];
+    },
+  };
 }
 
 ================
@@ -766,8 +1235,8 @@ export class ListTenantsUseCase {
 ================
 File: src/modules/tenants/domain/entities/tenant.entity.ts
 ================
-import { Entity, EntityProps } from '@core/domain/entities/entity';
-import { Id } from '@core/domain/value-objects/id.vo';
+import { Entity, EntityProps } from '@core/domain/entity';
+import { Id } from '@core/domain/id.vo';
 import { TenantStatus } from '../enums/tenant-status';
 
 interface TenantProps extends EntityProps {
@@ -863,7 +1332,7 @@ export abstract class TenantRepository {
 ================
 File: src/modules/tenants/infra/prisma/prisma-tenant.repository.ts
 ================
-import { PrismaService } from '@core/infra/prisma/prisma.service';
+import { PrismaService } from '@core/infra/prisma.service';
 import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 import { TenantRepository } from '@modules/tenants/domain/repositories/tenant.repository';
 import { Injectable } from '@nestjs/common';
@@ -914,7 +1383,7 @@ export class PrismaTenantRepository implements TenantRepository {
 ================
 File: src/modules/tenants/infra/prisma/tenant-mapper.ts
 ================
-import { Id } from '@core/domain/value-objects/id.vo';
+import { Id } from '@core/domain/id.vo';
 import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 import { TenantStatus } from '@modules/tenants/domain/enums/tenant-status';
 import { Tenant as PrismaTenant } from '@prisma/client';
@@ -1034,279 +1503,13 @@ import { PrismaTenantRepository } from './infra/prisma/prisma-tenant.repository'
 export class TenantModule {}
 
 ================
-File: src/modules/users/application/use-cases/create-user.usecase.ts
-================
-import { Email } from '@core/domain/value-objects/email.vo';
-import { Id } from '@core/domain/value-objects/id.vo';
-import { User } from '@modules/users/domain/entities/user.entity';
-import { UserRepository } from '@modules/users/domain/repositories/user.repository';
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
-export class CreateUserUseCase {
-  constructor(private readonly userRepository: UserRepository) {}
-
-  async execute(input: {
-    tenantId: string;
-    email: string;
-    password: string;
-    name: string;
-    code: string | null;
-  }): Promise<User> {
-    const user = await this.userRepository.save(
-      User.create({
-        tenantId: Id.from(input.tenantId),
-        email: Email.from(input.email),
-        password: input.password,
-        name: input.name,
-        code: input.code,
-      }),
-    );
-    return user;
-  }
-}
-
-================
-File: src/modules/users/application/use-cases/list-users.usecase.ts
-================
-import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@modules/users/domain/repositories/user.repository';
-
-@Injectable()
-export class ListUsersUseCase {
-  constructor(private readonly userRepository: UserRepository) {}
-
-  async execute(tenantId: string) {
-    return this.userRepository.findAll(tenantId);
-  }
-}
-
-================
-File: src/modules/users/domain/entities/user.entity.spec.ts
-================
-import { User } from '@modules/users/domain/entities/user.entity';
-import { Email } from 'src/core/domain/value-objects/email.vo';
-import { TenantId } from 'src/core/domain/value-objects/tentant-id.vo';
-import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
-import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
-
-describe('User Entity', () => {
-  const tenantId = TenantId.from('tenant-1');
-  const email = Email.from('user@test.com');
-
-  function createUser() {
-    return User.create({
-      tenantId,
-      email,
-      name: 'Test User',
-      passwordHash: '',
-    });
-  }
-
-  it('should create user with default role MEMBER', () => {
-    const user = createUser();
-    expect(user.role).toBe(UserPlatformRole.MEMBER);
-  });
-
-  it('should create user with default status ACTIVE', () => {
-    const user = createUser();
-    expect(user.status).toBe(UserStatus.ACTIVE);
-  });
-
-  it('should promote to admin', () => {
-    const user = createUser();
-    user.promoteToAdmin();
-    expect(user.role).toBe(UserPlatformRole.ADMIN);
-  });
-
-  it('should demote to member', () => {
-    const user = createUser();
-    user.promoteToAdmin();
-    user.demoteToMember();
-    expect(user.role).toBe(UserPlatformRole.MEMBER);
-  });
-
-  it('should deactivate user', () => {
-    const user = createUser();
-    user.deactivate();
-    expect(user.status).toBe(UserStatus.INACTIVE);
-  });
-
-  it('should change email', () => {
-    const user = createUser();
-    const newEmail = Email.from('newemail@test.com');
-    user.changeEmail(newEmail);
-    expect(user.email).toBe(newEmail);
-  });
-
-  it('should change name', () => {
-    const user = createUser();
-    user.changeName('New Name');
-    expect(user.name).toBe('New Name');
-  });
-});
-
-================
-File: src/modules/users/domain/enums/user-role.enum.ts
-================
-export enum UserPlatformRole {
-  ADMIN = 'ADMIN',
-  MEMBER = 'STAFF',
-  NONE = 'NONE',
-}
-
-================
-File: src/modules/users/domain/enums/user-status.enum.ts
-================
-export enum UserStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-}
-
-================
-File: src/modules/users/domain/errors/user.errors.ts
-================
-export class UserAlreadyActiveError extends Error {
-  constructor() {
-    super('User is already active');
-  }
-}
-
-export class UserAlreadyInactiveError extends Error {
-  constructor() {
-    super('User is already inactive');
-  }
-}
-
-export class UserAlreadyAdminError extends Error {
-  constructor() {
-    super('User is already an admin');
-  }
-}
-
-export class UserAlreadyMemberError extends Error {
-  constructor() {
-    super('User is already a member');
-  }
-}
-
-================
-File: src/modules/users/infra/prisma/user-mapper.ts
-================
-import { User as PrismaUser } from '@prisma/client';
-import { User } from '@modules/users/domain/entities/user.entity';
-import { Email } from '@core/domain/value-objects/email.vo';
-import { Id } from '@core/domain/value-objects/id.vo';
-import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
-import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
-import { UserStatus as PrismaUserStatus } from '@prisma/client';
-
-export class PrismaUserMapper {
-  static toDomain(bdUser: PrismaUser): User {
-    return User.rehydrate({
-      id: Id.from(bdUser.id),
-      name: bdUser.name,
-      email: Email.from(bdUser.email),
-      passwordHash: bdUser.passwordHash,
-      platformRole:
-        UserPlatformRole[bdUser.role as keyof typeof UserPlatformRole],
-      code: bdUser.code,
-      status: UserStatus[bdUser.status as keyof typeof UserStatus],
-      createdAt: bdUser.createdAt,
-      updatedAt: bdUser.updatedAt,
-    });
-  }
-
-  static toPersistence(user: User) {
-    return {
-      id: user.id.value,
-      name: user.name,
-      email: user.email.value,
-      passwordHash: user.passwordHash,
-      platformRole: user.role,
-      code: user.code,
-      status: PrismaUserStatus[user.status as keyof typeof PrismaUserStatus],
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
-  }
-}
-
-================
-File: src/modules/users/interface/dto/create-user-response.dto.ts
-================
-import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@modules/users/domain/entities/user.entity';
-
-export class CreateUserResponseDto {
-  @ApiProperty()
-  id!: string;
-
-  @ApiProperty()
-  tenantId!: string;
-
-  @ApiProperty()
-  name!: string;
-
-  @ApiProperty()
-  email!: string;
-
-  @ApiProperty()
-  role!: string;
-
-  @ApiProperty()
-  status!: string;
-
-  @ApiProperty({ required: false })
-  code!: string | null;
-
-  @ApiProperty()
-  createdAt!: Date;
-
-  static fromDomain(user: User): CreateUserResponseDto {
-    return {
-      id: user.id.value,
-      tenantId: user.tenantId.value,
-      name: user.name,
-      email: user.email.value,
-      role: user.role,
-      status: user.status,
-      code: user.code,
-      createdAt: user.createdAt,
-    };
-  }
-}
-
-================
-File: src/modules/users/interface/dto/create-user.dto.ts
-================
-import { ApiProperty } from '@nestjs/swagger';
-
-export class CreateUserDto {
-  @ApiProperty()
-  tenantId!: string;
-
-  @ApiProperty()
-  name!: string;
-
-  @ApiProperty()
-  email!: string;
-
-  @ApiProperty()
-  password!: string;
-
-  @ApiProperty({ required: false })
-  code!: string | null;
-}
-
-================
 File: src/modules/users/interface/users.controller.ts
 ================
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { CreateUserUseCase } from '../application/use-cases/create-user.usecase';
-import { ListUsersUseCase } from '../application/use-cases/list-users.usecase';
-import { CreateUserDto } from '@modules/users/interface/dto/create-user.dto';
-import { CreateUserResponseDto } from '@modules/users/interface/dto/create-user-response.dto';
+import { CreateUserUseCase } from '../application/create-user.usecase';
+import { ListUsersUseCase } from '../application/list-users.usecase';
+import { CreateUserDto } from '@modules/users/interface/create-user.dto';
+import { CreateUserResponseDto } from '@modules/users/interface/create-user-response.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Users')
@@ -1453,6 +1656,87 @@ export default tseslint.config(
 );
 
 ================
+File: plopfile.js
+================
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+// const path = require('path');
+
+module.exports = function (plop) {
+  plop.setGenerator('module', {
+    description:
+      'Create a new module that follows the Domain-Driven Design (DDD) pattern',
+    prompts: [
+      {
+        type: 'input',
+        name: 'singularName',
+        message: 'What is the singular name of the module?',
+      },
+      {
+        type: 'input',
+        name: 'pluralName',
+        message: 'What is the plural name?',
+      },
+    ],
+    actions: [
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity.ts',
+        templateFile: 'plop-templates/module/domain/module.entity.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.repository.ts',
+        templateFile: 'plop-templates/module/domain/module.repository.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/application/create-{{kebabCase singularName}}.usecase.ts',
+        templateFile:
+          'plop-templates/module/application/create-model.usecase.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/application/list-{{kebabCase pluralName}}.usecase.ts',
+        templateFile:
+          'plop-templates/module/application/list-models.usecase.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/infra/prisma-{{kebabCase sinularName}}.repository.ts',
+        templateFile: 'plop-templates/module/infra/prisma-model.repository.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/infra/{{kebabCase singularName}}-mapper.ts',
+        templateFile: 'plop-templates/module/infra/model-mapper.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/interface/create-{{kebabCase singularName}}.dto.ts',
+        templateFile: 'plop-templates/module/interface/create-model.dto.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/interface/create-{{kebabCase singularName}}-response.dto.ts',
+        templateFile:
+          'plop-templates/module/interface/create-model-response.dto.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/interface/{{kebabCase singularName}}.controller.ts',
+        templateFile: 'plop-templates/module/interface/model.controller.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/{{kebabCase singularName}}.module.ts',
+        templateFile: 'plop-templates/module/model.module.hbs',
+      },
+    ],
+  });
+};
+
+================
 File: prisma.config.ts
 ================
 // This file was generated by Prisma, and assumes you have installed the following:
@@ -1471,247 +1755,18 @@ export default defineConfig({
 });
 
 ================
-File: src/core/domain/entities/entity.ts
-================
-import { Id } from '@core/domain/value-objects/id.vo';
-
-export interface EntityProps {
-  id: Id;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export abstract class Entity<Props extends EntityProps> {
-  protected readonly props: Props;
-
-  protected constructor(props: Props) {
-    this.props = props;
-  }
-
-  // --------------- Getters ---------------
-  get id(): Id {
-    return this.props.id;
-  }
-
-  get createdAt(): Date {
-    return this.props.createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt;
-  }
-}
-
-================
-File: src/modules/users/domain/entities/user.entity.ts
-================
-import { Id } from '@core/domain/value-objects/id.vo';
-import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
-import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
-import { Email } from '@core/domain/value-objects/email.vo';
-import { Entity, EntityProps } from '@core/domain/entities/entity';
-
-interface UserProps extends EntityProps {
-  name: string;
-  email: Email;
-  passwordHash: string;
-  status: UserStatus;
-  platformRole: UserPlatformRole;
-  code: string | null;
-}
-
-interface CreateUserProps extends Omit<
-  UserProps,
-  'id' | 'createdAt' | 'updatedAt' | 'status' | 'platformRole' | 'passwordHash'
-> {
-  password: string;
-}
-
-export class User extends Entity<UserProps> {
-  private constructor(props: UserProps) {
-    super(props);
-  }
-
-  // --------------- Factory Methods ---------------
-
-  static create(params: CreateUserProps): User {
-    const now = new Date();
-    const user = new User({
-      ...params,
-      id: Id.generate(),
-      createdAt: now,
-      updatedAt: now,
-      status: UserStatus.ACTIVE,
-      platformRole: UserPlatformRole.MEMBER,
-      passwordHash: params.password, // TODO: In a real app, hash this!
-    });
-    return user;
-  }
-
-  static rehydrate(params: UserProps): User {
-    const user = new User(params);
-    return user;
-  }
-
-  // --------------- Getters ---------------
-
-  get name(): string {
-    return this.props.name;
-  }
-
-  get email(): Email {
-    return this.props.email;
-  }
-
-  get passwordHash(): string {
-    return this.props.passwordHash;
-  }
-
-  get role(): UserPlatformRole {
-    return this.props.platformRole;
-  }
-
-  get status(): UserStatus {
-    return this.props.status;
-  }
-
-  get code(): string | null {
-    return this.props.code;
-  }
-
-  // --------------- Behaviours ---------------
-  changeName(newName: string) {
-    this.props.name = newName;
-    this.touch();
-  }
-
-  changeEmail(newEmail: Email) {
-    this.props.email = newEmail;
-    this.touch();
-  }
-
-  changePasswordHash(newPasswordHash: string) {
-    this.props.passwordHash = newPasswordHash;
-    this.touch();
-  }
-
-  promoteToAdmin() {
-    this.props.platformRole = UserPlatformRole.ADMIN;
-    this.touch();
-  }
-
-  demoteToMember() {
-    this.props.platformRole = UserPlatformRole.MEMBER;
-    this.touch();
-  }
-
-  deactivate() {
-    this.props.status = UserStatus.INACTIVE;
-    this.touch();
-  }
-
-  activate() {
-    this.props.status = UserStatus.ACTIVE;
-    this.touch();
-  }
-
-  changeCode(newCode: string) {
-    this.props.code = newCode;
-    this.touch();
-  }
-
-  // --------------- Internal Methods ---------------
-  touch() {
-    this.props.updatedAt = new Date();
-  }
-}
-
-================
-File: src/modules/users/domain/repositories/user.repository.ts
-================
-import { User } from '@modules/users/domain/entities/user.entity';
-
-export abstract class UserRepository {
-  abstract findById(id: string, tenantId: string): Promise<User | null>;
-  abstract findByEmail(email: string, tenantId: string): Promise<User | null>;
-  abstract findByName(name: string, tenantId: string): Promise<User[]>;
-  abstract findAll(tenantId: string): Promise<User[]>;
-  abstract save(user: User): Promise<User>;
-  abstract delete(id: string): Promise<void>;
-}
-
-================
-File: src/modules/users/infra/prisma/prisma-user.repository.ts
-================
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/core/infra/prisma/prisma.service';
-import { UserRepository } from '@modules/users/domain/repositories/user.repository';
-import { User } from '@modules/users/domain/entities/user.entity';
-import { User as PrismaUser } from '@prisma/client';
-import { PrismaUserMapper } from '@modules/users/infra/prisma/user-mapper';
-
-@Injectable()
-export class PrismaUserRepository implements UserRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findById(id: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { id },
-    });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { email },
-    });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
-  }
-
-  async findByName(name: string): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: { name },
-    });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
-  }
-
-  async findAll(): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: {},
-    });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
-  }
-
-  async save(user: User): Promise<User> {
-    const bdUser = PrismaUserMapper.toPersistence(user);
-    await this.prisma.user.upsert({
-      where: { id: bdUser.id },
-      update: bdUser,
-      create: bdUser,
-    });
-    return user;
-  }
-
-  async delete(id: string): Promise<void> {
-    return this.prisma.user.delete({ where: { id } }).then(() => {});
-  }
-}
-
-================
 File: src/modules/users/users.module.ts
 ================
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/core/infra/prisma/prisma.module';
+import { PrismaModule } from '@core/infra/prisma.module';
 
 import { UsersController } from './interface/users.controller';
 
-import { CreateUserUseCase } from './application/use-cases/create-user.usecase';
-import { ListUsersUseCase } from './application/use-cases/list-users.usecase';
+import { CreateUserUseCase } from './application/create-user.usecase';
+import { ListUsersUseCase } from './application/list-users.usecase';
 
-import { UserRepository } from './domain/repositories/user.repository';
-import { PrismaUserRepository } from './infra/prisma/prisma-user.repository';
+import { UserRepository } from './domain/user.repository';
+import { PrismaUserRepository } from './infra/prisma-user.repository';
 
 @Module({
   imports: [PrismaModule],
@@ -1851,6 +1906,30 @@ File: package.json
 }
 
 ================
+File: src/main.ts
+================
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Viver Sorvete API')
+    .setDescription(
+      'This API is responsible for managing the Viver Sorvete application',
+    )
+    .setVersion('1.0')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+void bootstrap();
+
+================
 File: prisma/schema.prisma
 ================
 // This is your Prisma schema file,
@@ -1921,30 +2000,6 @@ model Membership {
   tenant   Tenant           @relation(fields: [tenantId], references: [id])
   status   MembershipStatus @default(ACTIVE)
 }
-
-================
-File: src/main.ts
-================
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  const config = new DocumentBuilder()
-    .setTitle('Viver Sorvete API')
-    .setDescription(
-      'This API is responsible for managing the Viver Sorvete application',
-    )
-    .setVersion('1.0')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
-
-  await app.listen(process.env.PORT ?? 3000);
-}
-void bootstrap();
 
 ================
 File: src/app.module.ts

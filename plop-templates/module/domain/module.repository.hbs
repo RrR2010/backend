@@ -1,0 +1,8 @@
+import {{ pascalCase singularName }} from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+
+export abstract class {{ pascalCase singularName }}Repository {
+  abstract findById(id: string): Promise<{{ pascalCase singularName }} | null>;
+  abstract findAll(): Promise<{{ pascalCase singularName }}[]>;
+  abstract save({{ pascalCase singularName }}: {{ pascalCase singularName }}): Promise<{{ pascalCase singularName }}>;
+  abstract delete(id: string): Promise<void>;
+}

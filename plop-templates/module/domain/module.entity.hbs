@@ -1,0 +1,38 @@
+import { Entity, EntityProps } from '@core/domain/entity';
+
+interface {{pascalCase singularName}}Props extends EntityProps {
+  ...
+}
+
+interface New{{pascalCase singularName}}Props extends Omit<
+  {{pascalCase singularName}}Props,
+  'id' | 'createdAt' | 'updatedAt'
+> {
+  ...
+}
+
+export class {{pascalCase singularName}} extends Entity<{{pascalCase singularName}}Props> {
+  private constructor(params: {{pascalCase singularName}}Props) {
+    super(params);
+  }
+
+  // --------------- Factory Methods ---------------
+  static create(params: New{{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    
+    return ...
+  }
+
+  static rehydratate(params: {{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    const {{camelCase singularName}} = new {{pascalCase singularName}}(params);
+    return {{camelCase singularName}}
+  }
+
+  // --------------- Getters ---------------
+
+
+  // --------------- Behaviours ---------------
+
+
+  // --------------- Internal Methods ---------------
+
+}

@@ -1,4 +1,4 @@
-import { Id } from '@core/domain/value-objects/id.vo';
+import { Id } from '@core/domain/id.vo';
 import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 import { TenantStatus } from '@modules/tenants/domain/enums/tenant-status';
 import { Tenant as PrismaTenant } from '@prisma/client';
