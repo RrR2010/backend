@@ -1,4 +1,5 @@
-export enum UserRole {
-  ADMIN = 'admin',
-  MEMBER = 'member',
+export enum UserPlatformRole {
+  ADMIN = 'ADMIN',
+  MEMBER = 'STAFF',
+  NONE = 'NONE',
 }

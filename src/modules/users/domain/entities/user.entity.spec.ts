@@ -1,7 +1,7 @@
 import { User } from '@modules/users/domain/entities/user.entity';
 import { Email } from 'src/core/domain/value-objects/email.vo';
 import { TenantId } from 'src/core/domain/value-objects/tentant-id.vo';
-import { UserRole } from '@modules/users/domain/enums/user-role.enum';
+import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
 import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
 
 describe('User Entity', () => {
@@ -19,7 +19,7 @@ describe('User Entity', () => {
 
   it('should create user with default role MEMBER', () => {
     const user = createUser();
-    expect(user.role).toBe(UserRole.MEMBER);
+    expect(user.role).toBe(UserPlatformRole.MEMBER);
   });
 
   it('should create user with default status ACTIVE', () => {
@@ -30,14 +30,14 @@ describe('User Entity', () => {
   it('should promote to admin', () => {
     const user = createUser();
     user.promoteToAdmin();
-    expect(user.role).toBe(UserRole.ADMIN);
+    expect(user.role).toBe(UserPlatformRole.ADMIN);
   });
 
   it('should demote to member', () => {
     const user = createUser();
     user.promoteToAdmin();
     user.demoteToMember();
-    expect(user.role).toBe(UserRole.MEMBER);
+    expect(user.role).toBe(UserPlatformRole.MEMBER);
   });
 
   it('should deactivate user', () => {

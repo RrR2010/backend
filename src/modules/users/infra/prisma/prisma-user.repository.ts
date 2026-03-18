@@ -9,32 +9,32 @@ import { PrismaUserMapper } from '@modules/users/infra/prisma/user-mapper';
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, tenantId: string): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { id, tenantId },
+      where: { id },
     });
     if (!bdUser) return null;
     return PrismaUserMapper.toDomain(bdUser);
   }
 
-  async findByEmail(email: string, tenantId: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<User | null> {
     const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { email, tenantId },
+      where: { email },
     });
     if (!bdUser) return null;
     return PrismaUserMapper.toDomain(bdUser);
   }
 
-  async findByName(name: string, tenantId: string): Promise<User[]> {
+  async findByName(name: string): Promise<User[]> {
     const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: { name, tenantId },
+      where: { name },
     });
     return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
   }
 
-  async findAll(tenantId: string): Promise<User[]> {
+  async findAll(): Promise<User[]> {
     const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: { tenantId },
+      where: {},
     });
     return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
   }

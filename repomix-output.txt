@@ -1,116 +1,626 @@
 ================================================================
 Directory Structure
 ================================================================
-app.module.ts
-core/domain/entities/entity.ts
-core/domain/entities/tenant-entity.ts
-core/domain/value-objects/email.vo.ts
-core/domain/value-objects/id.vo.ts
-core/infra/prisma/prisma.module.ts
-core/infra/prisma/prisma.service.ts
-main.ts
-modules/tenant/application/use-cases/create-tenant.usecase.ts
-modules/tenant/application/use-cases/list-tenants.usecase.ts
-modules/tenant/domain/entities/tenant.entity.ts
-modules/tenant/domain/enums/tenant-status.ts
-modules/tenant/domain/repositories/tenant.repository.ts
-modules/tenant/infra/prisma/prisma-tenant.repository.ts
-modules/tenant/infra/prisma/tenant-mapper.ts
-modules/tenant/interface/dto/create-tenant-response.dto.ts
-modules/tenant/interface/dto/create-tenant.dto.ts
-modules/tenant/interface/tenant.controller.ts
-modules/tenant/tenant.module.ts
-modules/users/application/use-cases/create-user.usecase.ts
-modules/users/application/use-cases/list-users.usecase.ts
-modules/users/domain/entities/user.entity.spec.ts
-modules/users/domain/entities/user.entity.ts
-modules/users/domain/enums/user-role.enum.ts
-modules/users/domain/enums/user-status.enum.ts
-modules/users/domain/errors/user.errors.ts
-modules/users/domain/repositories/user.repository.ts
-modules/users/infra/prisma/prisma-user.repository.ts
-modules/users/infra/prisma/user-mapper.ts
-modules/users/interface/dto/create-user-response.dto.ts
-modules/users/interface/dto/create-user.dto.ts
-modules/users/interface/users.controller.ts
-modules/users/users.module.ts
+.gitignore
+.prettierrc
+dev.db
+eslint.config.mjs
+jest.config.ts
+nest-cli.json
+package.json
+plop-templates/module/application/use-cases/create-model.usecase.hbs
+plop-templates/module/domain/entities/module.entity.hbs
+plop-templates/module/domain/repositories/module.repository.hbs
+plop-templates/module/module.hbs
+plopfile.js
+prisma.config.ts
+prisma/migrations/20260225015841_user_model/migration.sql
+prisma/migrations/20260308024411_npm_run_dev/migration.sql
+prisma/migrations/20260308041251_tenant_upgrade/migration.sql
+prisma/migrations/20260313013325_implemented_basic_membership/migration.sql
+prisma/migrations/migration_lock.toml
+prisma/schema.prisma
+README.md
+repomix.config.json
+src/app.module.ts
+src/core/domain/entities/entity.ts
+src/core/domain/value-objects/email.vo.ts
+src/core/domain/value-objects/id.vo.ts
+src/core/infra/prisma/prisma.module.ts
+src/core/infra/prisma/prisma.service.ts
+src/core/utils/create-enum-mapper.ts
+src/main.ts
+src/modules/tenants/application/use-cases/create-tenant.usecase.ts
+src/modules/tenants/application/use-cases/list-tenants.usecase.ts
+src/modules/tenants/domain/entities/tenant.entity.ts
+src/modules/tenants/domain/enums/tenant-status.ts
+src/modules/tenants/domain/repositories/tenant.repository.ts
+src/modules/tenants/infra/prisma/prisma-tenant.repository.ts
+src/modules/tenants/infra/prisma/tenant-mapper.ts
+src/modules/tenants/interface/dto/create-tenant-response.dto.ts
+src/modules/tenants/interface/dto/create-tenant.dto.ts
+src/modules/tenants/interface/tenant.controller.ts
+src/modules/tenants/tenant.module.ts
+src/modules/tests/application/use-cases/create-test.usecase.ts
+src/modules/tests/domain/entities/test.entity.ts
+src/modules/users/application/use-cases/create-user.usecase.ts
+src/modules/users/application/use-cases/list-users.usecase.ts
+src/modules/users/domain/entities/user.entity.spec.ts
+src/modules/users/domain/entities/user.entity.ts
+src/modules/users/domain/enums/user-role.enum.ts
+src/modules/users/domain/enums/user-status.enum.ts
+src/modules/users/domain/errors/user.errors.ts
+src/modules/users/domain/repositories/user.repository.ts
+src/modules/users/infra/prisma/prisma-user.repository.ts
+src/modules/users/infra/prisma/user-mapper.ts
+src/modules/users/interface/dto/create-user-response.dto.ts
+src/modules/users/interface/dto/create-user.dto.ts
+src/modules/users/interface/users.controller.ts
+src/modules/users/users.module.ts
+tsconfig.build.json
+tsconfig.json
 
 ================================================================
 Files
 ================================================================
 
 ================
-File: app.module.ts
+File: plop-templates/module/application/use-cases/create-model.usecase.hbs
 ================
-import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/core/infra/prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
-import { UsersModule } from '@modules/users/users.module';
-import { TenantModule } from '@modules/tenant/tenant.module';
+import { {{pascalCase singularName}} } from '@modules/{{camelCase pluralName}}/domain/entities/{{kebabCase singularName}}.entity'
+import { Injectable } from "@nestjs/common";
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,
-    TenantModule,
-    UsersModule,
-  ],
-})
-export class AppModule {}
+@Injectable()
+export class Create{{pascalCase singularName}}UseCase{
+  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}) {}
 
-================
-File: core/domain/entities/entity.ts
-================
-import { Id } from '@core/domain/value-objects/id.vo';
-
-export interface EntityProps {
-  id: Id;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export abstract class Entity<Props extends EntityProps> {
-  protected readonly props: Props;
-
-  protected constructor(props: Props) {
-    this.props = props;
-  }
-
-  // --------------- Getters ---------------
-  get id(): Id {
-    return this.props.id;
-  }
-
-  get createdAt(): Date {
-    return this.props.createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt;
+  async execute(input: {
+    param1: type1;
+  }): Promise<{{pascalCase singularName}}> {
+    const {{camelCase singularName}} = await this.{{camelCase singularName}}Repository.save(
+      {{pascalCase singularName}}.create({
+        param1: type1;
+      })
+    )
+    return {{pascalCase singularName}}
   }
 }
 
 ================
-File: core/domain/entities/tenant-entity.ts
+File: plop-templates/module/domain/entities/module.entity.hbs
 ================
 import { Entity, EntityProps } from '@core/domain/entities/entity';
-import { Id } from '@core/domain/value-objects/id.vo';
 
-export interface TenantEntityProps extends EntityProps {
-  tenantId: Id;
+interface {{pascalCase singularName}}Props extends EntityProps {
+  ...
 }
 
-export abstract class TenantEntity<
-  Props extends TenantEntityProps,
-> extends Entity<Props> {
+interface New{{pascalCase singularName}}Props extends Omit<
+  {{pascalCase singularName}}Props,
+  'id' | 'createdAt' | 'updatedAt'
+> {
+  ...
+}
+
+export class {{pascalCase singularName}} extends Entity<{{pascalCase singularName}}Props> {
+  private constructor(props: {{pascalCase singularName}}Props) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+  static create(params: New{{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    
+    return ...
+  }
+
+  static rehydratate(params: {{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    const {{camelCase singularName}} = new {{pascalCase singularName}}(params);
+    return {{camelCase singularName}}
+  }
+
   // --------------- Getters ---------------
-  get tenantId(): Id {
-    return this.props.tenantId;
+
+
+  // --------------- Behaviours ---------------
+
+
+  // --------------- Internal Methods ---------------
+
+}
+
+================
+File: plop-templates/module/domain/repositories/module.repository.hbs
+================
+import {{ pascalCase singleName }} from '@modules/{{kebabCase pluralName}}/domain/entities/{{kebabCase singleName}}.entity';
+
+export abstract class {{ pascalCase singleName }}Repository {
+  abstract findById(id: string): Promise<{{ pascalCase singleName }} | null>;
+  abstract findAll(): Promise<{{ pascalCase singleName }}[]>;
+  abstract save({{ pascalCase singleName }}: {{ pascalCase singleName }}): Promise<{{ pascalCase singleName }}>;
+  abstract delete(id: string): Promise<void>;
+}
+
+================
+File: plop-templates/module/module.hbs
+================
+import { Module } from '@nestjs/common';
+import {{pascalCase moduleName}}Service from './{{kebabCase moduleName}}.service';
+
+@Module({
+  providers: [{{pascalCase moduleName}}Service],
+  exports: [{{pascalCase moduleName}}Service],
+})
+export class {{pascalCase moduleName}}Module {}
+
+================
+File: prisma/migrations/20260313013325_implemented_basic_membership/migration.sql
+================
+/*
+  Warnings:
+
+  - You are about to drop the column `tenantId` on the `User` table. All the data in the column will be lost.
+  - Added the required column `platformRole` to the `User` table without a default value. This is not possible if the table is not empty.
+
+*/
+-- CreateTable
+CREATE TABLE "Membership" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    CONSTRAINT "Membership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Membership_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Tenant" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+INSERT INTO "new_Tenant" ("createdAt", "id", "name", "status", "updatedAt") SELECT "createdAt", "id", "name", "status", "updatedAt" FROM "Tenant";
+DROP TABLE "Tenant";
+ALTER TABLE "new_Tenant" RENAME TO "Tenant";
+CREATE TABLE "new_User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "code" TEXT,
+    "role" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "platformRole" TEXT NOT NULL
+);
+INSERT INTO "new_User" ("code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt") SELECT "code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt" FROM "User";
+DROP TABLE "User";
+ALTER TABLE "new_User" RENAME TO "User";
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "User_code_key" ON "User"("code");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
+
+================
+File: src/core/utils/create-enum-mapper.ts
+================
+/**
+ * Creates a bidirectional map between two string enums.
+ *
+ * Example:
+ * const map = createEnumMapper({
+ *   ACTIVE: UserStatus.ACTIVE,
+ *   INACTIVE: UserStatus.INACTIVE,
+ * });
+ *
+ * map.toDomain('ACTIVE') -> UserStatus.ACTIVE
+ * map.toPersistence(UserStatus.ACTIVE) -> 'ACTIVE'
+ */
+export function createEnumMapper<
+  TPrisma extends string,
+  TDomain extends string,
+>(mapping: Record<TPrisma, TDomain>) {
+  const reverseMapping: Record<TDomain, TPrisma> = {} as Record<
+    TDomain,
+    TPrisma
+  >;
+
+  for (const key in mapping) {
+    const value = mapping[key];
+    reverseMapping[value] = key;
+  }
+
+  return {
+    toDomain(prismaValue: TPrisma): TDomain {
+      return mapping[prismaValue];
+    },
+
+    toPersistence(domainValue: TDomain): TPrisma {
+      return reverseMapping[domainValue];
+    },
+  };
+}
+
+================
+File: src/modules/tests/application/use-cases/create-test.usecase.ts
+================
+import { Test } from '@modules/tests/domain/entities/test.entity'
+import { Injectable } from "@nestjs/common";
+
+@Injectable()
+export class CreateTestUseCase{
+  constructor(private readonly testRepository: Test) {}
+
+  async execute(input: {
+    param1: type1;
+  }): Promise<Test> {
+    const test = await this.testRepository.save(
+      Test.create({
+        param1: type1;
+      })
+    )
+    return Test
   }
 }
 
 ================
-File: core/domain/value-objects/email.vo.ts
+File: src/modules/tests/domain/entities/test.entity.ts
+================
+import { Entity, EntityProps } from '@core/domain/entities/entity';
+
+interface TestProps extends EntityProps {
+  ...
+}
+
+interface NewTestProps extends Omit<
+  TestProps,
+  'id' | 'createdAt' | 'updatedAt'
+> {
+  ...
+}
+
+export class Test extends Entity<TestProps> {
+  private constructor(props: TestProps) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+  static create(params: NewTestProps): Test {
+    
+    return ...
+  }
+
+  static rehydratate(params: TestProps): Test {
+    const test = new Test(params);
+    return test
+  }
+
+  // --------------- Getters ---------------
+
+
+  // --------------- Behaviours ---------------
+
+
+  // --------------- Internal Methods ---------------
+
+}
+
+================
+File: .prettierrc
+================
+{
+  "singleQuote": true,
+  "trailingComma": "all"
+}
+
+================
+File: jest.config.ts
+================
+module.exports = {
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  rootDir: '.',
+  testRegex: '.*\\.spec\\.ts$',
+  transform: {
+    '^.+\\.(t|j)s$': 'ts-jest',
+  },
+  moduleNameMapper: {
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+  },
+  testEnvironment: 'node',
+};
+
+================
+File: nest-cli.json
+================
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}
+
+================
+File: plopfile.js
+================
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+// const path = require('path');
+
+module.exports = function (plop) {
+  plop.setGenerator('module', {
+    description:
+      'Create a new module that follows the Domain-Driven Design (DDD) pattern',
+    prompts: [
+      {
+        type: 'input',
+        name: 'singularName',
+        message: 'What is the singular name of the module?',
+      },
+      {
+        type: 'input',
+        name: 'pluralName',
+        message: 'What is the plural name?',
+      },
+    ],
+    actions: [
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/application/use-cases/create-{{kebabCase singularName}}.usecase.ts',
+        templateFile:
+          'plop-templates/module/application/use-cases/create-model.usecase.hbs',
+      },
+      {
+        type: 'add',
+        path: 'src/modules/{{kebabCase pluralName}}/domain/entities/{{kebabCase singularName}}.entity.ts',
+        templateFile: 'plop-templates/module/domain/entities/module.entity.hbs',
+      },
+    ],
+  });
+};
+
+================
+File: prisma/migrations/20260225015841_user_model/migration.sql
+================
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+================
+File: prisma/migrations/20260308024411_npm_run_dev/migration.sql
+================
+/*
+  Warnings:
+
+  - You are about to drop the column `password` on the `User` table. All the data in the column will be lost.
+  - Added the required column `passwordHash` to the `User` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `role` to the `User` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `tenantId` to the `User` table without a default value. This is not possible if the table is not empty.
+
+*/
+-- CreateTable
+CREATE TABLE "Tenant" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "code" TEXT,
+    "role" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "tenantId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "User_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO "new_User" ("createdAt", "email", "id", "name", "updatedAt") SELECT "createdAt", "email", "id", "name", "updatedAt" FROM "User";
+DROP TABLE "User";
+ALTER TABLE "new_User" RENAME TO "User";
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "User_code_key" ON "User"("code");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
+
+================
+File: prisma/migrations/20260308041251_tenant_upgrade/migration.sql
+================
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Tenant" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+INSERT INTO "new_Tenant" ("createdAt", "id", "name", "updatedAt") SELECT "createdAt", "id", "name", "updatedAt" FROM "Tenant";
+DROP TABLE "Tenant";
+ALTER TABLE "new_Tenant" RENAME TO "Tenant";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
+
+================
+File: prisma/migrations/migration_lock.toml
+================
+# Please do not edit this file manually
+# It should be added in your version-control system (e.g., Git)
+provider = "sqlite"
+
+================
+File: README.md
+================
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
+
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
+
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+
+## Description
+
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+
+## Project setup
+
+```bash
+$ npm install
+```
+
+## Compile and run the project
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
+
+## Deployment
+
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+
+If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+
+```bash
+$ npm install -g @nestjs/mau
+$ mau deploy
+```
+
+With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+
+## Resources
+
+Check out a few resources that may come in handy when working with NestJS:
+
+- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+
+## Support
+
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+
+## Stay in touch
+
+- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
+
+## License
+
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+================
+File: repomix.config.json
+================
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 52428800
+  },
+  "output": {
+    "filePath": "repomix-output.txt",
+    "style": "plain",
+    "parsableStyle": false,
+    "fileSummary": false,
+    "directoryStructure": true,
+    "files": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "compress": false,
+    "topFilesLength": 5,
+    "showLineNumbers": false,
+    "truncateBase64": false,
+    "copyToClipboard": false,
+    "includeFullDirectoryStructure": false,
+    "tokenCountTree": false,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": false,
+      "includeLogs": false,
+      "includeLogsCount": 50
+    }
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDotIgnore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": []
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}
+
+================
+File: src/core/domain/value-objects/email.vo.ts
 ================
 export class Email {
   private constructor(private readonly _value: string) {}
@@ -144,7 +654,7 @@ export class Email {
 }
 
 ================
-File: core/domain/value-objects/id.vo.ts
+File: src/core/domain/value-objects/id.vo.ts
 ================
 import { randomUUID } from 'crypto';
 
@@ -172,7 +682,7 @@ export class Id {
 }
 
 ================
-File: core/infra/prisma/prisma.module.ts
+File: src/core/infra/prisma/prisma.module.ts
 ================
 import { Global, Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
@@ -185,7 +695,7 @@ import { PrismaService } from './prisma.service';
 export class PrismaModule {}
 
 ================
-File: core/infra/prisma/prisma.service.ts
+File: src/core/infra/prisma/prisma.service.ts
 ================
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -219,34 +729,10 @@ export class PrismaService
 }
 
 ================
-File: main.ts
+File: src/modules/tenants/application/use-cases/create-tenant.usecase.ts
 ================
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  const config = new DocumentBuilder()
-    .setTitle('Viver Sorvete API')
-    .setDescription(
-      'This API is responsible for managing the Viver Sorvete application',
-    )
-    .setVersion('1.0')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
-
-  await app.listen(process.env.PORT ?? 3000);
-}
-void bootstrap();
-
-================
-File: modules/tenant/application/use-cases/create-tenant.usecase.ts
-================
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
-import { TenantRepository } from '@modules/tenant/domain/repositories/tenant.repository';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/repositories/tenant.repository';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -262,10 +748,10 @@ export class CreateTenantUseCase {
 }
 
 ================
-File: modules/tenant/application/use-cases/list-tenants.usecase.ts
+File: src/modules/tenants/application/use-cases/list-tenants.usecase.ts
 ================
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
-import { TenantRepository } from '@modules/tenant/domain/repositories/tenant.repository';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/repositories/tenant.repository';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -278,7 +764,7 @@ export class ListTenantsUseCase {
 }
 
 ================
-File: modules/tenant/domain/entities/tenant.entity.ts
+File: src/modules/tenants/domain/entities/tenant.entity.ts
 ================
 import { Entity, EntityProps } from '@core/domain/entities/entity';
 import { Id } from '@core/domain/value-objects/id.vo';
@@ -354,7 +840,7 @@ export class Tenant extends Entity<TenantProps> {
 }
 
 ================
-File: modules/tenant/domain/enums/tenant-status.ts
+File: src/modules/tenants/domain/enums/tenant-status.ts
 ================
 export enum TenantStatus {
   ACTIVE = 'ACTIVE',
@@ -362,9 +848,9 @@ export enum TenantStatus {
 }
 
 ================
-File: modules/tenant/domain/repositories/tenant.repository.ts
+File: src/modules/tenants/domain/repositories/tenant.repository.ts
 ================
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 
 export abstract class TenantRepository {
   abstract findById(id: string): Promise<Tenant | null>;
@@ -375,14 +861,14 @@ export abstract class TenantRepository {
 }
 
 ================
-File: modules/tenant/infra/prisma/prisma-tenant.repository.ts
+File: src/modules/tenants/infra/prisma/prisma-tenant.repository.ts
 ================
 import { PrismaService } from '@core/infra/prisma/prisma.service';
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
-import { TenantRepository } from '@modules/tenant/domain/repositories/tenant.repository';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/repositories/tenant.repository';
 import { Injectable } from '@nestjs/common';
 import { Tenant as PrismaTenant } from '@prisma/client';
-import { TenantMapper as PrismaTenantMapper } from '@modules/tenant/infra/prisma/tenant-mapper';
+import { TenantMapper as PrismaTenantMapper } from '@modules/tenants/infra/prisma/tenant-mapper';
 
 @Injectable()
 export class PrismaTenantRepository implements TenantRepository {
@@ -426,11 +912,11 @@ export class PrismaTenantRepository implements TenantRepository {
 }
 
 ================
-File: modules/tenant/infra/prisma/tenant-mapper.ts
+File: src/modules/tenants/infra/prisma/tenant-mapper.ts
 ================
 import { Id } from '@core/domain/value-objects/id.vo';
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
-import { TenantStatus } from '@modules/tenant/domain/enums/tenant-status';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { TenantStatus } from '@modules/tenants/domain/enums/tenant-status';
 import { Tenant as PrismaTenant } from '@prisma/client';
 
 export class TenantMapper {
@@ -456,9 +942,9 @@ export class TenantMapper {
 }
 
 ================
-File: modules/tenant/interface/dto/create-tenant-response.dto.ts
+File: src/modules/tenants/interface/dto/create-tenant-response.dto.ts
 ================
-import { Tenant } from '@modules/tenant/domain/entities/tenant.entity';
+import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTenantResponseDto {
@@ -481,7 +967,7 @@ export class CreateTenantResponseDto {
 }
 
 ================
-File: modules/tenant/interface/dto/create-tenant.dto.ts
+File: src/modules/tenants/interface/dto/create-tenant.dto.ts
 ================
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -491,7 +977,7 @@ export class CreateTenantDto {
 }
 
 ================
-File: modules/tenant/interface/tenant.controller.ts
+File: src/modules/tenants/interface/tenant.controller.ts
 ================
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -522,7 +1008,7 @@ export class TenantsController {
 }
 
 ================
-File: modules/tenant/tenant.module.ts
+File: src/modules/tenants/tenant.module.ts
 ================
 import { PrismaModule } from '@core/infra/prisma/prisma.module';
 import { Module } from '@nestjs/common';
@@ -548,7 +1034,7 @@ import { PrismaTenantRepository } from './infra/prisma/prisma-tenant.repository'
 export class TenantModule {}
 
 ================
-File: modules/users/application/use-cases/create-user.usecase.ts
+File: src/modules/users/application/use-cases/create-user.usecase.ts
 ================
 import { Email } from '@core/domain/value-objects/email.vo';
 import { Id } from '@core/domain/value-objects/id.vo';
@@ -581,7 +1067,7 @@ export class CreateUserUseCase {
 }
 
 ================
-File: modules/users/application/use-cases/list-users.usecase.ts
+File: src/modules/users/application/use-cases/list-users.usecase.ts
 ================
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from '@modules/users/domain/repositories/user.repository';
@@ -596,12 +1082,12 @@ export class ListUsersUseCase {
 }
 
 ================
-File: modules/users/domain/entities/user.entity.spec.ts
+File: src/modules/users/domain/entities/user.entity.spec.ts
 ================
 import { User } from '@modules/users/domain/entities/user.entity';
 import { Email } from 'src/core/domain/value-objects/email.vo';
 import { TenantId } from 'src/core/domain/value-objects/tentant-id.vo';
-import { UserRole } from '@modules/users/domain/enums/user-role.enum';
+import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
 import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
 
 describe('User Entity', () => {
@@ -619,7 +1105,7 @@ describe('User Entity', () => {
 
   it('should create user with default role MEMBER', () => {
     const user = createUser();
-    expect(user.role).toBe(UserRole.MEMBER);
+    expect(user.role).toBe(UserPlatformRole.MEMBER);
   });
 
   it('should create user with default status ACTIVE', () => {
@@ -630,14 +1116,14 @@ describe('User Entity', () => {
   it('should promote to admin', () => {
     const user = createUser();
     user.promoteToAdmin();
-    expect(user.role).toBe(UserRole.ADMIN);
+    expect(user.role).toBe(UserPlatformRole.ADMIN);
   });
 
   it('should demote to member', () => {
     const user = createUser();
     user.promoteToAdmin();
     user.demoteToMember();
-    expect(user.role).toBe(UserRole.MEMBER);
+    expect(user.role).toBe(UserPlatformRole.MEMBER);
   });
 
   it('should deactivate user', () => {
@@ -661,154 +1147,24 @@ describe('User Entity', () => {
 });
 
 ================
-File: modules/users/domain/entities/user.entity.ts
+File: src/modules/users/domain/enums/user-role.enum.ts
 ================
-import { Id } from '@core/domain/value-objects/id.vo';
-import { UserRole } from '@modules/users/domain/enums/user-role.enum';
-import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
-import { Email } from '@core/domain/value-objects/email.vo';
-import {
-  TenantEntity,
-  TenantEntityProps,
-} from '@core/domain/entities/tenant-entity';
-
-interface UserProps extends TenantEntityProps {
-  name: string;
-  email: Email;
-  passwordHash: string;
-  status: UserStatus;
-  role: UserRole;
-  code: string | null;
-}
-
-interface NewUserProps extends Omit<
-  UserProps,
-  'id' | 'createdAt' | 'updatedAt' | 'status' | 'role' | 'passwordHash'
-> {
-  password: string;
-}
-
-export class User extends TenantEntity<UserProps> {
-  private constructor(props: UserProps) {
-    super(props);
-  }
-
-  // --------------- Factory Methods ---------------
-
-  static create(params: NewUserProps): User {
-    const now = new Date();
-    const user = new User({
-      ...params,
-      id: Id.generate(),
-      createdAt: now,
-      updatedAt: now,
-      status: UserStatus.ACTIVE,
-      role: UserRole.MEMBER,
-      passwordHash: params.password, // TODO: In a real app, hash this!
-    });
-    return user;
-  }
-
-  static rehydrate(props: UserProps): User {
-    const user = new User(props);
-    return user;
-  }
-
-  // --------------- Getters ---------------
-
-  get tenantId(): Id {
-    return this.props.tenantId;
-  }
-
-  get name(): string {
-    return this.props.name;
-  }
-
-  get email(): Email {
-    return this.props.email;
-  }
-
-  get passwordHash(): string {
-    return this.props.passwordHash;
-  }
-
-  get role(): UserRole {
-    return this.props.role;
-  }
-
-  get status(): UserStatus {
-    return this.props.status;
-  }
-
-  get code(): string | null {
-    return this.props.code;
-  }
-
-  // --------------- Behaviours ---------------
-  changeName(newName: string) {
-    this.props.name = newName;
-    this.touch();
-  }
-
-  changeEmail(newEmail: Email) {
-    this.props.email = newEmail;
-    this.touch();
-  }
-
-  changePasswordHash(newPasswordHash: string) {
-    this.props.passwordHash = newPasswordHash;
-    this.touch();
-  }
-
-  promoteToAdmin() {
-    this.props.role = UserRole.ADMIN;
-    this.touch();
-  }
-
-  demoteToMember() {
-    this.props.role = UserRole.MEMBER;
-    this.touch();
-  }
-
-  deactivate() {
-    this.props.status = UserStatus.INACTIVE;
-    this.touch();
-  }
-
-  activate() {
-    this.props.status = UserStatus.ACTIVE;
-    this.touch();
-  }
-
-  changeCode(newCode: string) {
-    this.props.code = newCode;
-    this.touch();
-  }
-
-  // --------------- Internal Methods ---------------
-  touch() {
-    this.props.updatedAt = new Date();
-  }
+export enum UserPlatformRole {
+  ADMIN = 'ADMIN',
+  MEMBER = 'STAFF',
+  NONE = 'NONE',
 }
 
 ================
-File: modules/users/domain/enums/user-role.enum.ts
-================
-export enum UserRole {
-  ADMIN = 'admin',
-  MEMBER = 'member',
-}
-
-================
-File: modules/users/domain/enums/user-status.enum.ts
+File: src/modules/users/domain/enums/user-status.enum.ts
 ================
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
 }
 
 ================
-File: modules/users/domain/errors/user.errors.ts
+File: src/modules/users/domain/errors/user.errors.ts
 ================
 export class UserAlreadyActiveError extends Error {
   constructor() {
@@ -835,87 +1191,15 @@ export class UserAlreadyMemberError extends Error {
 }
 
 ================
-File: modules/users/domain/repositories/user.repository.ts
-================
-import { User } from '@modules/users/domain/entities/user.entity';
-
-export abstract class UserRepository {
-  abstract findById(id: string, tenantId: string): Promise<User | null>;
-  abstract findByEmail(email: string, tenantId: string): Promise<User | null>;
-  abstract findByName(name: string, tenantId: string): Promise<User[]>;
-  abstract findAll(tenantId: string): Promise<User[]>;
-  abstract save(user: User): Promise<User>;
-  abstract delete(id: string): Promise<void>;
-}
-
-================
-File: modules/users/infra/prisma/prisma-user.repository.ts
-================
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/core/infra/prisma/prisma.service';
-import { UserRepository } from '@modules/users/domain/repositories/user.repository';
-import { User } from '@modules/users/domain/entities/user.entity';
-import { User as PrismaUser } from '@prisma/client';
-import { PrismaUserMapper } from '@modules/users/infra/prisma/user-mapper';
-
-@Injectable()
-export class PrismaUserRepository implements UserRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findById(id: string, tenantId: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { id, tenantId },
-    });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
-  }
-
-  async findByEmail(email: string, tenantId: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { email, tenantId },
-    });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
-  }
-
-  async findByName(name: string, tenantId: string): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: { name, tenantId },
-    });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
-  }
-
-  async findAll(tenantId: string): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: { tenantId },
-    });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
-  }
-
-  async save(user: User): Promise<User> {
-    const bdUser = PrismaUserMapper.toPersistence(user);
-    await this.prisma.user.upsert({
-      where: { id: bdUser.id },
-      update: bdUser,
-      create: bdUser,
-    });
-    return user;
-  }
-
-  async delete(id: string): Promise<void> {
-    return this.prisma.user.delete({ where: { id } }).then(() => {});
-  }
-}
-
-================
-File: modules/users/infra/prisma/user-mapper.ts
+File: src/modules/users/infra/prisma/user-mapper.ts
 ================
 import { User as PrismaUser } from '@prisma/client';
 import { User } from '@modules/users/domain/entities/user.entity';
 import { Email } from '@core/domain/value-objects/email.vo';
 import { Id } from '@core/domain/value-objects/id.vo';
-import { UserRole } from '@modules/users/domain/enums/user-role.enum';
+import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
 import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
+import { UserStatus as PrismaUserStatus } from '@prisma/client';
 
 export class PrismaUserMapper {
   static toDomain(bdUser: PrismaUser): User {
@@ -923,9 +1207,9 @@ export class PrismaUserMapper {
       id: Id.from(bdUser.id),
       name: bdUser.name,
       email: Email.from(bdUser.email),
-      tenantId: Id.from(bdUser.tenantId),
       passwordHash: bdUser.passwordHash,
-      role: UserRole[bdUser.role as keyof typeof UserRole],
+      platformRole:
+        UserPlatformRole[bdUser.role as keyof typeof UserPlatformRole],
       code: bdUser.code,
       status: UserStatus[bdUser.status as keyof typeof UserStatus],
       createdAt: bdUser.createdAt,
@@ -938,11 +1222,10 @@ export class PrismaUserMapper {
       id: user.id.value,
       name: user.name,
       email: user.email.value,
-      tenantId: user.tenantId.value,
       passwordHash: user.passwordHash,
-      role: user.role,
+      platformRole: user.role,
       code: user.code,
-      status: user.status,
+      status: PrismaUserStatus[user.status as keyof typeof PrismaUserStatus],
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -950,7 +1233,7 @@ export class PrismaUserMapper {
 }
 
 ================
-File: modules/users/interface/dto/create-user-response.dto.ts
+File: src/modules/users/interface/dto/create-user-response.dto.ts
 ================
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@modules/users/domain/entities/user.entity';
@@ -995,7 +1278,7 @@ export class CreateUserResponseDto {
 }
 
 ================
-File: modules/users/interface/dto/create-user.dto.ts
+File: src/modules/users/interface/dto/create-user.dto.ts
 ================
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -1017,7 +1300,7 @@ export class CreateUserDto {
 }
 
 ================
-File: modules/users/interface/users.controller.ts
+File: src/modules/users/interface/users.controller.ts
 ================
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { CreateUserUseCase } from '../application/use-cases/create-user.usecase';
@@ -1050,7 +1333,374 @@ export class UsersController {
 }
 
 ================
-File: modules/users/users.module.ts
+File: tsconfig.build.json
+================
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+
+================
+File: .gitignore
+================
+# compiled output
+/dist
+/node_modules
+/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# temp directory
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+/generated/prisma
+
+================
+File: eslint.config.mjs
+================
+// @ts-check
+import eslint from '@eslint/js';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  {
+    ignores: ['eslint.config.mjs'],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  eslintPluginPrettierRecommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+      sourceType: 'commonjs',
+      parserOptions: {
+        projectService: {
+          allowDefaultProject: ['plopfile.js', '.build/*.ts'],
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
+    },
+  },
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+    },
+  },
+);
+
+================
+File: prisma.config.ts
+================
+// This file was generated by Prisma, and assumes you have installed the following:
+// npm install --save-dev prisma dotenv
+import 'dotenv/config';
+import { defineConfig } from 'prisma/config';
+
+export default defineConfig({
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+  },
+  datasource: {
+    url: process.env['DATABASE_URL']!,
+  },
+});
+
+================
+File: src/core/domain/entities/entity.ts
+================
+import { Id } from '@core/domain/value-objects/id.vo';
+
+export interface EntityProps {
+  id: Id;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export abstract class Entity<Props extends EntityProps> {
+  protected readonly props: Props;
+
+  protected constructor(props: Props) {
+    this.props = props;
+  }
+
+  // --------------- Getters ---------------
+  get id(): Id {
+    return this.props.id;
+  }
+
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+}
+
+================
+File: src/modules/users/domain/entities/user.entity.ts
+================
+import { Id } from '@core/domain/value-objects/id.vo';
+import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
+import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
+import { Email } from '@core/domain/value-objects/email.vo';
+import { Entity, EntityProps } from '@core/domain/entities/entity';
+
+interface UserProps extends EntityProps {
+  name: string;
+  email: Email;
+  passwordHash: string;
+  status: UserStatus;
+  platformRole: UserPlatformRole;
+  code: string | null;
+}
+
+interface CreateUserProps extends Omit<
+  UserProps,
+  'id' | 'createdAt' | 'updatedAt' | 'status' | 'platformRole' | 'passwordHash'
+> {
+  password: string;
+}
+
+export class User extends Entity<UserProps> {
+  private constructor(props: UserProps) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+
+  static create(params: CreateUserProps): User {
+    const now = new Date();
+    const user = new User({
+      ...params,
+      id: Id.generate(),
+      createdAt: now,
+      updatedAt: now,
+      status: UserStatus.ACTIVE,
+      platformRole: UserPlatformRole.MEMBER,
+      passwordHash: params.password, // TODO: In a real app, hash this!
+    });
+    return user;
+  }
+
+  static rehydrate(params: UserProps): User {
+    const user = new User(params);
+    return user;
+  }
+
+  // --------------- Getters ---------------
+
+  get name(): string {
+    return this.props.name;
+  }
+
+  get email(): Email {
+    return this.props.email;
+  }
+
+  get passwordHash(): string {
+    return this.props.passwordHash;
+  }
+
+  get role(): UserPlatformRole {
+    return this.props.platformRole;
+  }
+
+  get status(): UserStatus {
+    return this.props.status;
+  }
+
+  get code(): string | null {
+    return this.props.code;
+  }
+
+  // --------------- Behaviours ---------------
+  changeName(newName: string) {
+    this.props.name = newName;
+    this.touch();
+  }
+
+  changeEmail(newEmail: Email) {
+    this.props.email = newEmail;
+    this.touch();
+  }
+
+  changePasswordHash(newPasswordHash: string) {
+    this.props.passwordHash = newPasswordHash;
+    this.touch();
+  }
+
+  promoteToAdmin() {
+    this.props.platformRole = UserPlatformRole.ADMIN;
+    this.touch();
+  }
+
+  demoteToMember() {
+    this.props.platformRole = UserPlatformRole.MEMBER;
+    this.touch();
+  }
+
+  deactivate() {
+    this.props.status = UserStatus.INACTIVE;
+    this.touch();
+  }
+
+  activate() {
+    this.props.status = UserStatus.ACTIVE;
+    this.touch();
+  }
+
+  changeCode(newCode: string) {
+    this.props.code = newCode;
+    this.touch();
+  }
+
+  // --------------- Internal Methods ---------------
+  touch() {
+    this.props.updatedAt = new Date();
+  }
+}
+
+================
+File: src/modules/users/domain/repositories/user.repository.ts
+================
+import { User } from '@modules/users/domain/entities/user.entity';
+
+export abstract class UserRepository {
+  abstract findById(id: string, tenantId: string): Promise<User | null>;
+  abstract findByEmail(email: string, tenantId: string): Promise<User | null>;
+  abstract findByName(name: string, tenantId: string): Promise<User[]>;
+  abstract findAll(tenantId: string): Promise<User[]>;
+  abstract save(user: User): Promise<User>;
+  abstract delete(id: string): Promise<void>;
+}
+
+================
+File: src/modules/users/infra/prisma/prisma-user.repository.ts
+================
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/core/infra/prisma/prisma.service';
+import { UserRepository } from '@modules/users/domain/repositories/user.repository';
+import { User } from '@modules/users/domain/entities/user.entity';
+import { User as PrismaUser } from '@prisma/client';
+import { PrismaUserMapper } from '@modules/users/infra/prisma/user-mapper';
+
+@Injectable()
+export class PrismaUserRepository implements UserRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<User | null> {
+    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    if (!bdUser) return null;
+    return PrismaUserMapper.toDomain(bdUser);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!bdUser) return null;
+    return PrismaUserMapper.toDomain(bdUser);
+  }
+
+  async findByName(name: string): Promise<User[]> {
+    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
+      where: { name },
+    });
+    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
+  }
+
+  async findAll(): Promise<User[]> {
+    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
+      where: {},
+    });
+    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
+  }
+
+  async save(user: User): Promise<User> {
+    const bdUser = PrismaUserMapper.toPersistence(user);
+    await this.prisma.user.upsert({
+      where: { id: bdUser.id },
+      update: bdUser,
+      create: bdUser,
+    });
+    return user;
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.prisma.user.delete({ where: { id } }).then(() => {});
+  }
+}
+
+================
+File: src/modules/users/users.module.ts
 ================
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/core/infra/prisma/prisma.module';
@@ -1081,6 +1731,239 @@ import { PrismaUserRepository } from './infra/prisma/prisma-user.repository';
   exports: [UserRepository],
 })
 export class UsersModule {}
+
+================
+File: tsconfig.json
+================
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "paths": {
+      "@modules/*": ["src/modules/*"],
+      "@core/*": ["src/core/*"]
+    }
+  }
+}
+
+================
+File: package.json
+================
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "nest start",
+    "start:prod": "NODE_ENV=production node dist/main",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "plop": "plop --trace-warnings"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.3",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/mapped-types": "*",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.2.6",
+    "@prisma/adapter-better-sqlite3": "^7.4.1",
+    "@prisma/client": "^7.4.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.10.7",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "prisma": "^7.4.1",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+
+================
+File: prisma/schema.prisma
+================
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  module   = "cjs"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Tenant {
+  id        String       @id @default(uuid())
+  name      String
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  memberships Membership[]
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PlatformRoles {
+  ADMIN
+  STAFF
+  NONE
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  code         String?       @unique
+  status       UserStatus    @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  platformRole PlatformRoles @default(NONE)
+
+  memberships Membership[]
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Membership {
+  id       String           @id @default(uuid())
+  userId   String
+  user     User             @relation(fields: [userId], references: [id])
+  tenantId String
+  tenant   Tenant           @relation(fields: [tenantId], references: [id])
+  status   MembershipStatus @default(ACTIVE)
+}
+
+================
+File: src/main.ts
+================
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Viver Sorvete API')
+    .setDescription(
+      'This API is responsible for managing the Viver Sorvete application',
+    )
+    .setVersion('1.0')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+void bootstrap();
+
+================
+File: src/app.module.ts
+================
+import { Module } from '@nestjs/common';
+import { PrismaModule } from 'src/core/infra/prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
+import { UsersModule } from '@modules/users/users.module';
+import { TenantModule } from '@modules/tenants/tenant.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    TenantModule,
+    UsersModule,
+  ],
+})
+export class AppModule {}
 
 
 

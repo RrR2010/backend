@@ -9,20 +9,26 @@ module.exports = function (plop) {
     prompts: [
       {
         type: 'input',
-        name: 'moduleName',
-        message: 'What is the name of the module?',
+        name: 'singularName',
+        message: 'What is the singular name of the module?',
+      },
+      {
+        type: 'input',
+        name: 'pluralName',
+        message: 'What is the plural name?',
       },
     ],
     actions: [
       {
         type: 'add',
-        path: 'src/modules/{{kebabCase moduleName}}/{{kebabCase moduleName}}.module.ts',
-        templateFile: 'plop-templates/module.hbs',
+        path: 'src/modules/{{kebabCase pluralName}}/application/use-cases/create-{{kebabCase singularName}}.usecase.ts',
+        templateFile:
+          'plop-templates/module/application/use-cases/create-model.usecase.hbs',
       },
       {
         type: 'add',
-        path: 'src/modules/{{kebabCase moduleName}}/domain/{{kebabCase moduleName}}.entity.ts',
-        templateFile: 'plop-templates/domain.entity.hbs',
+        path: 'src/modules/{{kebabCase pluralName}}/domain/entities/{{kebabCase singularName}}.entity.ts',
+        templateFile: 'plop-templates/module/domain/entities/module.entity.hbs',
       },
     ],
   });

@@ -13,26 +13,56 @@ datasource db {
   provider = "sqlite"
 }
 
-model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  status    String   @default("active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+}
 
-  users User[]
+model Tenant {
+  id        String       @id @default(uuid())
+  name      String
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  memberships Membership[]
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PlatformRoles {
+  ADMIN
+  STAFF
+  NONE
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String        @id @default(uuid())
   name         String
-  email        String   @unique
+  email        String        @unique
   passwordHash String
-  code         String?  @unique
-  role         String
-  status       String   @default("active")
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  code         String?       @unique
+  status       UserStatus    @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  platformRole PlatformRoles @default(NONE)
+
+  memberships Membership[]
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Membership {
+  id       String           @id @default(uuid())
+  userId   String
+  user     User             @relation(fields: [userId], references: [id])
+  tenantId String
+  tenant   Tenant           @relation(fields: [tenantId], references: [id])
+  status   MembershipStatus @default(ACTIVE)
 }

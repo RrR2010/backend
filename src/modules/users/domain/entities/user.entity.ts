@@ -1,36 +1,33 @@
 import { Id } from '@core/domain/value-objects/id.vo';
-import { UserRole } from '@modules/users/domain/enums/user-role.enum';
+import { UserPlatformRole } from '@modules/users/domain/enums/user-role.enum';
 import { UserStatus } from '@modules/users/domain/enums/user-status.enum';
 import { Email } from '@core/domain/value-objects/email.vo';
-import {
-  TenantEntity,
-  TenantEntityProps,
-} from '@core/domain/entities/tenant-entity';
+import { Entity, EntityProps } from '@core/domain/entities/entity';
 
-interface UserProps extends TenantEntityProps {
+interface UserProps extends EntityProps {
   name: string;
   email: Email;
   passwordHash: string;
   status: UserStatus;
-  role: UserRole;
+  platformRole: UserPlatformRole;
   code: string | null;
 }
 
-interface NewUserProps extends Omit<
+interface CreateUserProps extends Omit<
   UserProps,
-  'id' | 'createdAt' | 'updatedAt' | 'status' | 'role' | 'passwordHash'
+  'id' | 'createdAt' | 'updatedAt' | 'status' | 'platformRole' | 'passwordHash'
 > {
   password: string;
 }
 
-export class User extends TenantEntity<UserProps> {
+export class User extends Entity<UserProps> {
   private constructor(props: UserProps) {
     super(props);
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(params: NewUserProps): User {
+  static create(params: CreateUserProps): User {
     const now = new Date();
     const user = new User({
       ...params,
@@ -38,22 +35,18 @@ export class User extends TenantEntity<UserProps> {
       createdAt: now,
       updatedAt: now,
       status: UserStatus.ACTIVE,
-      role: UserRole.MEMBER,
+      platformRole: UserPlatformRole.MEMBER,
       passwordHash: params.password, // TODO: In a real app, hash this!
     });
     return user;
   }
 
-  static rehydrate(props: UserProps): User {
-    const user = new User(props);
+  static rehydrate(params: UserProps): User {
+    const user = new User(params);
     return user;
   }
 
   // --------------- Getters ---------------
-
-  get tenantId(): Id {
-    return this.props.tenantId;
-  }
 
   get name(): string {
     return this.props.name;
@@ -67,8 +60,8 @@ export class User extends TenantEntity<UserProps> {
     return this.props.passwordHash;
   }
 
-  get role(): UserRole {
-    return this.props.role;
+  get role(): UserPlatformRole {
+    return this.props.platformRole;
   }
 
   get status(): UserStatus {
@@ -96,12 +89,12 @@ export class User extends TenantEntity<UserProps> {
   }
 
   promoteToAdmin() {
-    this.props.role = UserRole.ADMIN;
+    this.props.platformRole = UserPlatformRole.ADMIN;
     this.touch();
   }
 
   demoteToMember() {
-    this.props.role = UserRole.MEMBER;
+    this.props.platformRole = UserPlatformRole.MEMBER;
     this.touch();
   }
 
