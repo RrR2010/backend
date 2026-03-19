@@ -1,5 +1,4 @@
 import { Id } from '@core/domain/id.vo';
-import { UserPlatformRole } from '@modules/users/domain/user-role.enum';
 import { UserStatus } from '@modules/users/domain/user-status.enum';
 import { Email } from '@core/domain/email.vo';
 import { Entity, EntityProps } from '@core/domain/entity';
@@ -9,7 +8,6 @@ interface UserProps extends EntityProps {
   email: Email;
   passwordHash: string;
   status: UserStatus;
-  platformRole: UserPlatformRole;
   code: string | null;
 }
 
@@ -35,8 +33,7 @@ export class User extends Entity<UserProps> {
       createdAt: now,
       updatedAt: now,
       status: UserStatus.ACTIVE,
-      platformRole: UserPlatformRole.MEMBER,
-      passwordHash: params.password, // TODO: In a real app, hash this!
+      passwordHash: params.password, // TODO: implement hash
     });
     return user;
   }
@@ -60,10 +57,6 @@ export class User extends Entity<UserProps> {
     return this.props.passwordHash;
   }
 
-  get role(): UserPlatformRole {
-    return this.props.platformRole;
-  }
-
   get status(): UserStatus {
     return this.props.status;
   }
@@ -85,16 +78,6 @@ export class User extends Entity<UserProps> {
 
   changePasswordHash(newPasswordHash: string) {
     this.props.passwordHash = newPasswordHash;
-    this.touch();
-  }
-
-  promoteToAdmin() {
-    this.props.platformRole = UserPlatformRole.ADMIN;
-    this.touch();
-  }
-
-  demoteToMember() {
-    this.props.platformRole = UserPlatformRole.MEMBER;
     this.touch();
   }
 

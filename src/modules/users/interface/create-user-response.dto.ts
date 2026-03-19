@@ -6,16 +6,10 @@ export class CreateUserResponseDto {
   id!: string;
 
   @ApiProperty()
-  tenantId!: string;
-
-  @ApiProperty()
   name!: string;
 
   @ApiProperty()
   email!: string;
-
-  @ApiProperty()
-  role!: string;
 
   @ApiProperty()
   status!: string;
@@ -29,10 +23,8 @@ export class CreateUserResponseDto {
   static fromDomain(user: User): CreateUserResponseDto {
     return {
       id: user.id.value,
-      tenantId: user.tenantId.value,
       name: user.name,
       email: user.email.value,
-      role: user.role,
       status: user.status,
       code: user.code,
       createdAt: user.createdAt,

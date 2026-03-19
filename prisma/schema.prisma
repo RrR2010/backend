@@ -33,22 +33,15 @@ enum UserStatus {
   INACTIVE
 }
 
-enum PlatformRoles {
-  ADMIN
-  STAFF
-  NONE
-}
-
 model User {
-  id           String        @id @default(uuid())
+  id           String     @id @default(uuid())
   name         String
-  email        String        @unique
+  email        String     @unique
   passwordHash String
-  code         String?       @unique
-  status       UserStatus    @default(ACTIVE)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  platformRole PlatformRoles @default(NONE)
+  code         String?    @unique
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   memberships Membership[]
 }
