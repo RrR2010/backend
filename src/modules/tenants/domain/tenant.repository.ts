@@ -1,4 +1,4 @@
-import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
 
 export abstract class TenantRepository {
   abstract findById(id: string): Promise<Tenant | null>;

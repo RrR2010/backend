@@ -1,0 +1,41 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@core/infra/prisma.service';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+import { Prisma{{pascalCase singularName}}Mapper } from '@modules/{{kebabCase pluralName}}/infra/{{kebabCase singularName}}-mapper';
+import { {{pascalCase singularName}}Repository } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.repository';
+import { {{pascalCase singularName}} as Prisma{{pascalCase singularName}} } from '@prisma/client';
+
+@Injectable()
+export class Prisma{{pascalCase singularName}}Repository implements {{pascalCase singularName}}Repository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<{{pascalCase singularName}} | null> {
+    const prisma{{pascalCase singularName}}: Prisma{{pascalCase singularName}} | null = await this.prisma.{{camelCase singularName}}.findUnique({
+      where: { id },
+    });
+    if (!prisma{{pascalCase singularName}}) return null;
+    return Prisma{{pascalCase singularName}}Mapper.toDomain(prisma{{pascalCase singularName}});
+  }
+
+  async findAll(): Promise<{{pascalCase singularName}}[]> {
+    const prisma{{pascalCase pluralName}}: Prisma{{pascalCase singularName}}[] = await this.prisma.{{camelCase singularName}}.findMany({
+      where: {},
+    });
+    return prisma{{pascalCase pluralName}}.map(({{camelCase singularName}}) => Prisma{{pascalCase singularName}}Mapper.toDomain({{camelCase singularName}}));
+  }
+
+  async save({{camelCase singularName}}: {{pascalCase singularName}}): Promise<{{pascalCase singularName}}> {
+    const prisma{{pascalCase singularName}} = Prisma{{pascalCase singularName}}Mapper.toPersistence({{camelCase singularName}});
+    await this.prisma.{{camelCase singularName}}.upsert({
+      where : { id: prisma{{pascalCase singularName}}.id },
+      update: prisma{{pascalCase singularName}},
+      create: prisma{{pascalCase singularName}},
+    });
+    return {{camelCase singularName}}
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.{{camelCase singularName}}.delete({ where: { id } });
+  }
+
+}

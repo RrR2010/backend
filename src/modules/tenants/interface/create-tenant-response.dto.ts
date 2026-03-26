@@ -1,4 +1,4 @@
-import { Tenant } from '@modules/tenants/domain/entities/tenant.entity';
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTenantResponseDto {
@@ -11,11 +11,15 @@ export class CreateTenantResponseDto {
   @ApiProperty()
   createdAt!: Date;
 
+  @ApiProperty()
+  entityStaty!: string;
+
   static fromDomain(tenant: Tenant) {
     return {
       id: tenant.id.value,
-      name: tenant.name,
       createdAt: tenant.createdAt,
+      entityStaty: tenant.entityStatus,
+      name: tenant.name,
     };
   }
 }

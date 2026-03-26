@@ -6,7 +6,6 @@
     "repomix.config.json": "repomix-output.txt",
     "*.ts": "${capture}.spec.ts",
     "*.usecase.ts": "${capture}.dto.ts, ${capture}-response.dto.ts",
-    "prisma-user.repository.ts": "user-mapper.ts",
     "explorer.compactFolders": "true"
   },
   "todo-tree.tree.showCountsInTree": true,

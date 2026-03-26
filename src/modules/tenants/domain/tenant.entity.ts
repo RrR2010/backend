@@ -1,15 +1,14 @@
 import { Entity, EntityProps } from '@core/domain/entity';
+import { EntityStatus } from '@core/domain/entity-status.enum';
 import { Id } from '@core/domain/id.vo';
-import { TenantStatus } from '../enums/tenant-status';
 
 interface TenantProps extends EntityProps {
   name: string;
-  status: TenantStatus;
 }
 
 interface CreateTenantProps extends Omit<
   TenantProps,
-  'id' | 'createdAt' | 'updatedAt' | 'status'
+  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
 > {
   name: string;
 }
@@ -21,14 +20,15 @@ export class Tenant extends Entity<TenantProps> {
 
   // --------------- Factory Methods ---------------
 
-  static create(params: CreateTenantProps): Tenant {
+  static create(props: CreateTenantProps): Tenant {
     const now = new Date();
     const tenant = new Tenant({
+      ...props,
       id: Id.generate(),
-      name: params.name,
-      status: TenantStatus.ACTIVE,
       createdAt: now,
       updatedAt: now,
+      entityStatus: EntityStatus.ACTIVE,
+      name: props.name,
     });
     return tenant;
   }
@@ -39,34 +39,14 @@ export class Tenant extends Entity<TenantProps> {
 
   // --------------- Getters ---------------
   get name(): string {
-    return this.props.name;
-  }
-
-  get status(): TenantStatus {
-    return this.props.status;
-  }
-
-  // --------------- Behaviors ---------------
-  activate() {
-    if (this.props.status === TenantStatus.ACTIVE) return;
-    this.props.status = TenantStatus.ACTIVE;
-    this.touch();
-  }
-
-  deactivate() {
-    if (this.props.status === TenantStatus.INACTIVE) return;
-    this.props.status = TenantStatus.INACTIVE;
-    this.touch();
+    return this._props.name;
   }
 
   changeName(newName: string) {
-    if (this.props.name === newName) return;
-    this.props.name = newName;
+    if (this._props.name === newName) return;
+    this._props.name = newName;
     this.touch();
   }
 
   // --------------- Private Methods ---------------
-  private touch() {
-    this.props.updatedAt = new Date();
-  }
 }

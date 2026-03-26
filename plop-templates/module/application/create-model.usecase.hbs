@@ -1,9 +1,10 @@
-import { {{pascalCase singularName}} } from '@modules/{{camelCase pluralName}}/domain/{{kebabCase singularName}}.entity'
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity'
+import { {{pascalCase singularName}}Repository } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.repository'
 
 @Injectable()
 export class Create{{pascalCase singularName}}UseCase{
-  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}) {}
+  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}Repository) {}
 
   async execute(input: {
     ...
@@ -13,6 +14,6 @@ export class Create{{pascalCase singularName}}UseCase{
         ...
       })
     )
-    return {{pascalCase singularName}}
+    return {{camelCase singularName}}
   }
 }

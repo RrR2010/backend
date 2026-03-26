@@ -1,4 +1,4 @@
-import {{ pascalCase singularName }} from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+import { {{ pascalCase singularName }} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
 
 export abstract class {{ pascalCase singularName }}Repository {
   abstract findById(id: string): Promise<{{ pascalCase singularName }} | null>;

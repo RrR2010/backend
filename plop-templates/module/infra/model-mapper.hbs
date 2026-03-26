@@ -1,0 +1,27 @@
+import { {{pascalCase singularName}} as Prisma{{pascalCase singularName}} } from '@prisma/client';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+import { Id } from '@core/domain/id.vo';
+import { EntityStatus } from '@core/domain/entity-status.enum';
+
+export class Prisma{{pascalCase singularName}}Mapper {
+  static toDomain(prisma{{pascalCase singularName}}: Prisma{{pascalCase singularName}}): {{pascalCase singularName}} {
+    return {{pascalCase singularName}}.rehydratate({
+      id: Id.from(prisma{{pascalCase singularName}}.id),
+      createdAt: prisma{{pascalCase singularName}}.createdAt,
+      updatedAt: prisma{{pascalCase singularName}}.updatedAt,
+      entityStatus:
+        EntityStatus[prisma{{pascalCase singularName}}.entityStatus as keyof typeof EntityStatus],  
+      ...
+    });
+  }
+
+  static toPersistence({{camelCase singularName}}: {{pascalCase singularName}}): Prisma{{pascalCase singularName}} {
+    return {
+      id: {{camelCase singularName}}.id.value,
+      createdAt: {{camelCase singularName}}.createdAt,
+      updatedAt: {{camelCase singularName}}.updatedAt,
+      entityStatus: {{camelCase singularName}}.entityStatus,
+      ...
+    };
+  }
+}

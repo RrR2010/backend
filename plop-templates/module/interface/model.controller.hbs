@@ -1,0 +1,27 @@
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Create{{pascalCase singularName}}UseCase } from '@modules/{{kebabCase pluralName}}/application/create-{{kebabCase singularName}}.usecase';
+import { List{{pascalCase singularName}}UseCase } from '@modules/{{kebabCase pluralName}}/application/list-{{kebabCase pluralName}}.usecase';
+import { Create{{pascalCase singularName}}Dto } from '@modules/{{kebabCase pluralName}}/interface/create-{{kebabCase singularName}}.dto';
+import { Create{{pascalCase singularName}}ResponseDto } from '@modules/{{kebabCase pluralName}}/interface/create-{{kebabCase singularName}}-response.dto';
+
+@ApiTags('{{camelCase pluralName}}')
+@Controller('{{kebabCase pluralName}}')
+export class {{pascalCase pluralName}}Controller {
+  constructor(
+    private readonly create{{pascalCase singularName}}UseCase: Create{{pascalCase singularName}}UseCase,
+    private readonly list{{pascalCase singularName}}UseCase: List{{pascalCase singularName}}UseCase,
+  ) {}
+
+  @Post()
+  async create(@Body() input: Create{{pascalCase singularName}}Dto): Promise<Create{{pascalCase singularName}}ResponseDto> {
+    const {{camelCase singularName}} = await this.create{{pascalCase singularName}}UseCase.execute(input);
+    return Create{{pascalCase singularName}}ResponseDto.fromDomain({{camelCase singularName}});
+  }
+
+  @Get()
+  async list(): Promise<Create{{pascalCase singularName}}ResponseDto[]> {
+    const {{pascalCase pluralName}} = await this.list{{pascalCase singularName}}UseCase.execute();
+    return {{pascalCase pluralName}}.map(({{camelCase singularName}}) => Create{{pascalCase singularName}}ResponseDto.fromDomain({{camelCase singularName}}));  
+  }
+}

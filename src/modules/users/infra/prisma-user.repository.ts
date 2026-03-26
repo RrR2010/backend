@@ -1,50 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@core/infra/prisma.service';
-import { UserRepository } from '@modules/users/domain/user.repository';
 import { User } from '@modules/users/domain/user.entity';
-import { User as PrismaUser } from '@prisma/client';
 import { PrismaUserMapper } from '@modules/users/infra/user-mapper';
+import { UserRepository } from '@modules/users/domain/user.repository';
+import { User as PrismaUser } from '@prisma/client';
 
 @Injectable()
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
+    const prismaUser: PrismaUser | null = await this.prisma.user.findUnique({
       where: { id },
     });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
+    if (!prismaUser) return null;
+    return PrismaUserMapper.toDomain(prismaUser);
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
+    const prismaUser: PrismaUser | null = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
+    if (!prismaUser) return null;
+    return PrismaUserMapper.toDomain(prismaUser);
   }
 
   async findByName(name: string): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
+    const prismaUsers: PrismaUser[] = await this.prisma.user.findMany({
       where: { name },
     });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
+    return prismaUsers.map((prismaUser) =>
+      PrismaUserMapper.toDomain(prismaUser),
+    );
   }
 
   async findAll(): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
+    const prismaUsers: PrismaUser[] = await this.prisma.user.findMany({
       where: {},
     });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
+    return prismaUsers.map((prismaUser) =>
+      PrismaUserMapper.toDomain(prismaUser),
+    );
   }
 
   async save(user: User): Promise<User> {
-    const bdUser = PrismaUserMapper.toPersistence(user);
+    const prismaUser = PrismaUserMapper.toPersistence(user);
     await this.prisma.user.upsert({
-      where: { id: bdUser.id },
-      update: bdUser,
-      create: bdUser,
+      where: { id: prismaUser.id },
+      update: prismaUser,
+      create: prismaUser,
     });
     return user;
   }

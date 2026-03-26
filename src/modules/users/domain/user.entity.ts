@@ -1,21 +1,20 @@
 import { Id } from '@core/domain/id.vo';
-import { UserStatus } from '@modules/users/domain/user-status.enum';
 import { Email } from '@core/domain/email.vo';
 import { Entity, EntityProps } from '@core/domain/entity';
+import { EntityStatus } from '@core/domain/entity-status.enum';
 
 interface UserProps extends EntityProps {
   name: string;
   email: Email;
   passwordHash: string;
-  status: UserStatus;
   code: string | null;
 }
 
 interface CreateUserProps extends Omit<
   UserProps,
-  'id' | 'createdAt' | 'updatedAt' | 'status' | 'platformRole' | 'passwordHash'
+  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
 > {
-  password: string;
+  passwordHash: string;
 }
 
 export class User extends Entity<UserProps> {
@@ -25,79 +24,62 @@ export class User extends Entity<UserProps> {
 
   // --------------- Factory Methods ---------------
 
-  static create(params: CreateUserProps): User {
+  static create(props: CreateUserProps): User {
     const now = new Date();
     const user = new User({
-      ...params,
+      ...props,
       id: Id.generate(),
+      name: props.name,
       createdAt: now,
       updatedAt: now,
-      status: UserStatus.ACTIVE,
-      passwordHash: params.password, // TODO: implement hash
+      entityStatus: EntityStatus.ACTIVE,
+      passwordHash: props.passwordHash, // TODO: implement hash
     });
     return user;
   }
 
-  static rehydrate(params: UserProps): User {
-    const user = new User(params);
-    return user;
+  static rehydrate(props: UserProps): User {
+    return new User(props);
   }
 
   // --------------- Getters ---------------
 
   get name(): string {
-    return this.props.name;
+    return this._props.name;
   }
 
   get email(): Email {
-    return this.props.email;
+    return this._props.email;
   }
 
   get passwordHash(): string {
-    return this.props.passwordHash;
-  }
-
-  get status(): UserStatus {
-    return this.props.status;
+    return this._props.passwordHash;
   }
 
   get code(): string | null {
-    return this.props.code;
+    return this._props.code;
   }
 
   // --------------- Behaviours ---------------
   changeName(newName: string) {
-    this.props.name = newName;
+    this._props.name = newName;
     this.touch();
   }
 
   changeEmail(newEmail: Email) {
-    this.props.email = newEmail;
+    this._props.email = newEmail;
     this.touch();
   }
 
   changePasswordHash(newPasswordHash: string) {
-    this.props.passwordHash = newPasswordHash;
-    this.touch();
-  }
-
-  deactivate() {
-    this.props.status = UserStatus.INACTIVE;
-    this.touch();
-  }
-
-  activate() {
-    this.props.status = UserStatus.ACTIVE;
+    this._props.passwordHash = newPasswordHash;
     this.touch();
   }
 
   changeCode(newCode: string) {
-    this.props.code = newCode;
+    this._props.code = newCode;
     this.touch();
   }
 
   // --------------- Internal Methods ---------------
-  touch() {
-    this.props.updatedAt = new Date();
-  }
 }

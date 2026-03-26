@@ -1,0 +1,21 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+
+export class Create{{pascalCase singularName}}ResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  @ApiProperty()
+  ...
+
+  static fromDomain({{camelCase singularName}}: {{pascalCase singularName}}): Create{{pascalCase singularName}}ResponseDto {
+    return {
+      id: {{camelCase singularName}}.id.value,
+      createdAt: {{camelCase singularName}}.createdAt,
+      ...
+    };
+  }
+}

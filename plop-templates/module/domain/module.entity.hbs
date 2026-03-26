@@ -1,38 +1,45 @@
 import { Entity, EntityProps } from '@core/domain/entity';
+import { EntityStatus } from '@core/domain/entity-status.enum';
+import { Id } from '@core/domain/id.vo'
 
 interface {{pascalCase singularName}}Props extends EntityProps {
   ...
 }
 
-interface New{{pascalCase singularName}}Props extends Omit<
+interface Create{{pascalCase singularName}}Props extends Omit<
   {{pascalCase singularName}}Props,
-  'id' | 'createdAt' | 'updatedAt'
+  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
 > {
   ...
 }
 
 export class {{pascalCase singularName}} extends Entity<{{pascalCase singularName}}Props> {
-  private constructor(params: {{pascalCase singularName}}Props) {
-    super(params);
+  private constructor(props: {{pascalCase singularName}}Props) {
+    super(props);
   }
 
   // --------------- Factory Methods ---------------
-  static create(params: New{{pascalCase singularName}}Props): {{pascalCase singularName}} {
-    
-    return ...
+  static create(props: Create{{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    const now = new Date();
+    const {{camelCase singularName}} = new {{pascalCase singularName}}({
+      ...props,
+      id: Id.generate(),
+      createdAt: now,
+      updatedAt: now,
+      entityStatus: EntityStatus.ACTIVE,
+      ...
+    })
+    return {{camelCase singularName}};
   }
 
   static rehydratate(params: {{pascalCase singularName}}Props): {{pascalCase singularName}} {
-    const {{camelCase singularName}} = new {{pascalCase singularName}}(params);
-    return {{camelCase singularName}}
+    return new {{pascalCase singularName}}(params);
   }
 
   // --------------- Getters ---------------
-
+  get x(): any {...}
 
   // --------------- Behaviours ---------------
-
-
-  // --------------- Internal Methods ---------------
+  doSomething() {...}
 
 }

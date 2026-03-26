@@ -1,10 +1,10 @@
-import { PrismaModule } from '@core/infra/prisma/prisma.module';
+import { PrismaModule } from '@core/infra/prisma.module';
 import { Module } from '@nestjs/common';
 import { TenantsController } from './interface/tenant.controller';
-import { CreateTenantUseCase } from './application/use-cases/create-tenant.usecase';
-import { ListTenantsUseCase } from './application/use-cases/list-tenants.usecase';
-import { TenantRepository } from './domain/repositories/tenant.repository';
-import { PrismaTenantRepository } from './infra/prisma/prisma-tenant.repository';
+import { CreateTenantUseCase } from './application/create-tenant.usecase';
+import { ListTenantsUseCase } from './application/list-tenants.usecase';
+import { TenantRepository } from './domain/tenant.repository';
+import { PrismaTenantRepository } from './infra/prisma-tenant.repository';
 
 @Module({
   imports: [PrismaModule],
