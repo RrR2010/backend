@@ -11,14 +11,10 @@ export class CreateTenantResponseDto {
   @ApiProperty()
   createdAt!: Date;
 
-  @ApiProperty()
-  entityStaty!: string;
-
   static fromDomain(tenant: Tenant) {
     return {
       id: tenant.id.value,
       createdAt: tenant.createdAt,
-      entityStaty: tenant.entityStatus,
       name: tenant.name,
     };
   }

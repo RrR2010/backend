@@ -1,17 +1,16 @@
-import { Entity, EntityProps } from '@core/domain/entity';
-import { EntityStatus } from '@core/domain/entity-status.enum';
+import { CreateEntityProps, Entity, EntityProps } from '@core/domain/entity';
+import { SystemState } from '@core/domain/system-state.enum';
 import { Id } from '@core/domain/id.vo';
 
-interface TenantProps extends EntityProps {
+type TenantProps = EntityProps & {
   name: string;
-}
+};
 
-interface CreateTenantProps extends Omit<
-  TenantProps,
-  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
-> {
+type CreateTenantProps = CreateEntityProps<TenantProps> & {
   name: string;
-}
+};
+
+export type TenantSimpleProps = Pick<TenantProps, 'id' | 'name'>;
 
 export class Tenant extends Entity<TenantProps> {
   private constructor(props: TenantProps) {
@@ -27,7 +26,7 @@ export class Tenant extends Entity<TenantProps> {
       id: Id.generate(),
       createdAt: now,
       updatedAt: now,
-      entityStatus: EntityStatus.ACTIVE,
+      systemState: SystemState.ACTIVE,
       name: props.name,
     });
     return tenant;
@@ -42,10 +41,18 @@ export class Tenant extends Entity<TenantProps> {
     return this._props.name;
   }
 
+  get simpleStructure(): TenantSimpleProps {
+    return {
+      id: this._props.id,
+      name: this._props.name,
+    };
+  }
+
+  // --------------- Behaviours ---------------
   changeName(newName: string) {
     if (this._props.name === newName) return;
     this._props.name = newName;
-    this.touch();
+    this._touch();
   }
 
   // --------------- Private Methods ---------------

@@ -25,20 +25,34 @@ prisma/migrations/20260308024411_npm_run_dev/migration.sql
 prisma/migrations/20260308041251_tenant_upgrade/migration.sql
 prisma/migrations/20260313013325_implemented_basic_membership/migration.sql
 prisma/migrations/20260325011044_removed_tenant_from_user/migration.sql
+prisma/migrations/20260404022827_created_system_state/migration.sql
 prisma/migrations/migration_lock.toml
 prisma/schema.prisma
 README.md
 repomix.config.json
 src/app.module.ts
 src/core/domain/email.vo.ts
-src/core/domain/entity-status.enum.ts
 src/core/domain/entity.ts
 src/core/domain/id.vo.ts
+src/core/domain/platform-roles.enum.ts
+src/core/domain/system-state.enum.ts
 src/core/domain/tenant-entity.ts
 src/core/infra/prisma.module.ts
 src/core/infra/prisma.service.ts
-src/core/utils/create-enum-mapper.ts
 src/main.ts
+src/modules/auth/auth.module.ts
+src/modules/auth/domain/password-hasher.ts
+src/modules/auth/infra/bycript-password-hasher.ts
+src/modules/memberships/application/create-membership.usecase.ts
+src/modules/memberships/application/list-memberships.usecase.ts
+src/modules/memberships/domain/membership.entity.ts
+src/modules/memberships/domain/membership.repository.ts
+src/modules/memberships/infra/membership-mapper.ts
+src/modules/memberships/infra/prisma-membership.repository.ts
+src/modules/memberships/interface/create-membership-response.dto.ts
+src/modules/memberships/interface/create-membership.dto.ts
+src/modules/memberships/interface/membership.controller.ts
+src/modules/memberships/membership.module.ts
 src/modules/tenants/application/create-tenant.usecase.ts
 src/modules/tenants/application/list-tenants.usecase.ts
 src/modules/tenants/domain/tenant.entity.ts
@@ -70,25 +84,38 @@ Files
 ================================================================
 
 ================
-File: prisma/migrations/20260325011044_removed_tenant_from_user/migration.sql
+File: prisma/migrations/20260404022827_created_system_state/migration.sql
 ================
 /*
   Warnings:
 
-  - You are about to drop the column `status` on the `Tenant` table. All the data in the column will be lost.
-  - You are about to drop the column `platformRole` on the `User` table. All the data in the column will be lost.
-  - You are about to drop the column `role` on the `User` table. All the data in the column will be lost.
-  - You are about to drop the column `status` on the `User` table. All the data in the column will be lost.
+  - You are about to drop the column `status` on the `Membership` table. All the data in the column will be lost.
+  - You are about to drop the column `entityStatus` on the `Tenant` table. All the data in the column will be lost.
+  - You are about to drop the column `entityStatus` on the `User` table. All the data in the column will be lost.
+  - Added the required column `updatedAt` to the `Membership` table without a default value. This is not possible if the table is not empty.
 
 */
 -- RedefineTables
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Membership" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "systemState" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "userId" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    CONSTRAINT "Membership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Membership_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO "new_Membership" ("id", "tenantId", "userId") SELECT "id", "tenantId", "userId" FROM "Membership";
+DROP TABLE "Membership";
+ALTER TABLE "new_Membership" RENAME TO "Membership";
 CREATE TABLE "new_Tenant" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    "entityStatus" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "systemState" TEXT NOT NULL DEFAULT 'ACTIVE',
     "name" TEXT NOT NULL
 );
 INSERT INTO "new_Tenant" ("createdAt", "id", "name", "updatedAt") SELECT "createdAt", "id", "name", "updatedAt" FROM "Tenant";
@@ -98,7 +125,8 @@ CREATE TABLE "new_User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    "entityStatus" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "systemState" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "platformRole" TEXT NOT NULL DEFAULT 'MEMBER',
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
@@ -113,272 +141,352 @@ PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;
 
 ================
-File: src/core/domain/entity-status.enum.ts
+File: src/core/domain/platform-roles.enum.ts
 ================
-export enum EntityStatus {
-  ACTIVE = 'ACTIVE', // follows the business logic
-  LOCKED = 'LOCKED', // cannot be changed but is visible
-  HIDDEN = 'HIDDEN', // cannot be changed and is not visible - used for soft delete
+export enum PlatformRoles {
+  ADMIN = 'ADMIN',
+  MEMBER = 'MEMBER',
 }
 
 ================
-File: src/core/domain/tenant-entity.ts
+File: src/core/domain/system-state.enum.ts
 ================
-import { Entity, EntityProps } from '@core/domain/entity';
-import { Id } from '@core/domain/id.vo';
-
-export interface TenantEntityProps extends EntityProps {
-  tenantId: Id;
-}
-
-export abstract class TenantEntity<
-  Props extends TenantEntityProps,
-> extends Entity<Props> {
-  protected constructor(props: Props) {
-    super(props);
-  }
-
-  // --------------- Getters ---------------
-
-  get tenantId(): Id {
-    return this._props.tenantId;
-  }
-
-  // --------------- Behaviours ---------------
-  protected ensureSameTenant(other: TenantEntity<any>): void {
-    if (!other) {
-      throw new Error('Other entity cannot be null');
-    }
-    if (!this.tenantId.equals(other.tenantId)) {
-      throw new Error('Cross tenant operation not allowed');
-    }
-  }
+export enum SystemState {
+  ACTIVE = 'ACTIVE', // visible and can be modified
+  LOCKED = 'LOCKED', // cannot be changed but is visible (audit purpose)
+  HIDDEN = 'HIDDEN', // cannot be changed and is not visible (soft delete)
 }
 
 ================
-File: src/modules/tenants/application/create-tenant.usecase.ts
+File: src/modules/auth/auth.module.ts
 ================
-import { Tenant } from '@modules/tenants/domain/tenant.entity';
-import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
+import { Module } from '@nestjs/common';
+import { PasswordHasher } from './domain/password-hasher';
+import { BcryptPasswordHasher } from './infra/bycript-password-hasher';
+
+@Module({
+  providers: [{ provide: PasswordHasher, useClass: BcryptPasswordHasher }],
+  exports: [PasswordHasher],
+})
+export class AuthModule {}
+
+================
+File: src/modules/auth/domain/password-hasher.ts
+================
+export abstract class PasswordHasher {
+  abstract hash(password: string): Promise<string>;
+  abstract compare(password: string, hash: string): Promise<boolean>;
+}
+
+================
+File: src/modules/auth/infra/bycript-password-hasher.ts
+================
+import { PasswordHasher } from '@modules/auth/domain/password-hasher';
+import * as bcrypt from 'bcrypt';
+
+export class BcryptPasswordHasher implements PasswordHasher {
+  async hash(password: string): Promise<string> {
+    return await bcrypt.hash(password, 10);
+  }
+
+  async compare(password: string, hash: string): Promise<boolean> {
+    return await bcrypt.compare(password, hash);
+  }
+}
+
+================
+File: src/modules/memberships/application/create-membership.usecase.ts
+================
 import { Injectable } from '@nestjs/common';
+import { Membership } from '@modules/memberships/domain/membership.entity';
+import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
 
 @Injectable()
-export class CreateTenantUseCase {
-  constructor(private readonly tenantRepository: TenantRepository) {}
+export class CreateMembershipUseCase {
+  constructor(private readonly membershipRepository: MembershipRepository) {}
 
-  async execute(input: { name: string }): Promise<Tenant> {
-    const tenant = await this.tenantRepository.save(
-      Tenant.create({ name: input.name }),
+  async execute(input: {
+    userId: string;
+    tenantId: string;
+  }): Promise<Membership> {
+    const membership = await this.membershipRepository.save(
+      Membership.create({
+        userId: input.userId,
+        tenantId: input.tenantId,
+      }),
     );
-    return tenant;
+    return membership;
   }
 }
 
 ================
-File: src/modules/tenants/application/list-tenants.usecase.ts
+File: src/modules/memberships/application/list-memberships.usecase.ts
 ================
-import { Tenant } from '@modules/tenants/domain/tenant.entity';
-import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
 import { Injectable } from '@nestjs/common';
+import { Membership } from '@modules/memberships/domain/membership.entity';
+import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
 
 @Injectable()
-export class ListTenantsUseCase {
-  constructor(private readonly tenantRepository: TenantRepository) {}
+export class ListMembershipUseCase {
+  constructor(private readonly membershipRepository: MembershipRepository) {}
 
-  async execute(): Promise<Tenant[]> {
-    return this.tenantRepository.findAll();
+  async execute(): Promise<Membership[]> {
+    return this.membershipRepository.findAll();
   }
 }
 
 ================
-File: src/modules/tenants/domain/tenant.entity.ts
+File: src/modules/memberships/domain/membership.entity.ts
 ================
-import { Entity, EntityProps } from '@core/domain/entity';
-import { EntityStatus } from '@core/domain/entity-status.enum';
+import { Entity, EntityProps, CreateEntityProps } from '@core/domain/entity';
+import { SystemState } from '@core/domain/system-state.enum';
 import { Id } from '@core/domain/id.vo';
 
-interface TenantProps extends EntityProps {
-  name: string;
+export enum MembershipStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
 }
 
-interface CreateTenantProps extends Omit<
-  TenantProps,
-  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
-> {
-  name: string;
-}
+type MembershipProps = EntityProps & {
+  userId: string;
+  tenantId: string;
+};
 
-export class Tenant extends Entity<TenantProps> {
-  private constructor(props: TenantProps) {
+type CreateMembershipProps = CreateEntityProps<MembershipProps> & {
+  userId: string;
+  tenantId: string;
+};
+
+export class Membership extends Entity<MembershipProps> {
+  private constructor(props: MembershipProps) {
     super(props);
   }
 
   // --------------- Factory Methods ---------------
-
-  static create(props: CreateTenantProps): Tenant {
+  static create(props: CreateMembershipProps): Membership {
     const now = new Date();
-    const tenant = new Tenant({
+    const membership = new Membership({
       ...props,
       id: Id.generate(),
       createdAt: now,
       updatedAt: now,
-      entityStatus: EntityStatus.ACTIVE,
-      name: props.name,
+      systemState: SystemState.ACTIVE,
     });
-    return tenant;
+    return membership;
   }
 
-  static rehydrate(props: TenantProps): Tenant {
-    return new Tenant(props);
+  static rehydratate(params: MembershipProps): Membership {
+    return new Membership(params);
   }
 
   // --------------- Getters ---------------
-  get name(): string {
-    return this._props.name;
+  get userId(): string {
+    return this._props.userId;
   }
 
-  changeName(newName: string) {
-    if (this._props.name === newName) return;
-    this._props.name = newName;
-    this.touch();
+  get tenantId(): string {
+    return this._props.tenantId;
   }
 
-  // --------------- Private Methods ---------------
+  // --------------- Behaviours ---------------
 }
 
 ================
-File: src/modules/tenants/domain/tenant.repository.ts
+File: src/modules/memberships/domain/membership.repository.ts
 ================
-import { Tenant } from '@modules/tenants/domain/tenant.entity';
+import { Membership } from '@modules/memberships/domain/membership.entity';
 
-export abstract class TenantRepository {
-  abstract findById(id: string): Promise<Tenant | null>;
-  abstract findByName(name: string): Promise<Tenant[]>;
-  abstract findAll(): Promise<Tenant[]>;
-  abstract save(tenant: Tenant): Promise<Tenant>;
+export abstract class MembershipRepository {
+  abstract findById(id: string): Promise<Membership | null>;
+  abstract findAll(): Promise<Membership[]>;
+  abstract save(Membership: Membership): Promise<Membership>;
   abstract delete(id: string): Promise<void>;
 }
 
 ================
-File: src/modules/tenants/infra/prisma-tenant.repository.ts
+File: src/modules/memberships/infra/membership-mapper.ts
 ================
-import { PrismaService } from '@core/infra/prisma.service';
-import { Tenant } from '@modules/tenants/domain/tenant.entity';
-import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
-import { Injectable } from '@nestjs/common';
-import { Tenant as PrismaTenant } from '@prisma/client';
-import { TenantMapper as PrismaTenantMapper } from '@modules/tenants/infra/tenant-mapper';
-
-@Injectable()
-export class PrismaTenantRepository implements TenantRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findById(id: string): Promise<Tenant | null> {
-    const tenant: PrismaTenant | null = await this.prisma.tenant.findUnique({
-      where: { id },
-    });
-    if (!tenant) {
-      return null;
-    }
-    return PrismaTenantMapper.toDomain(tenant);
-  }
-
-  async findByName(name: string): Promise<Tenant[]> {
-    const tenants: PrismaTenant[] = await this.prisma.tenant.findMany({
-      where: { name },
-    });
-    return tenants.map((tenant) => PrismaTenantMapper.toDomain(tenant));
-  }
-
-  async findAll(): Promise<Tenant[]> {
-    const tenants: PrismaTenant[] = await this.prisma.tenant.findMany();
-    return tenants.map((tenant) => PrismaTenantMapper.toDomain(tenant));
-  }
-
-  async save(tenant: Tenant): Promise<Tenant> {
-    const bdTenant = PrismaTenantMapper.toPersistence(tenant);
-    await this.prisma.tenant.upsert({
-      where: { id: bdTenant.id },
-      update: bdTenant,
-      create: bdTenant,
-    });
-    return PrismaTenantMapper.toDomain(bdTenant);
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.prisma.tenant.delete({ where: { id } });
-  }
-}
-
-================
-File: src/modules/tenants/infra/tenant-mapper.ts
-================
-import { EntityStatus } from '@core/domain/entity-status.enum';
+import { Membership as PrismaMembership } from '@prisma/client';
+import { Membership } from '@modules/memberships/domain/membership.entity';
 import { Id } from '@core/domain/id.vo';
-import { Tenant } from '@modules/tenants/domain/tenant.entity';
-import { Tenant as PrismaTenant } from '@prisma/client';
+import { SystemState } from '@core/domain/system-state.enum';
 
-export class TenantMapper {
-  static toDomain(bdTenant: PrismaTenant) {
-    return Tenant.rehydrate({
-      id: Id.from(bdTenant.id),
-      createdAt: bdTenant.createdAt,
-      updatedAt: bdTenant.updatedAt,
-      entityStatus:
-        EntityStatus[bdTenant.entityStatus as keyof typeof EntityStatus],
-      name: bdTenant.name,
+export class PrismaMembershipMapper {
+  static toDomain(prismaMembership: PrismaMembership): Membership {
+    return Membership.rehydratate({
+      id: Id.from(prismaMembership.id),
+      createdAt: prismaMembership.createdAt,
+      updatedAt: prismaMembership.updatedAt,
+      systemState:
+        SystemState[prismaMembership.systemState as keyof typeof SystemState],
+      userId: prismaMembership.userId,
+      tenantId: prismaMembership.tenantId,
     });
   }
 
-  static toPersistence(tenant: Tenant): PrismaTenant {
+  static toPersistence(membership: Membership): PrismaMembership {
     return {
-      id: tenant.id.value,
-      createdAt: tenant.createdAt,
-      updatedAt: tenant.updatedAt,
-      entityStatus: tenant.entityStatus,
-      name: tenant.name,
+      id: membership.id.value,
+      createdAt: membership.createdAt,
+      updatedAt: membership.updatedAt,
+      systemState: membership.systemState,
+      userId: membership.userId,
+      tenantId: membership.tenantId,
     };
   }
 }
 
 ================
-File: src/modules/tenants/interface/create-tenant-response.dto.ts
+File: src/modules/memberships/infra/prisma-membership.repository.ts
 ================
-import { Tenant } from '@modules/tenants/domain/tenant.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@core/infra/prisma.service';
+import { Membership } from '@modules/memberships/domain/membership.entity';
+import { PrismaMembershipMapper } from '@modules/memberships/infra/membership-mapper';
+import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
+import { Membership as PrismaMembership } from '@prisma/client';
 
-export class CreateTenantResponseDto {
+@Injectable()
+export class PrismaMembershipRepository implements MembershipRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<Membership | null> {
+    const prismaMembership: PrismaMembership | null = await this.prisma.membership.findUnique({
+      where: { id },
+    });
+    if (!prismaMembership) return null;
+    return PrismaMembershipMapper.toDomain(prismaMembership);
+  }
+
+  async findAll(): Promise<Membership[]> {
+    const prismaMemberships: PrismaMembership[] = await this.prisma.membership.findMany({
+      where: {},
+    });
+    return prismaMemberships.map((membership) => PrismaMembershipMapper.toDomain(membership));
+  }
+
+  async save(membership: Membership): Promise<Membership> {
+    const prismaMembership = PrismaMembershipMapper.toPersistence(membership);
+    await this.prisma.membership.upsert({
+      where : { id: prismaMembership.id },
+      update: prismaMembership,
+      create: prismaMembership,
+    });
+    return membership
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.membership.delete({ where: { id } });
+  }
+
+}
+
+================
+File: src/modules/memberships/interface/create-membership-response.dto.ts
+================
+import { ApiProperty } from '@nestjs/swagger';
+import { Membership } from '@modules/memberships/domain/membership.entity';
+
+export class CreateMembershipResponseDto {
   @ApiProperty()
   id!: string;
-
-  @ApiProperty()
-  name!: string;
 
   @ApiProperty()
   createdAt!: Date;
 
   @ApiProperty()
-  entityStaty!: string;
+  userId!: string;
 
-  static fromDomain(tenant: Tenant) {
+  @ApiProperty()
+  tenantId!: string;
+
+  static fromDomain(membership: Membership): CreateMembershipResponseDto {
     return {
-      id: tenant.id.value,
-      createdAt: tenant.createdAt,
-      entityStaty: tenant.entityStatus,
-      name: tenant.name,
+      id: membership.id.value,
+      createdAt: membership.createdAt,
+      userId: membership.userId,
+      tenantId: membership.tenantId,
     };
   }
 }
 
 ================
-File: src/modules/tenants/interface/create-tenant.dto.ts
+File: src/modules/memberships/interface/create-membership.dto.ts
 ================
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateTenantDto {
-  @ApiProperty()
-  name!: string;
+export class CreateMembershipDto {
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426655440000',
+    description: 'User ID in UUID format.',
+  })
+  userId!: string;
+
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426655440000',
+    description: 'Tenant ID in UUID format.',
+  })
+  tenantId!: string;
 }
+
+================
+File: src/modules/memberships/interface/membership.controller.ts
+================
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { CreateMembershipUseCase } from '@modules/memberships/application/create-membership.usecase';
+import { ListMembershipUseCase } from '@modules/memberships/application/list-memberships.usecase';
+import { CreateMembershipDto } from '@modules/memberships/interface/create-membership.dto';
+import { CreateMembershipResponseDto } from '@modules/memberships/interface/create-membership-response.dto';
+
+@ApiTags('memberships')
+@Controller('memberships')
+export class MembershipsController {
+  constructor(
+    private readonly createMembershipUseCase: CreateMembershipUseCase,
+    private readonly listMembershipUseCase: ListMembershipUseCase,
+  ) {}
+
+  @Post()
+  @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
+  async create(
+    @Body() input: CreateMembershipDto,
+  ): Promise<CreateMembershipResponseDto> {
+    const membership = await this.createMembershipUseCase.execute(input);
+    return CreateMembershipResponseDto.fromDomain(membership);
+  }
+
+  @Get()
+  async list(): Promise<CreateMembershipResponseDto[]> {
+    const Memberships = await this.listMembershipUseCase.execute();
+    return Memberships.map((membership) =>
+      CreateMembershipResponseDto.fromDomain(membership),
+    );
+  }
+}
+
+================
+File: src/modules/memberships/membership.module.ts
+================
+import { Module } from '@nestjs/common';
+import { PrismaModule } from '@core/infra/prisma.module';
+import { MembershipsController } from './interface/membership.controller';
+import { CreateMembershipUseCase } from './application/create-membership.usecase';
+import { ListMembershipUseCase } from './application/list-memberships.usecase';
+import { MembershipRepository } from './domain/membership.repository';
+import { PrismaMembershipRepository } from './infra/prisma-membership.repository';
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [MembershipsController],
+  providers: [
+    CreateMembershipUseCase,
+    ListMembershipUseCase,
+    { provide: MembershipRepository, useClass: PrismaMembershipRepository },
+  ],
+  exports: [MembershipRepository],
+})
+export class MembershipModule {}
 
 ================
 File: .prettierrc
@@ -412,115 +520,10 @@ File: nest-cli.json
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "plugins": ["@nestjs/swagger"]
   }
 }
-
-================
-File: plop-templates/module/application/create-model.usecase.hbs
-================
-import { {{pascalCase singularName}} } from '@modules/{{camelCase pluralName}}/domain/{{kebabCase singularName}}.entity'
-import { Injectable } from "@nestjs/common";
-
-@Injectable()
-export class Create{{pascalCase singularName}}UseCase{
-  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}) {}
-
-  async execute(input: {
-    ...
-  }): Promise<{{pascalCase singularName}}> {
-    const {{camelCase singularName}} = await this.{{camelCase singularName}}Repository.save(
-      {{pascalCase singularName}}.create({
-        ...
-      })
-    )
-    return {{pascalCase singularName}}
-  }
-}
-
-================
-File: plop-templates/module/application/list-models.usecase.hbs
-================
-
-
-================
-File: plop-templates/module/domain/module.entity.hbs
-================
-import { Entity, EntityProps } from '@core/domain/entity';
-
-interface {{pascalCase singularName}}Props extends EntityProps {
-  ...
-}
-
-interface New{{pascalCase singularName}}Props extends Omit<
-  {{pascalCase singularName}}Props,
-  'id' | 'createdAt' | 'updatedAt'
-> {
-  ...
-}
-
-export class {{pascalCase singularName}} extends Entity<{{pascalCase singularName}}Props> {
-  private constructor(params: {{pascalCase singularName}}Props) {
-    super(params);
-  }
-
-  // --------------- Factory Methods ---------------
-  static create(params: New{{pascalCase singularName}}Props): {{pascalCase singularName}} {
-    
-    return ...
-  }
-
-  static rehydratate(params: {{pascalCase singularName}}Props): {{pascalCase singularName}} {
-    const {{camelCase singularName}} = new {{pascalCase singularName}}(params);
-    return {{camelCase singularName}}
-  }
-
-  // --------------- Getters ---------------
-
-
-  // --------------- Behaviours ---------------
-
-
-  // --------------- Internal Methods ---------------
-
-}
-
-================
-File: plop-templates/module/domain/module.repository.hbs
-================
-import {{ pascalCase singularName }} from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
-
-export abstract class {{ pascalCase singularName }}Repository {
-  abstract findById(id: string): Promise<{{ pascalCase singularName }} | null>;
-  abstract findAll(): Promise<{{ pascalCase singularName }}[]>;
-  abstract save({{ pascalCase singularName }}: {{ pascalCase singularName }}): Promise<{{ pascalCase singularName }}>;
-  abstract delete(id: string): Promise<void>;
-}
-
-================
-File: plop-templates/module/infra/model-mapper.hbs
-================
-
-
-================
-File: plop-templates/module/infra/prisma-model.repository.hbs
-================
-
-
-================
-File: plop-templates/module/interface/create-model-response.dto.hbs
-================
-
-
-================
-File: plop-templates/module/interface/create-model.dto.hbs
-================
-
-
-================
-File: plop-templates/module/interface/model.controller.hbs
-================
-
 
 ================
 File: plop-templates/module/model.module.hbs
@@ -659,6 +662,49 @@ CREATE TABLE "new_User" (
     "platformRole" TEXT NOT NULL
 );
 INSERT INTO "new_User" ("code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt") SELECT "code", "createdAt", "email", "id", "name", "passwordHash", "role", "status", "updatedAt" FROM "User";
+DROP TABLE "User";
+ALTER TABLE "new_User" RENAME TO "User";
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "User_code_key" ON "User"("code");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
+
+================
+File: prisma/migrations/20260325011044_removed_tenant_from_user/migration.sql
+================
+/*
+  Warnings:
+
+  - You are about to drop the column `status` on the `Tenant` table. All the data in the column will be lost.
+  - You are about to drop the column `platformRole` on the `User` table. All the data in the column will be lost.
+  - You are about to drop the column `role` on the `User` table. All the data in the column will be lost.
+  - You are about to drop the column `status` on the `User` table. All the data in the column will be lost.
+
+*/
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Tenant" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "entityStatus" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "name" TEXT NOT NULL
+);
+INSERT INTO "new_Tenant" ("createdAt", "id", "name", "updatedAt") SELECT "createdAt", "id", "name", "updatedAt" FROM "Tenant";
+DROP TABLE "Tenant";
+ALTER TABLE "new_Tenant" RENAME TO "Tenant";
+CREATE TABLE "new_User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "entityStatus" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "code" TEXT
+);
+INSERT INTO "new_User" ("code", "createdAt", "email", "id", "name", "passwordHash", "updatedAt") SELECT "code", "createdAt", "email", "id", "name", "passwordHash", "updatedAt" FROM "User";
 DROP TABLE "User";
 ALTER TABLE "new_User" RENAME TO "User";
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
@@ -857,125 +903,36 @@ export class Email {
 }
 
 ================
-File: src/core/domain/entity.ts
+File: src/core/domain/tenant-entity.ts
 ================
+import { Entity, EntityProps } from '@core/domain/entity';
 import { Id } from '@core/domain/id.vo';
-import { EntityStatus } from './entity-status.enum';
 
-export interface EntityProps {
-  id: Id;
-  entityStatus: EntityStatus;
-  createdAt: Date;
-  updatedAt: Date;
+export interface TenantEntityProps extends EntityProps {
+  tenantId: Id;
 }
 
-export type MutableEntityProps<Props> = Omit<
-  Props,
-  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
->;
-
-export abstract class Entity<Props extends EntityProps> {
-  protected readonly _props: Props;
-
+export abstract class TenantEntity<
+  Props extends TenantEntityProps,
+> extends Entity<Props> {
   protected constructor(props: Props) {
-    this._props = props;
+    super(props);
   }
 
   // --------------- Getters ---------------
-  protected get props(): Readonly<Props> {
-    return this._props;
-  }
 
-  get id(): Id {
-    return this._props.id;
-  }
-
-  get entityStatus(): EntityStatus {
-    return this._props.entityStatus;
-  }
-
-  get createdAt(): Date {
-    return this._props.createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this._props.updatedAt;
-  }
-
-  // --------------- Setters ---------------
-  protected set<K extends keyof MutableEntityProps<Props>>(
-    key: K,
-    value: MutableEntityProps<Props>[K],
-  ): void {
-    this._props[key] = value;
-    this.touch();
+  get tenantId(): Id {
+    return this._props.tenantId;
   }
 
   // --------------- Behaviours ---------------
-  activate() {
-    this._props.entityStatus = EntityStatus.ACTIVE;
-    this.touch();
-  }
-
-  lock() {
-    this._props.entityStatus = EntityStatus.LOCKED;
-    this.touch();
-  }
-
-  hide() {
-    this._props.entityStatus = EntityStatus.HIDDEN;
-    this.touch();
-  }
-
-  ensureNotLocked() {
-    if (this._props.entityStatus === EntityStatus.LOCKED) {
-      throw new Error('Entity is locked');
+  protected ensureSameTenant(other: TenantEntity<any>): void {
+    if (!other) {
+      throw new Error('Other entity cannot be null');
     }
-  }
-
-  // --------------- Internal Methods ---------------
-  protected touch() {
-    this._props.updatedAt = new Date();
-  }
-}
-
-================
-File: src/core/domain/id.vo.ts
-================
-import { randomUUID } from 'crypto';
-
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-export class Id {
-  private constructor(private readonly _value: string) {}
-
-  static generate(): Id {
-    return new Id(randomUUID());
-  }
-
-  static from(value: string): Id {
-    if (!value || !UUID_REGEX.test(value)) {
-      throw new Error('Invalid UUID');
+    if (!this.tenantId.equals(other.tenantId)) {
+      throw new Error('Cross tenant operation not allowed');
     }
-    return new Id(value);
-  }
-
-  get value(): string {
-    return this._value;
-  }
-
-  toString(): string {
-    return this._value;
-  }
-
-  toJSON(): string {
-    return this._value;
-  }
-
-  equals(other?: Id): boolean {
-    if (!other) return false;
-    return this._value === other._value;
   }
 }
 
@@ -1027,132 +984,221 @@ export class PrismaService
 }
 
 ================
-File: src/core/utils/create-enum-mapper.ts
+File: src/modules/tenants/application/create-tenant.usecase.ts
 ================
-/**
- * Creates a bidirectional map between two string enums.
- *
- * Example:
- * const map = createEnumMapper({
- *   ACTIVE: UserStatus.ACTIVE,
- *   INACTIVE: UserStatus.INACTIVE,
- * });
- *
- * map.toDomain('ACTIVE') -> UserStatus.ACTIVE
- * map.toPersistence(UserStatus.ACTIVE) -> 'ACTIVE'
- */
-export function createEnumMapper<
-  TPrisma extends string,
-  TDomain extends string,
->(mapping: Record<TPrisma, TDomain>) {
-  const reverseMapping: Record<TDomain, TPrisma> = {} as Record<
-    TDomain,
-    TPrisma
-  >;
-
-  for (const key in mapping) {
-    const value = mapping[key];
-    reverseMapping[value] = key;
-  }
-
-  return {
-    toDomain(prismaValue: TPrisma): TDomain {
-      return mapping[prismaValue];
-    },
-
-    toPersistence(domainValue: TDomain): TPrisma {
-      return reverseMapping[domainValue];
-    },
-  };
-}
-
-================
-File: src/modules/tenants/interface/tenant.controller.ts
-================
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { CreateTenantUseCase } from '../application/create-tenant.usecase';
-import { ListTenantsUseCase } from '../application/list-tenants.usecase';
-import { CreateTenantDto } from './create-tenant.dto';
-import { CreateTenantResponseDto } from './create-tenant-response.dto';
-
-@ApiTags('Tenants')
-@Controller('tenants')
-export class TenantsController {
-  constructor(
-    private readonly createTenantUseCase: CreateTenantUseCase,
-    private readonly listTenantsUseCase: ListTenantsUseCase,
-  ) {}
-
-  @Post()
-  async create(@Body() dto: CreateTenantDto): Promise<CreateTenantResponseDto> {
-    const tenant = await this.createTenantUseCase.execute(dto);
-    return CreateTenantResponseDto.fromDomain(tenant);
-  }
-
-  @Get()
-  async list(): Promise<CreateTenantResponseDto[]> {
-    const tenants = await this.listTenantsUseCase.execute();
-    return tenants.map((tenant) => CreateTenantResponseDto.fromDomain(tenant));
-  }
-}
-
-================
-File: src/modules/tenants/tenant.module.ts
-================
-import { PrismaModule } from '@core/infra/prisma.module';
-import { Module } from '@nestjs/common';
-import { TenantsController } from './interface/tenant.controller';
-import { CreateTenantUseCase } from './application/create-tenant.usecase';
-import { ListTenantsUseCase } from './application/list-tenants.usecase';
-import { TenantRepository } from './domain/tenant.repository';
-import { PrismaTenantRepository } from './infra/prisma-tenant.repository';
-
-@Module({
-  imports: [PrismaModule],
-
-  controllers: [TenantsController],
-
-  providers: [
-    CreateTenantUseCase,
-    ListTenantsUseCase,
-    { provide: TenantRepository, useClass: PrismaTenantRepository },
-  ],
-
-  exports: [TenantRepository],
-})
-export class TenantModule {}
-
-================
-File: src/modules/users/application/create-user.usecase.ts
-================
-import { Email } from '@core/domain/email.vo';
-import { User } from '@modules/users/domain/user.entity';
-import { UserRepository } from '@modules/users/domain/user.repository';
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class CreateUserUseCase {
-  constructor(private readonly userRepository: UserRepository) {}
+export class CreateTenantUseCase {
+  constructor(private readonly tenantRepository: TenantRepository) {}
 
-  async execute(input: {
-    tenantId: string;
-    email: string;
-    password: string;
-    name: string;
-    code: string | null;
-  }): Promise<User> {
-    const user = await this.userRepository.save(
-      User.create({
-        name: input.name,
-        email: Email.from(input.email),
-        passwordHash: input.password,
-        code: input.code?.toString() || null,
-      }),
+  async execute(input: { name: string }): Promise<Tenant> {
+    const tenant = await this.tenantRepository.save(
+      Tenant.create({ name: input.name }),
     );
-
-    return user;
+    return tenant;
   }
+}
+
+================
+File: src/modules/tenants/application/list-tenants.usecase.ts
+================
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ListTenantsUseCase {
+  constructor(private readonly tenantRepository: TenantRepository) {}
+
+  async execute(): Promise<Tenant[]> {
+    return this.tenantRepository.findAll();
+  }
+}
+
+================
+File: src/modules/tenants/domain/tenant.entity.ts
+================
+import { CreateEntityProps, Entity, EntityProps } from '@core/domain/entity';
+import { SystemState } from '@core/domain/system-state.enum';
+import { Id } from '@core/domain/id.vo';
+
+type TenantProps = EntityProps & {
+  name: string;
+};
+
+type CreateTenantProps = CreateEntityProps<TenantProps> & {
+  name: string;
+};
+
+export class Tenant extends Entity<TenantProps> {
+  private constructor(props: TenantProps) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+
+  static create(props: CreateTenantProps): Tenant {
+    const now = new Date();
+    const tenant = new Tenant({
+      ...props,
+      id: Id.generate(),
+      createdAt: now,
+      updatedAt: now,
+      systemState: SystemState.ACTIVE,
+      name: props.name,
+    });
+    return tenant;
+  }
+
+  static rehydrate(props: TenantProps): Tenant {
+    return new Tenant(props);
+  }
+
+  // --------------- Getters ---------------
+  get name(): string {
+    return this._props.name;
+  }
+
+  changeName(newName: string) {
+    if (this._props.name === newName) return;
+    this._props.name = newName;
+    this._touch();
+  }
+
+  // --------------- Private Methods ---------------
+}
+
+================
+File: src/modules/tenants/domain/tenant.repository.ts
+================
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
+
+export abstract class TenantRepository {
+  abstract findById(id: string): Promise<Tenant | null>;
+  abstract findByName(name: string): Promise<Tenant[]>;
+  abstract findAll(): Promise<Tenant[]>;
+  abstract save(tenant: Tenant): Promise<Tenant>;
+  abstract delete(id: string): Promise<void>;
+}
+
+================
+File: src/modules/tenants/infra/prisma-tenant.repository.ts
+================
+import { PrismaService } from '@core/infra/prisma.service';
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
+import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
+import { Injectable } from '@nestjs/common';
+import { Tenant as PrismaTenant } from '@prisma/client';
+import { TenantMapper as PrismaTenantMapper } from '@modules/tenants/infra/tenant-mapper';
+
+@Injectable()
+export class PrismaTenantRepository implements TenantRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<Tenant | null> {
+    const tenant: PrismaTenant | null = await this.prisma.tenant.findUnique({
+      where: { id },
+    });
+    if (!tenant) {
+      return null;
+    }
+    return PrismaTenantMapper.toDomain(tenant);
+  }
+
+  async findByName(name: string): Promise<Tenant[]> {
+    const tenants: PrismaTenant[] = await this.prisma.tenant.findMany({
+      where: { name },
+    });
+    return tenants.map((tenant) => PrismaTenantMapper.toDomain(tenant));
+  }
+
+  async findAll(): Promise<Tenant[]> {
+    const tenants: PrismaTenant[] = await this.prisma.tenant.findMany();
+    return tenants.map((tenant) => PrismaTenantMapper.toDomain(tenant));
+  }
+
+  async save(tenant: Tenant): Promise<Tenant> {
+    const bdTenant = PrismaTenantMapper.toPersistence(tenant);
+    await this.prisma.tenant.upsert({
+      where: { id: bdTenant.id },
+      update: bdTenant,
+      create: bdTenant,
+    });
+    return PrismaTenantMapper.toDomain(bdTenant);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.tenant.delete({ where: { id } });
+  }
+}
+
+================
+File: src/modules/tenants/infra/tenant-mapper.ts
+================
+import { SystemState } from '@core/domain/system-state.enum';
+import { Id } from '@core/domain/id.vo';
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
+import { Tenant as PrismaTenant } from '@prisma/client';
+
+export class TenantMapper {
+  static toDomain(bdTenant: PrismaTenant) {
+    return Tenant.rehydrate({
+      id: Id.from(bdTenant.id),
+      createdAt: bdTenant.createdAt,
+      updatedAt: bdTenant.updatedAt,
+      systemState:
+        SystemState[bdTenant.systemState as keyof typeof SystemState],
+      name: bdTenant.name,
+    });
+  }
+
+  static toPersistence(tenant: Tenant): PrismaTenant {
+    return {
+      id: tenant.id.value,
+      createdAt: tenant.createdAt,
+      updatedAt: tenant.updatedAt,
+      systemState: tenant.systemState,
+      name: tenant.name,
+    };
+  }
+}
+
+================
+File: src/modules/tenants/interface/create-tenant-response.dto.ts
+================
+import { Tenant } from '@modules/tenants/domain/tenant.entity';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class CreateTenantResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  static fromDomain(tenant: Tenant) {
+    return {
+      id: tenant.id.value,
+      createdAt: tenant.createdAt,
+      name: tenant.name,
+    };
+  }
+}
+
+================
+File: src/modules/tenants/interface/create-tenant.dto.ts
+================
+import { ApiProperty } from '@nestjs/swagger';
+
+export class CreateTenantDto {
+  @ApiProperty({ example: 'My Company', description: 'Tenant name.' })
+  name!: string;
 }
 
 ================
@@ -1250,83 +1296,43 @@ export abstract class UserRepository {
 }
 
 ================
-File: src/modules/users/infra/prisma-user.repository.ts
-================
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@core/infra/prisma.service';
-import { UserRepository } from '@modules/users/domain/user.repository';
-import { User } from '@modules/users/domain/user.entity';
-import { User as PrismaUser } from '@prisma/client';
-import { PrismaUserMapper } from '@modules/users/infra/user-mapper';
-
-@Injectable()
-export class PrismaUserRepository implements UserRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findById(id: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { id },
-    });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    const bdUser: PrismaUser | null = await this.prisma.user.findUnique({
-      where: { email },
-    });
-    if (!bdUser) return null;
-    return PrismaUserMapper.toDomain(bdUser);
-  }
-
-  async findByName(name: string): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: { name },
-    });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
-  }
-
-  async findAll(): Promise<User[]> {
-    const bdUsers: PrismaUser[] = await this.prisma.user.findMany({
-      where: {},
-    });
-    return bdUsers.map((bdUser) => PrismaUserMapper.toDomain(bdUser));
-  }
-
-  async save(user: User): Promise<User> {
-    const bdUser = PrismaUserMapper.toPersistence(user);
-    await this.prisma.user.upsert({
-      where: { id: bdUser.id },
-      update: bdUser,
-      create: bdUser,
-    });
-    return user;
-  }
-
-  async delete(id: string): Promise<void> {
-    return this.prisma.user.delete({ where: { id } }).then(() => {});
-  }
-}
-
-================
 File: src/modules/users/interface/create-user.dto.ts
 ================
-import { ApiProperty } from '@nestjs/swagger';
+import { PlatformRoles } from '@core/domain/platform-roles.enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  @ApiProperty()
-  tenantId!: string;
+  @ApiPropertyOptional({
+    enum: PlatformRoles,
+    default: PlatformRoles.MEMBER,
+    example: PlatformRoles.MEMBER,
+    description:
+      'The role of the user on the platform. ADMIN represents an user that have transversal platform permissions - non tenant. MEMBER is the default role and represents a tenant user.',
+  })
+  platformRole!: PlatformRoles;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'João da Silva', description: 'User full name.' })
   name!: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 'JoaoDaSilva@email.com',
+    description:
+      'User email. Must be unique per tenant and in a valid name@domain.com format.',
+  })
   email!: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 'imJoao123*',
+    description:
+      'User password. Must be at least 8 characters, contain at least one lowercase letter, one uppercase letter and one number.',
+  })
   password!: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({
+    example: '0001',
+    description:
+      'Represents the internal company code. Can be a badge number, registration ID or other, for example.',
+  })
   code!: string | null;
 }
 
@@ -1394,6 +1400,247 @@ export default tseslint.config(
 );
 
 ================
+File: plop-templates/module/application/create-model.usecase.hbs
+================
+import { Injectable } from '@nestjs/common';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity'
+import { {{pascalCase singularName}}Repository } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.repository'
+
+@Injectable()
+export class Create{{pascalCase singularName}}UseCase{
+  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}Repository) {}
+
+  async execute(input: {
+    ...
+  }): Promise<{{pascalCase singularName}}> {
+    const {{camelCase singularName}} = await this.{{camelCase singularName}}Repository.save(
+      {{pascalCase singularName}}.create({
+        ...
+      })
+    )
+    return {{camelCase singularName}}
+  }
+}
+
+================
+File: plop-templates/module/application/list-models.usecase.hbs
+================
+import { Injectable } from '@nestjs/common';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+import { {{pascalCase singularName}}Repository } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.repository';
+
+@Injectable()
+export class List{{pascalCase singularName}}UseCase {
+  constructor(private readonly {{camelCase singularName}}Repository: {{pascalCase singularName}}Repository) {}
+
+  async execute(): Promise<{{pascalCase singularName}}[]> {
+    return this.{{camelCase singularName}}Repository.findAll(...)
+  }
+}
+
+================
+File: plop-templates/module/domain/module.entity.hbs
+================
+import { Entity, EntityProps } from '@core/domain/entity';
+import { EntityStatus } from '@core/domain/entity-status.enum';
+import { Id } from '@core/domain/id.vo'
+
+interface {{pascalCase singularName}}Props extends EntityProps {
+  ...
+}
+
+interface Create{{pascalCase singularName}}Props extends Omit<
+  {{pascalCase singularName}}Props,
+  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
+> {
+  ...
+}
+
+export class {{pascalCase singularName}} extends Entity<{{pascalCase singularName}}Props> {
+  private constructor(props: {{pascalCase singularName}}Props) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+  static create(props: Create{{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    const now = new Date();
+    const {{camelCase singularName}} = new {{pascalCase singularName}}({
+      ...props,
+      id: Id.generate(),
+      createdAt: now,
+      updatedAt: now,
+      entityStatus: EntityStatus.ACTIVE,
+    })
+    return {{camelCase singularName}};
+  }
+
+  static rehydratate(params: {{pascalCase singularName}}Props): {{pascalCase singularName}} {
+    return new {{pascalCase singularName}}(params);
+  }
+
+  // --------------- Getters ---------------
+  get x(): any {...}
+
+  // --------------- Behaviours ---------------
+  doSomething() {...}
+
+}
+
+================
+File: plop-templates/module/domain/module.repository.hbs
+================
+import { {{ pascalCase singularName }} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+
+export abstract class {{ pascalCase singularName }}Repository {
+  abstract findById(id: string): Promise<{{ pascalCase singularName }} | null>;
+  abstract findAll(): Promise<{{ pascalCase singularName }}[]>;
+  abstract save({{ camelCase singularName }}: {{ pascalCase singularName }}): Promise<{{ pascalCase singularName }}>;
+  abstract delete(id: string): Promise<void>;
+}
+
+================
+File: plop-templates/module/infra/model-mapper.hbs
+================
+import { {{pascalCase singularName}} as Prisma{{pascalCase singularName}} } from '@prisma/client';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+import { Id } from '@core/domain/id.vo';
+import { EntityStatus } from '@core/domain/entity-status.enum';
+
+export class Prisma{{pascalCase singularName}}Mapper {
+  static toDomain(prisma{{pascalCase singularName}}: Prisma{{pascalCase singularName}}): {{pascalCase singularName}} {
+    return {{pascalCase singularName}}.rehydratate({
+      id: Id.from(prisma{{pascalCase singularName}}.id),
+      createdAt: prisma{{pascalCase singularName}}.createdAt,
+      updatedAt: prisma{{pascalCase singularName}}.updatedAt,
+      entityStatus:
+        EntityStatus[prisma{{pascalCase singularName}}.entityStatus as keyof typeof EntityStatus],  
+      ...
+    });
+  }
+
+  static toPersistence({{camelCase singularName}}: {{pascalCase singularName}}): Prisma{{pascalCase singularName}} {
+    return {
+      id: {{camelCase singularName}}.id.value,
+      createdAt: {{camelCase singularName}}.createdAt,
+      updatedAt: {{camelCase singularName}}.updatedAt,
+      entityStatus: {{camelCase singularName}}.entityStatus,
+      ...
+    };
+  }
+}
+
+================
+File: plop-templates/module/infra/prisma-model.repository.hbs
+================
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@core/infra/prisma.service';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+import { Prisma{{pascalCase singularName}}Mapper } from '@modules/{{kebabCase pluralName}}/infra/{{kebabCase singularName}}-mapper';
+import { {{pascalCase singularName}}Repository } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.repository';
+import { {{pascalCase singularName}} as Prisma{{pascalCase singularName}} } from '@prisma/client';
+
+@Injectable()
+export class Prisma{{pascalCase singularName}}Repository implements {{pascalCase singularName}}Repository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<{{pascalCase singularName}} | null> {
+    const prisma{{pascalCase singularName}}: Prisma{{pascalCase singularName}} | null = await this.prisma.{{camelCase singularName}}.findUnique({
+      where: { id },
+    });
+    if (!prisma{{pascalCase singularName}}) return null;
+    return Prisma{{pascalCase singularName}}Mapper.toDomain(prisma{{pascalCase singularName}});
+  }
+
+  async findAll(): Promise<{{pascalCase singularName}}[]> {
+    const prisma{{pascalCase pluralName}}: Prisma{{pascalCase singularName}}[] = await this.prisma.{{camelCase singularName}}.findMany({
+      where: {},
+    });
+    return prisma{{pascalCase pluralName}}.map(({{camelCase singularName}}) => Prisma{{pascalCase singularName}}Mapper.toDomain({{camelCase singularName}}));
+  }
+
+  async save({{camelCase singularName}}: {{pascalCase singularName}}): Promise<{{pascalCase singularName}}> {
+    const prisma{{pascalCase singularName}} = Prisma{{pascalCase singularName}}Mapper.toPersistence({{camelCase singularName}});
+    await this.prisma.{{camelCase singularName}}.upsert({
+      where : { id: prisma{{pascalCase singularName}}.id },
+      update: prisma{{pascalCase singularName}},
+      create: prisma{{pascalCase singularName}},
+    });
+    return {{camelCase singularName}}
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.{{camelCase singularName}}.delete({ where: { id } });
+  }
+
+}
+
+================
+File: plop-templates/module/interface/create-model-response.dto.hbs
+================
+import { ApiProperty } from '@nestjs/swagger';
+import { {{pascalCase singularName}} } from '@modules/{{kebabCase pluralName}}/domain/{{kebabCase singularName}}.entity';
+
+export class Create{{pascalCase singularName}}ResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  @ApiProperty()
+  ...
+
+  static fromDomain({{camelCase singularName}}: {{pascalCase singularName}}): Create{{pascalCase singularName}}ResponseDto {
+    return {
+      id: {{camelCase singularName}}.id.value,
+      createdAt: {{camelCase singularName}}.createdAt,
+      ...
+    };
+  }
+}
+
+================
+File: plop-templates/module/interface/create-model.dto.hbs
+================
+import { ApiProperty } from '@nestjs/swagger';
+
+export class Create{{pascalCase singularName}}Dto {
+  @ApiProperty()
+  ...
+}
+
+================
+File: plop-templates/module/interface/model.controller.hbs
+================
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Create{{pascalCase singularName}}UseCase } from '@modules/{{kebabCase pluralName}}/application/create-{{kebabCase singularName}}.usecase';
+import { List{{pascalCase singularName}}UseCase } from '@modules/{{kebabCase pluralName}}/application/list-{{kebabCase pluralName}}.usecase';
+import { Create{{pascalCase singularName}}Dto } from '@modules/{{kebabCase pluralName}}/interface/create-{{kebabCase singularName}}.dto';
+import { Create{{pascalCase singularName}}ResponseDto } from '@modules/{{kebabCase pluralName}}/interface/create-{{kebabCase singularName}}-response.dto';
+
+@ApiTags('{{camelCase pluralName}}')
+@Controller('{{kebabCase pluralName}}')
+export class {{pascalCase pluralName}}Controller {
+  constructor(
+    private readonly create{{pascalCase singularName}}UseCase: Create{{pascalCase singularName}}UseCase,
+    private readonly list{{pascalCase singularName}}UseCase: List{{pascalCase singularName}}UseCase,
+  ) {}
+
+  @Post()
+  async create(@Body() input: Create{{pascalCase singularName}}Dto): Promise<Create{{pascalCase singularName}}ResponseDto> {
+    const {{camelCase singularName}} = await this.create{{pascalCase singularName}}UseCase.execute(input);
+    return Create{{pascalCase singularName}}ResponseDto.fromDomain({{camelCase singularName}});
+  }
+
+  @Get()
+  async list(): Promise<Create{{pascalCase singularName}}ResponseDto[]> {
+    const {{pascalCase pluralName}} = await this.list{{pascalCase singularName}}UseCase.execute();
+    return {{pascalCase pluralName}}.map(({{camelCase singularName}}) => Create{{pascalCase singularName}}ResponseDto.fromDomain({{camelCase singularName}}));  
+  }
+}
+
+================
 File: prisma.config.ts
 ================
 // This file was generated by Prisma, and assumes you have installed the following:
@@ -1412,92 +1659,228 @@ export default defineConfig({
 });
 
 ================
-File: src/modules/users/domain/user.entity.ts
+File: src/core/domain/entity.ts
 ================
 import { Id } from '@core/domain/id.vo';
-import { Email } from '@core/domain/email.vo';
-import { Entity, EntityProps } from '@core/domain/entity';
-import { EntityStatus } from '@core/domain/entity-status.enum';
+import { SystemState } from './system-state.enum';
 
-interface UserProps extends EntityProps {
-  name: string;
-  email: Email;
-  passwordHash: string;
-  code: string | null;
-}
+export type EntityProps = {
+  id: Id;
+  systemState: SystemState;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
-interface CreateUserProps extends Omit<
-  UserProps,
-  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
-> {
-  passwordHash: string;
-}
+export type MutableEntityProps<Props> = Omit<
+  Props,
+  'id' | 'createdAt' | 'updatedAt' | 'systemState'
+>;
 
-export class User extends Entity<UserProps> {
-  private constructor(props: UserProps) {
-    super(props);
-  }
+export type CreateEntityProps<Props> = Omit<
+  Props,
+  'id' | 'createdAt' | 'updatedAt' | 'systemState'
+>;
 
-  // --------------- Factory Methods ---------------
+export abstract class Entity<Props extends EntityProps> {
+  protected readonly _props: Props;
 
-  static create(props: CreateUserProps): User {
-    const now = new Date();
-    const user = new User({
-      ...props,
-      id: Id.generate(),
-      name: props.name,
-      createdAt: now,
-      updatedAt: now,
-      entityStatus: EntityStatus.ACTIVE,
-      passwordHash: props.passwordHash, // TODO: implement hash
-    });
-    return user;
-  }
-
-  static rehydrate(props: UserProps): User {
-    return new User(props);
+  protected constructor(props: Props) {
+    this._props = props;
   }
 
   // --------------- Getters ---------------
-
-  get name(): string {
-    return this._props.name;
+  protected get props(): Readonly<Props> {
+    return this._props;
   }
 
-  get email(): Email {
-    return this._props.email;
+  get id(): Id {
+    return this._props.id;
   }
 
-  get passwordHash(): string {
-    return this._props.passwordHash;
+  get systemState(): SystemState {
+    return this._props.systemState;
   }
 
-  get code(): string | null {
-    return this._props.code;
+  get createdAt(): Date {
+    return this._props.createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._props.updatedAt;
+  }
+
+  // --------------- Setters ---------------
+  protected set<K extends keyof MutableEntityProps<Props>>(
+    key: K,
+    value: MutableEntityProps<Props>[K],
+  ): void {
+    this._props[key] = value;
+    this._touch();
   }
 
   // --------------- Behaviours ---------------
-  changeName(newName: string) {
-    this._props.name = newName;
-    this.touch();
+  activate() {
+    this._props.systemState = SystemState.ACTIVE;
+    this._touch();
   }
 
-  changeEmail(newEmail: Email) {
-    this._props.email = newEmail;
-    this.touch();
+  lock() {
+    this._props.systemState = SystemState.LOCKED;
+    this._touch();
   }
 
-  changePasswordHash(newPasswordHash: string) {
-    this._props.passwordHash = newPasswordHash;
-    this.touch();
+  hide() {
+    this._props.systemState = SystemState.HIDDEN;
+    this._touch();
   }
 
-  changeCode(newCode: string) {
-    this._props.code = newCode;
-    this.touch();
+  ensureNotLocked() {
+    if (this._props.systemState === SystemState.LOCKED) {
+      throw new Error('Entity is locked');
+    }
   }
 
   // --------------- Internal Methods ---------------
+  protected _touch() {
+    this._props.updatedAt = new Date();
+  }
+}
+
+================
+File: src/core/domain/id.vo.ts
+================
+import { randomUUID } from 'crypto';
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export class Id {
+  private constructor(private readonly _value: string) {}
+
+  static generate(): Id {
+    return new Id(randomUUID());
+  }
+
+  static from(value: string): Id {
+    if (!value || !UUID_REGEX.test(value)) {
+      throw new Error('Invalid UUID');
+    }
+    return new Id(value);
+  }
+
+  get value(): string {
+    return this._value;
+  }
+
+  toString(): string {
+    return this._value;
+  }
+
+  toJSON(): string {
+    return this._value;
+  }
+
+  equals(other?: Id): boolean {
+    if (!other) return false;
+    return this._value === other._value;
+  }
+}
+
+================
+File: src/modules/tenants/interface/tenant.controller.ts
+================
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { CreateTenantUseCase } from '../application/create-tenant.usecase';
+import { ListTenantsUseCase } from '../application/list-tenants.usecase';
+import { CreateTenantDto } from './create-tenant.dto';
+import { CreateTenantResponseDto } from './create-tenant-response.dto';
+
+@ApiTags('Tenants')
+@Controller('tenants')
+export class TenantsController {
+  constructor(
+    private readonly createTenantUseCase: CreateTenantUseCase,
+    private readonly listTenantsUseCase: ListTenantsUseCase,
+  ) {}
+
+  @Post()
+  @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
+  async create(@Body() dto: CreateTenantDto): Promise<CreateTenantResponseDto> {
+    const tenant = await this.createTenantUseCase.execute(dto);
+    return CreateTenantResponseDto.fromDomain(tenant);
+  }
+
+  @Get()
+  async list(): Promise<CreateTenantResponseDto[]> {
+    const tenants = await this.listTenantsUseCase.execute();
+    return tenants.map((tenant) => CreateTenantResponseDto.fromDomain(tenant));
+  }
+}
+
+================
+File: src/modules/tenants/tenant.module.ts
+================
+import { PrismaModule } from '@core/infra/prisma.module';
+import { Module } from '@nestjs/common';
+import { TenantsController } from './interface/tenant.controller';
+import { CreateTenantUseCase } from './application/create-tenant.usecase';
+import { ListTenantsUseCase } from './application/list-tenants.usecase';
+import { TenantRepository } from './domain/tenant.repository';
+import { PrismaTenantRepository } from './infra/prisma-tenant.repository';
+
+@Module({
+  imports: [PrismaModule],
+
+  controllers: [TenantsController],
+
+  providers: [
+    CreateTenantUseCase,
+    ListTenantsUseCase,
+    { provide: TenantRepository, useClass: PrismaTenantRepository },
+  ],
+
+  exports: [TenantRepository],
+})
+export class TenantModule {}
+
+================
+File: src/modules/users/application/create-user.usecase.ts
+================
+import { Email } from '@core/domain/email.vo';
+import { PlatformRoles } from '@core/domain/platform-roles.enum';
+import { User } from '@modules/users/domain/user.entity';
+import { UserRepository } from '@modules/users/domain/user.repository';
+import { PasswordHasher } from '@modules/auth/domain/password-hasher';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class CreateUserUseCase {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly passwordHasher: PasswordHasher,
+  ) {}
+
+  async execute(input: {
+    email: string;
+    password: string;
+    name: string;
+    platformRole: PlatformRoles | null;
+    code: string | null;
+  }): Promise<User> {
+    const passwordHash = await this.passwordHasher.hash(input.password);
+    const user = await this.userRepository.save(
+      User.create({
+        platformRole: input.platformRole || PlatformRoles.MEMBER,
+        name: input.name,
+        email: Email.from(input.email),
+        passwordHash: passwordHash,
+        code: input.code?.toString() || null,
+      }),
+    );
+
+    return user;
+  }
 }
 
 ================
@@ -1516,106 +1899,65 @@ export class UserAlreadyInactiveError extends Error {
 }
 
 ================
-File: src/modules/users/infra/user-mapper.ts
+File: src/modules/users/infra/prisma-user.repository.ts
 ================
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@core/infra/prisma.service';
+import { User } from '@modules/users/domain/user.entity';
+import { PrismaUserMapper } from '@modules/users/infra/user-mapper';
+import { UserRepository } from '@modules/users/domain/user.repository';
 import { User as PrismaUser } from '@prisma/client';
-import { User } from '@modules/users/domain/user.entity';
-import { Email } from '@core/domain/email.vo';
-import { Id } from '@core/domain/id.vo';
-import { EntityStatus } from '@core/domain/entity-status.enum';
 
-export class PrismaUserMapper {
-  static toDomain(bdUser: PrismaUser): User {
-    return User.rehydrate({
-      id: Id.from(bdUser.id),
-      createdAt: bdUser.createdAt,
-      updatedAt: bdUser.updatedAt,
-      entityStatus:
-        EntityStatus[bdUser.entityStatus as keyof typeof EntityStatus],
-      name: bdUser.name,
-      email: Email.from(bdUser.email),
-      passwordHash: bdUser.passwordHash,
-      code: bdUser.code,
+@Injectable()
+export class PrismaUserRepository implements UserRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<User | null> {
+    const prismaUser: PrismaUser | null = await this.prisma.user.findUnique({
+      where: { id },
     });
+    if (!prismaUser) return null;
+    return PrismaUserMapper.toDomain(prismaUser);
   }
 
-  static toPersistence(user: User) {
-    return {
-      id: user.id.value,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      entityStatus: user.entityStatus,
-      name: user.name,
-      email: user.email.value,
-      passwordHash: user.passwordHash,
-      code: user.code,
-    };
-  }
-}
-
-================
-File: src/modules/users/interface/create-user-response.dto.ts
-================
-import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@modules/users/domain/user.entity';
-
-export class CreateUserResponseDto {
-  @ApiProperty()
-  id!: string;
-
-  @ApiProperty()
-  name!: string;
-
-  @ApiProperty()
-  email!: string;
-
-  @ApiProperty({ required: false })
-  code!: string | null;
-
-  @ApiProperty()
-  createdAt!: Date;
-
-  static fromDomain(user: User): CreateUserResponseDto {
-    return {
-      id: user.id.value,
-      name: user.name,
-      email: user.email.value,
-      code: user.code,
-      createdAt: user.createdAt,
-    };
-  }
-}
-
-================
-File: src/modules/users/interface/users.controller.ts
-================
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { CreateUserUseCase } from '../application/create-user.usecase';
-import { ListUsersUseCase } from '../application/list-users.usecase';
-import { CreateUserDto } from '@modules/users/interface/create-user.dto';
-import { CreateUserResponseDto } from '@modules/users/interface/create-user-response.dto';
-import { ApiTags } from '@nestjs/swagger';
-
-@ApiTags('Users')
-@Controller('users')
-export class UsersController {
-  constructor(
-    private readonly createUserUseCase: CreateUserUseCase,
-    private readonly listUsersUseCase: ListUsersUseCase,
-  ) {}
-
-  @Post()
-  async create(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
-    const user = await this.createUserUseCase.execute(dto);
-    return CreateUserResponseDto.fromDomain(user);
+  async findByEmail(email: string): Promise<User | null> {
+    const prismaUser: PrismaUser | null = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!prismaUser) return null;
+    return PrismaUserMapper.toDomain(prismaUser);
   }
 
-  @Get(':tenantId')
-  async list(
-    @Param('tenantId') tenantId: string,
-  ): Promise<CreateUserResponseDto[]> {
-    const users = await this.listUsersUseCase.execute(tenantId);
-    return users.map((user) => CreateUserResponseDto.fromDomain(user));
+  async findByName(name: string): Promise<User[]> {
+    const prismaUsers: PrismaUser[] = await this.prisma.user.findMany({
+      where: { name },
+    });
+    return prismaUsers.map((prismaUser) =>
+      PrismaUserMapper.toDomain(prismaUser),
+    );
+  }
+
+  async findAll(): Promise<User[]> {
+    const prismaUsers: PrismaUser[] = await this.prisma.user.findMany({
+      where: {},
+    });
+    return prismaUsers.map((prismaUser) =>
+      PrismaUserMapper.toDomain(prismaUser),
+    );
+  }
+
+  async save(user: User): Promise<User> {
+    const prismaUser = PrismaUserMapper.toPersistence(user);
+    await this.prisma.user.upsert({
+      where: { id: prismaUser.id },
+      update: prismaUser,
+      create: prismaUser,
+    });
+    return user;
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.prisma.user.delete({ where: { id } }).then(() => {});
   }
 }
 
@@ -1859,6 +2201,205 @@ module.exports = function (plop) {
 };
 
 ================
+File: src/modules/users/domain/user.entity.ts
+================
+import { Id } from '@core/domain/id.vo';
+import { Email } from '@core/domain/email.vo';
+import { CreateEntityProps, Entity, EntityProps } from '@core/domain/entity';
+import { SystemState } from '@core/domain/system-state.enum';
+import { PlatformRoles } from '@core/domain/platform-roles.enum';
+
+type UserProps = EntityProps & {
+  platformRole: PlatformRoles;
+  name: string;
+  email: Email;
+  passwordHash: string;
+  code: string | null;
+};
+
+type CreateUserProps = CreateEntityProps<UserProps>;
+
+export class User extends Entity<UserProps> {
+  private constructor(props: UserProps) {
+    super(props);
+  }
+
+  // --------------- Factory Methods ---------------
+
+  static create(props: CreateUserProps): User {
+    const now = new Date();
+    const user = new User({
+      ...props,
+      id: Id.generate(),
+      platformRole: props.platformRole,
+      name: props.name,
+      createdAt: now,
+      updatedAt: now,
+      systemState: SystemState.ACTIVE,
+      passwordHash: props.passwordHash,
+    });
+    return user;
+  }
+
+  static rehydrate(props: UserProps): User {
+    return new User(props);
+  }
+
+  // --------------- Getters ---------------
+  get platformRole(): PlatformRoles {
+    return this._props.platformRole;
+  }
+
+  get name(): string {
+    return this._props.name;
+  }
+
+  get email(): Email {
+    return this._props.email;
+  }
+
+  get passwordHash(): string {
+    return this._props.passwordHash;
+  }
+
+  get code(): string | null {
+    return this._props.code;
+  }
+
+  // --------------- Behaviours ---------------
+  changeName(newName: string) {
+    this._props.name = newName;
+    this._touch();
+  }
+
+  changeEmail(newEmail: Email) {
+    this._props.email = newEmail;
+    this._touch();
+  }
+
+  changePasswordHash(newPasswordHash: string) {
+    this._props.passwordHash = newPasswordHash;
+    this._touch();
+  }
+
+  changeCode(newCode: string) {
+    this._props.code = newCode;
+    this._touch();
+  }
+
+  // --------------- Internal Methods ---------------
+}
+
+================
+File: src/modules/users/infra/user-mapper.ts
+================
+import { User as PrismaUser } from '@prisma/client';
+import { User } from '@modules/users/domain/user.entity';
+import { Id } from '@core/domain/id.vo';
+import { SystemState } from '@core/domain/system-state.enum';
+import { Email } from '@core/domain/email.vo';
+import { PlatformRoles } from '@core/domain/platform-roles.enum';
+
+export class PrismaUserMapper {
+  static toDomain(prismaUser: PrismaUser): User {
+    return User.rehydrate({
+      id: Id.from(prismaUser.id),
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
+      systemState:
+        SystemState[prismaUser.systemState as keyof typeof SystemState],
+      platformRole:
+        PlatformRoles[prismaUser.platformRole as keyof typeof PlatformRoles],
+      name: prismaUser.name,
+      email: Email.from(prismaUser.email),
+      passwordHash: prismaUser.passwordHash,
+      code: prismaUser.code,
+    });
+  }
+
+  static toPersistence(user: User) {
+    return {
+      id: user.id.value,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      systemState: user.systemState,
+      platformRole: user.platformRole,
+      name: user.name,
+      email: user.email.value,
+      passwordHash: user.passwordHash,
+      code: user.code,
+    };
+  }
+}
+
+================
+File: src/modules/users/interface/create-user-response.dto.ts
+================
+import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@modules/users/domain/user.entity';
+
+export class CreateUserResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty({ required: false })
+  code!: string | null;
+
+  static fromDomain(user: User): CreateUserResponseDto {
+    return {
+      id: user.id.value,
+      createdAt: user.createdAt,
+      name: user.name,
+      email: user.email.value,
+      code: user.code,
+    };
+  }
+}
+
+================
+File: src/modules/users/interface/users.controller.ts
+================
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { CreateUserUseCase } from '@modules/users/application/create-user.usecase';
+import { ListUsersUseCase } from '@modules/users/application/list-users.usecase';
+import { CreateUserDto } from '@modules/users/interface/create-user.dto';
+import { CreateUserResponseDto } from '@modules/users/interface/create-user-response.dto';
+
+@ApiTags('Users')
+@Controller('users')
+export class UsersController {
+  constructor(
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly listUsersUseCase: ListUsersUseCase,
+  ) {}
+
+  @Post()
+  @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
+  async create(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
+    const user = await this.createUserUseCase.execute(dto);
+    return CreateUserResponseDto.fromDomain(user);
+  }
+
+  @Get(':tenantId') // TODO Find a user friendly way to get this param. The way it is now appears that it's being passed a userId instead of a tenantId.
+  async list(
+    @Param('tenantId') tenantId: string,
+  ): Promise<CreateUserResponseDto[]> {
+    const users = await this.listUsersUseCase.execute(tenantId);
+    return users.map((user) => CreateUserResponseDto.fromDomain(user));
+  }
+}
+
+================
 File: src/modules/users/users.module.ts
 ================
 import { Module } from '@nestjs/common';
@@ -1871,9 +2412,10 @@ import { ListUsersUseCase } from './application/list-users.usecase';
 
 import { UserRepository } from './domain/user.repository';
 import { PrismaUserRepository } from './infra/prisma-user.repository';
+import { AuthModule } from '@modules/auth/auth.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthModule],
 
   controllers: [UsersController],
 
@@ -1924,6 +2466,7 @@ File: package.json
     "@nestjs/swagger": "^11.2.6",
     "@prisma/adapter-better-sqlite3": "^7.4.1",
     "@prisma/client": "^7.4.1",
+    "bcrypt": "^6.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -1933,6 +2476,7 @@ File: package.json
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
@@ -2001,17 +2545,21 @@ void bootstrap();
 File: src/app.module.ts
 ================
 import { Module } from '@nestjs/common';
+import { MembershipModule } from './modules/memberships/membership.module';
 import { PrismaModule } from 'src/core/infra/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '@modules/users/users.module';
 import { TenantModule } from '@modules/tenants/tenant.module';
+import { AuthModule } from '@modules/auth/auth.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,
-    TenantModule,
+    AuthModule,
     UsersModule,
+    TenantModule,
+    MembershipModule,
+    PrismaModule,
   ],
 })
 export class AppModule {}
@@ -2034,47 +2582,50 @@ datasource db {
   provider = "sqlite"
 }
 
-enum EntityStatus {
+enum SystemState {
   ACTIVE
   LOCKED
   HIDDEN
 }
 
 model Tenant {
-  id           String       @id @default(uuid())
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  entityStatus EntityStatus @default(ACTIVE)
-  name         String
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+  name        String
 
   memberships Membership[]
+}
+
+enum PlatformRoles {
+  ADMIN
+  MEMBER
 }
 
 model User {
-  id           String       @id @default(uuid())
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  entityStatus EntityStatus @default(ACTIVE)
+  id           String        @id @default(uuid())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  systemState  SystemState   @default(ACTIVE)
+  platformRole PlatformRoles @default(MEMBER)
   name         String
-  email        String       @unique
+  email        String        @unique
   passwordHash String
-  code         String?      @unique
+  code         String?       @unique
 
   memberships Membership[]
 }
 
-enum MembershipStatus {
-  ACTIVE
-  INACTIVE
-}
-
 model Membership {
-  id       String           @id @default(uuid())
-  userId   String
-  user     User             @relation(fields: [userId], references: [id])
-  tenantId String
-  tenant   Tenant           @relation(fields: [tenantId], references: [id])
-  status   MembershipStatus @default(ACTIVE)
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
 }
 
 

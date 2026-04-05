@@ -1,4 +1,4 @@
-import { EntityStatus } from '@core/domain/entity-status.enum';
+import { SystemState } from '@core/domain/system-state.enum';
 import { Id } from '@core/domain/id.vo';
 import { Tenant } from '@modules/tenants/domain/tenant.entity';
 import { Tenant as PrismaTenant } from '@prisma/client';
@@ -9,8 +9,8 @@ export class TenantMapper {
       id: Id.from(bdTenant.id),
       createdAt: bdTenant.createdAt,
       updatedAt: bdTenant.updatedAt,
-      entityStatus:
-        EntityStatus[bdTenant.entityStatus as keyof typeof EntityStatus],
+      systemState:
+        SystemState[bdTenant.systemState as keyof typeof SystemState],
       name: bdTenant.name,
     });
   }
@@ -20,7 +20,7 @@ export class TenantMapper {
       id: tenant.id.value,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt,
-      entityStatus: tenant.entityStatus,
+      systemState: tenant.systemState,
       name: tenant.name,
     };
   }

@@ -1,21 +1,18 @@
 import { Id } from '@core/domain/id.vo';
 import { Email } from '@core/domain/email.vo';
-import { Entity, EntityProps } from '@core/domain/entity';
-import { EntityStatus } from '@core/domain/entity-status.enum';
+import { CreateEntityProps, Entity, EntityProps } from '@core/domain/entity';
+import { SystemState } from '@core/domain/system-state.enum';
+import { PlatformRoles } from '@core/domain/platform-roles.enum';
 
-interface UserProps extends EntityProps {
+type UserProps = EntityProps & {
+  platformRole: PlatformRoles;
   name: string;
   email: Email;
   passwordHash: string;
   code: string | null;
-}
+};
 
-interface CreateUserProps extends Omit<
-  UserProps,
-  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
-> {
-  passwordHash: string;
-}
+type CreateUserProps = CreateEntityProps<UserProps>;
 
 export class User extends Entity<UserProps> {
   private constructor(props: UserProps) {
@@ -29,11 +26,12 @@ export class User extends Entity<UserProps> {
     const user = new User({
       ...props,
       id: Id.generate(),
+      platformRole: props.platformRole,
       name: props.name,
       createdAt: now,
       updatedAt: now,
-      entityStatus: EntityStatus.ACTIVE,
-      passwordHash: props.passwordHash, // TODO: implement hash
+      systemState: SystemState.ACTIVE,
+      passwordHash: props.passwordHash,
     });
     return user;
   }
@@ -43,6 +41,9 @@ export class User extends Entity<UserProps> {
   }
 
   // --------------- Getters ---------------
+  get platformRole(): PlatformRoles {
+    return this._props.platformRole;
+  }
 
   get name(): string {
     return this._props.name;
@@ -63,22 +64,22 @@ export class User extends Entity<UserProps> {
   // --------------- Behaviours ---------------
   changeName(newName: string) {
     this._props.name = newName;
-    this.touch();
+    this._touch();
   }
 
   changeEmail(newEmail: Email) {
     this._props.email = newEmail;
-    this.touch();
+    this._touch();
   }
 
   changePasswordHash(newPasswordHash: string) {
     this._props.passwordHash = newPasswordHash;
-    this.touch();
+    this._touch();
   }
 
   changeCode(newCode: string) {
     this._props.code = newCode;
-    this.touch();
+    this._touch();
   }
 
   // --------------- Internal Methods ---------------

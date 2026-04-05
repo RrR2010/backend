@@ -10,48 +10,57 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
-enum EntityStatus {
+enum SystemState {
   ACTIVE
   LOCKED
   HIDDEN
 }
 
 model Tenant {
-  id           String       @id @default(uuid())
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  entityStatus EntityStatus @default(ACTIVE)
-  name         String
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+  name        String
 
   memberships Membership[]
+}
+
+enum PlatformRoles {
+  ADMIN
+  MEMBER
 }
 
 model User {
-  id           String       @id @default(uuid())
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  entityStatus EntityStatus @default(ACTIVE)
+  id           String        @id @default(uuid())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  systemState  SystemState   @default(ACTIVE)
+  platformRole PlatformRoles @default(MEMBER)
   name         String
-  email        String       @unique
+  email        String        @unique
   passwordHash String
-  code         String?      @unique
+  code         String?       @unique
 
   memberships Membership[]
 }
 
-enum MembershipStatus {
-  ACTIVE
-  INACTIVE
+enum Role {
+  ADMIN
+  USER
 }
 
 model Membership {
-  id       String           @id @default(uuid())
-  userId   String
-  user     User             @relation(fields: [userId], references: [id])
-  tenantId String
-  tenant   Tenant           @relation(fields: [tenantId], references: [id])
-  status   MembershipStatus @default(ACTIVE)
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  roles       Role[]
 }

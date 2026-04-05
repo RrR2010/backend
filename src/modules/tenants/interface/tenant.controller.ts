@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateTenantUseCase } from '../application/create-tenant.usecase';
 import { ListTenantsUseCase } from '../application/list-tenants.usecase';
 import { CreateTenantDto } from './create-tenant.dto';
@@ -14,6 +14,7 @@ export class TenantsController {
   ) {}
 
   @Post()
+  @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   async create(@Body() dto: CreateTenantDto): Promise<CreateTenantResponseDto> {
     const tenant = await this.createTenantUseCase.execute(dto);
     return CreateTenantResponseDto.fromDomain(tenant);

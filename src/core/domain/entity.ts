@@ -1,16 +1,21 @@
 import { Id } from '@core/domain/id.vo';
-import { EntityStatus } from './entity-status.enum';
+import { SystemState } from './system-state.enum';
 
-export interface EntityProps {
+export type EntityProps = {
   id: Id;
-  entityStatus: EntityStatus;
+  systemState: SystemState;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
 export type MutableEntityProps<Props> = Omit<
   Props,
-  'id' | 'createdAt' | 'updatedAt' | 'entityStatus'
+  'id' | 'createdAt' | 'updatedAt' | 'systemState'
+>;
+
+export type CreateEntityProps<Props> = Omit<
+  Props,
+  'id' | 'createdAt' | 'updatedAt' | 'systemState'
 >;
 
 export abstract class Entity<Props extends EntityProps> {
@@ -29,8 +34,8 @@ export abstract class Entity<Props extends EntityProps> {
     return this._props.id;
   }
 
-  get entityStatus(): EntityStatus {
-    return this._props.entityStatus;
+  get systemState(): SystemState {
+    return this._props.systemState;
   }
 
   get createdAt(): Date {
@@ -47,33 +52,33 @@ export abstract class Entity<Props extends EntityProps> {
     value: MutableEntityProps<Props>[K],
   ): void {
     this._props[key] = value;
-    this.touch();
+    this._touch();
   }
 
   // --------------- Behaviours ---------------
   activate() {
-    this._props.entityStatus = EntityStatus.ACTIVE;
-    this.touch();
+    this._props.systemState = SystemState.ACTIVE;
+    this._touch();
   }
 
   lock() {
-    this._props.entityStatus = EntityStatus.LOCKED;
-    this.touch();
+    this._props.systemState = SystemState.LOCKED;
+    this._touch();
   }
 
   hide() {
-    this._props.entityStatus = EntityStatus.HIDDEN;
-    this.touch();
+    this._props.systemState = SystemState.HIDDEN;
+    this._touch();
   }
 
   ensureNotLocked() {
-    if (this._props.entityStatus === EntityStatus.LOCKED) {
+    if (this._props.systemState === SystemState.LOCKED) {
       throw new Error('Entity is locked');
     }
   }
 
   // --------------- Internal Methods ---------------
-  protected touch() {
+  protected _touch() {
     this._props.updatedAt = new Date();
   }
 }
