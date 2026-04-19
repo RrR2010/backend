@@ -34,7 +34,7 @@ Links and IDs must match canonical filenames exactly.
 | TASK_005_008 | [[EPIC_005]] | Implement AuthorizationGuard (two-level)             | backlog | dev      | high     | [[tasks/TASK_005_008]] |
 | TASK_005_009 | [[EPIC_005]] | Implement tenant-level permission verification       | backlog | dev      | high     | [[tasks/TASK_005_009]] |
 | TASK_005_010 | [[EPIC_005]] | Create PermissionResolver (platform + tenant)       | backlog | dev      | high     | [[tasks/TASK_005_010]] |
-| TASK_005_011 | [[EPIC_005]] | Apply authorization guards to controllers            | backlog | dev      | high     | [[tasks/TASK_005_011]] |
+| TASK_005_011 | [[EPIC_005]] | Separate Platform and Tenant Authorization Paths     | done    | dev      | high     | [[tasks/TASK_005_011]] |
 | TASK_005_012 | [[EPIC_005]] | Seed platform and tenant permissions                 | backlog | dev      | high     | [[tasks/TASK_005_012]] |
 | TASK_005_013 | [[EPIC_005]] | Seed platform and tenant role profiles                | backlog | dev      | high     | [[tasks/TASK_005_013]] |
 | TASK_005_014 | [[EPIC_005]] | Unit tests for authorization                         | backlog | dev      | high     | [[tasks/TASK_005_014]] |

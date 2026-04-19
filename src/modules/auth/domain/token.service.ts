@@ -1,6 +1,3 @@
-import { PlatformRole } from '@core/domain/platform-role.enum';
-import { TenantRole } from '@core/domain/tenant-role.enum';
-
 export interface PreAuthPayload {
   sub: string; // user ID
   type: 'pre-auth';
@@ -10,9 +7,7 @@ export interface PreAuthPayload {
 
 export interface AuthTokenPayload {
   sub: string; // user ID
-  tenantId?: string; // undefined = platform scope
-  platformRoles?: PlatformRole[]; // for platform scope
-  tenantRoles?: TenantRole[]; // for tenant scope
+  tenantId?: string; // tenant ID (optional for platform scope)
   iat?: number;
   exp?: number;
 }
