@@ -41,8 +41,8 @@ export class PermissionsGuard implements CanActivate {
     );
 
     if (!permissions || permissions.length === 0) {
-      // No permissions required - allow
-      return true;
+      // No explicit permissions - reject (fail-safe default)
+      throw new ForbiddenException('No explicit permissions defined - use @CheckPermissions');
     }
 
     // Resolve scope: platform (tenantId missing) or tenant
