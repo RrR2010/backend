@@ -38,7 +38,7 @@ Links and IDs must match canonical filenames exactly.
 | TASK_005_012 | [[EPIC_005]] | Seed platform and tenant permissions                 | backlog | dev      | high     | [[tasks/TASK_005_012]] |
 | TASK_005_013 | [[EPIC_005]] | Seed platform and tenant role profiles                | backlog | dev      | high     | [[tasks/TASK_005_013]] |
 | TASK_005_014 | [[EPIC_005]] | Unit tests for authorization                         | done    | dev      | high     | [[tasks/TASK_005_014]] |
-| TASK_005_015 | [[EPIC_005]] | Implement @Require decorator for permissions          | backlog | dev      | high     | [[tasks/TASK_005_015]] |
+| TASK_005_015 | [[EPIC_005]] | Implement @Require decorator for permissions          | done    | dev      | high     | [[tasks/TASK_005_015]] |
 | TASK_005_016 | [[EPIC_005]] | Modify login.usecase.ts to support platform users   | backlog | dev      | high     | [[tasks/TASK_005_016]] |
 | TASK_005_017 | [[EPIC_005]] | Update LoginResponseDto with userType field          | backlog | dev      | high     | [[tasks/TASK_005_017]] |
 | TASK_005_018 | [[EPIC_005]] | Extend token.service.ts for platform token generation| backlog | dev      | high     | [[tasks/TASK_005_018]] |

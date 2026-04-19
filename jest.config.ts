@@ -9,5 +9,9 @@ module.exports = {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@core/(.*)$': '<rootDir>/src/core/$1',
   },
+  collectCoverageFrom: [
+    '**/*.(t|j)s',
+  ],
+  coverageDirectory: './coverage',
   testEnvironment: 'node',
 };
