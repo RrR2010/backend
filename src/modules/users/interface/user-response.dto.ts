@@ -11,15 +11,11 @@ export class UserResponseDto {
   @ApiProperty()
   email!: string;
 
-  @ApiProperty({ enum: ['ADMIN', 'MEMBER', 'NONE'], isArray: true })
-  platformRoles!: string[];
-
   static fromDomain(user: User): UserResponseDto {
     return {
       id: user.id.value,
       name: user.name,
       email: user.email.value,
-      platformRoles: user.platformRoles,
     };
   }
 }

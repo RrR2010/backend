@@ -10,7 +10,6 @@ export class MeUseCase {
     private readonly userRepository: UserRepository,
     private readonly tenantRepository: TenantRepository,
   ) {}
-
   async execute(userId: string, tenantId: string): Promise<MeUseCaseResult> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
