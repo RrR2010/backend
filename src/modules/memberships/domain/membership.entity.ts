@@ -10,18 +10,18 @@ import { Id } from '@core/domain/id.vo';
  * Contains tenant-level roles (TenantRole) that define permissions within the tenant.
  *
  * Canonical Vocabulary:
- * - role: TenantRole (ADMIN, USER) - per-tenant scope
+ * - tenantRoles: TenantRole[] (ADMIN, USER) - per-tenant scope
  * - scope: tenant (vs platform for PlatformRole)
  */
 
 type MembershipProps = EntityProps & {
   userId: string;
   tenantId: string;
-  roles: TenantRole[];
+  tenantRoles: TenantRole[];
 };
 
 type CreateMembershipProps = CreateEntityProps<MembershipProps> & {
-  roles?: TenantRole[];
+  tenantRoles?: TenantRole[];
 };
 
 export class Membership extends Entity<MembershipProps> {
@@ -38,7 +38,7 @@ export class Membership extends Entity<MembershipProps> {
       createdAt: now,
       updatedAt: now,
       systemState: SystemState.ACTIVE,
-      roles: props.roles || [TenantRole.USER],
+      tenantRoles: props.tenantRoles || [TenantRole.USER],
     });
     return membership;
   }
@@ -56,8 +56,8 @@ export class Membership extends Entity<MembershipProps> {
     return this._props.tenantId;
   }
 
-  get roles(): TenantRole[] {
-    return this._props.roles;
+  get tenantRoles(): TenantRole[] {
+    return this._props.tenantRoles;
   }
 
   // --------------- Behaviours ---------------

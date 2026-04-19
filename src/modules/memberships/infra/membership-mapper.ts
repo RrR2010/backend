@@ -8,7 +8,7 @@ import { SystemState } from '@core/domain/system-state.enum';
 
 export class PrismaMembershipMapper {
   static toDomain(prismaMembership: PrismaMembership): Membership {
-    const roles = (prismaMembership.roles as unknown as TenantRole[]) || [TenantRole.USER];
+    const tenantRoles = (prismaMembership.roles as unknown as TenantRole[]) || [TenantRole.USER];
 
     return Membership.rehydratate({
       id: Id.from(prismaMembership.id),
@@ -18,7 +18,7 @@ export class PrismaMembershipMapper {
         SystemState[prismaMembership.systemState as keyof typeof SystemState],
       userId: prismaMembership.userId,
       tenantId: prismaMembership.tenantId,
-      roles,
+      tenantRoles,
     });
   }
 
@@ -30,7 +30,7 @@ export class PrismaMembershipMapper {
       systemState: membership.systemState,
       userId: membership.userId,
       tenantId: membership.tenantId,
-      roles: membership.roles,
+      roles: membership.tenantRoles,
     };
   }
 }

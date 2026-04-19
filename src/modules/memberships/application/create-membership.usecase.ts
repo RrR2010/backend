@@ -14,7 +14,7 @@ export class CreateMembershipUseCase {
       Membership.create({
         userId: input.userId,
         tenantId: input.tenantId,
-        roles: [],
+        tenantRoles: [],
       }),
     );
     return membership;
