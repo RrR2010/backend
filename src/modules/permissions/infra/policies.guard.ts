@@ -4,11 +4,18 @@
  * CASL-based guard for permission enforcement.
  * Implements TASK_005_009 for permission checking using AbilityFactory.
  */
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { AbilityFactory } from '@modules/permissions/application/ability.factory';
 import { Action } from '@core/domain/casl/actions.enum';
 import { Subject } from '@core/domain/casl/subjects.enum';
+import { AuthTokenPayload } from '@modules/auth/domain/token.service';
 
 export const PERMISSIONS_KEY = 'permissions';
 
@@ -27,22 +34,23 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest() as Request;
+    const user = request.user as AuthTokenPayload;
 
     if (!user) {
       throw new ForbiddenException('Authentication required');
     }
 
     // Extract action and subject from metadata
-    const permissions = this.reflector.get<{ action: Action; subject: Subject }[]>(
-      PERMISSIONS_KEY,
-      context.getHandler(),
-    );
+    const permissions = this.reflector.get<
+      { action: Action; subject: Subject }[]
+    >(PERMISSIONS_KEY, context.getHandler());
 
     if (!permissions || permissions.length === 0) {
       // No explicit permissions - reject (fail-safe default)
-      throw new ForbiddenException('No explicit permissions defined - use @CheckPermissions');
+      throw new ForbiddenException(
+        'No explicit permissions defined - use @CheckPermissions',
+      );
     }
 
     // Resolve scope: platform (tenantId missing) or tenant
