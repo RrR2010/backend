@@ -28,7 +28,7 @@ export class SelectTenantUseCase {
     const accessToken = this.tokenService.sign({
       sub: userId,
       tenantId: tenantId,
-      roles: membership.tenantRoles,
+      tenantRoles: membership.tenantRoles,
     });
 
     return { accessToken };

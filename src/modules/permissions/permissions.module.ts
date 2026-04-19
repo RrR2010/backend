@@ -6,15 +6,16 @@
  */
 import { Module } from '@nestjs/common';
 import { AbilityFactory } from './application/ability.factory';
+import { PermissionsGuard } from './infra/policies.guard';
 
 /**
  * Permissions Module
  *
- * Registers CASL ability factory as a provider for
+ * Registers CASL ability factory and guard as providers for
  * authorization throughout the application.
  */
 @Module({
-  providers: [AbilityFactory],
-  exports: [AbilityFactory],
+  providers: [AbilityFactory, PermissionsGuard],
+  exports: [AbilityFactory, PermissionsGuard],
 })
 export class PermissionsModule {}

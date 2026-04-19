@@ -113,7 +113,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, TenantContextGuard)
   async me(@Req() req: Request): Promise<MeResponseDto> {
     const payload = req.user as AuthTokenPayload;
-    const result = await this.meUseCase.execute(payload.sub, payload.tenantId);
+    // tenantId is guaranteed to be defined after TenantContextGuard passes
+    const result = await this.meUseCase.execute(payload.sub, payload.tenantId!);
 
     return {
       user: result.user,
