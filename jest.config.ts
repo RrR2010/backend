@@ -6,7 +6,8 @@ module.exports = {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   moduleNameMapper: {
-    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^@core/(.*)$': '<rootDir>/src/core/$1',
   },
   testEnvironment: 'node',
 };

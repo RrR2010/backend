@@ -1,15 +1,8 @@
 /**
  * User Entity Tests
  *
- * NOTE: This test file needs a complete rewrite to match the current entity.
- *
- * Current issues:
- * - Imports non-existent 'user-role.enum.ts' (should use 'platform-role.enum.ts')
- * - Imports non-existent 'user-status.enum.ts' (should use 'system-state.enum.ts')
- * - Tests methods that don't exist (promoteToAdmin, demoteToMember, deactivate)
- * - Uses tenantId which is not part of the User entity (User is platform-level)
- *
- * See TASK_005_008 for test rewrite.
+ * Tests for User entity with platformRoles array.
+ * Implements TASK_005_014 unit tests.
  */
 import { User } from '@modules/users/domain/user.entity';
 import { Email } from '@core/domain/email.vo';
@@ -29,7 +22,7 @@ describe('User Entity', () => {
 
   it('should create user with default role MEMBER', () => {
     const user = createUser();
-    expect(user.platformRole).toBe(PlatformRole.MEMBER);
+    expect(user.platformRoles).toContain(PlatformRole.MEMBER);
   });
 
   it('should create user with default status ACTIVE', () => {
@@ -37,9 +30,9 @@ describe('User Entity', () => {
     expect(user.systemState).toBe(SystemState.ACTIVE);
   });
 
-  it('should have platform role property', () => {
+  it('should have platformRoles array property', () => {
     const user = createUser();
-    expect(user.platformRole).toBe(PlatformRole.MEMBER);
+    expect(user.platformRoles).toEqual([PlatformRole.MEMBER]);
   });
 
   it('should have systemState property', () => {
