@@ -42,7 +42,7 @@ Links and IDs must match canonical filenames exactly.
 | TASK_005_016 | [[EPIC_005]] | Modify login.usecase.ts to support platform users   | done    | dev      | high     | [[tasks/TASK_005_016]] |
 | TASK_005_017 | [[EPIC_005]] | Update LoginResponseDto with userType field          | done    | dev      | high     | [[tasks/TASK_005_017]] |
 | TASK_005_018 | [[EPIC_005]] | Extend token.service.ts for platform token generation| done    | dev      | high     | [[tasks/TASK_005_018]] |
-| TASK_005_019 | [[EPIC_005]] | Implement select-tenant auto-selection logic         | backlog | dev      | high     | [[tasks/TASK_005_019]] |
+| TASK_005_019 | [[EPIC_005]] | Implement select-tenant auto-selection logic         | done    | dev      | high     | [[tasks/TASK_005_019]] |
 | TASK_005_020 | [[EPIC_005]] | Update JWT strategy to handle both token types      | backlog | dev      | high     | [[tasks/TASK_005_020]] |
 | TASK_005_021 | [[EPIC_005]] | Implement platform-scoped authorization guard        | backlog | dev      | high     | [[tasks/TASK_005_021]] |
 | TASK_005_022 | [[EPIC_005]] | Update tenant-scoped guard for unified token support| backlog | dev      | high     | [[tasks/TASK_005_022]] |

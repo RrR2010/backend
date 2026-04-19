@@ -52,9 +52,7 @@ describe('Platform Authorization (TASK_005_016)', () => {
     mockUserRepository = module.get(UserRepository);
   });
 
-  const createMockContext = (
-    user: any,
-  ): ExecutionContext => {
+  const createMockContext = (user: any): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({ user }),
@@ -68,9 +66,9 @@ describe('Platform Authorization (TASK_005_016)', () => {
       const user = { sub: 'user-1', platformRoles: [], tenantId: undefined };
       const context = createMockContext(user);
 
-      jest.spyOn(reflector, 'get').mockReturnValue([
-        { action: Action.Read, subject: Subject.User },
-      ]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([{ action: Action.Read, subject: Subject.User }]);
 
       // User has no platform roles - repository returns undefined
       mockUserRepository.findById.mockResolvedValue(undefined);
@@ -80,42 +78,42 @@ describe('Platform Authorization (TASK_005_016)', () => {
       );
     });
 
-    it('should allow READ for MEMBER role', async () => {
+    it('should allow READ for USER role', async () => {
       const user = {
         sub: 'user-1',
-        platformRoles: [PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.USER],
         tenantId: undefined,
       };
       const context = createMockContext(user);
 
-      jest.spyOn(reflector, 'get').mockReturnValue([
-        { action: Action.Read, subject: Subject.User },
-      ]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([{ action: Action.Read, subject: Subject.User }]);
 
       mockUserRepository.findById.mockResolvedValue({
         id: 'user-1',
-        platformRoles: [PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.USER],
       });
 
       const result = await guard.canActivate(context);
       expect(result).toBe(true);
     });
 
-    it('should block MANAGE for MEMBER role', async () => {
+    it('should block MANAGE for USER role', async () => {
       const user = {
         sub: 'user-1',
-        platformRoles: [PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.USER],
         tenantId: undefined,
       };
       const context = createMockContext(user);
 
-      jest.spyOn(reflector, 'get').mockReturnValue([
-        { action: Action.Manage, subject: Subject.User },
-      ]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([{ action: Action.Manage, subject: Subject.User }]);
 
       mockUserRepository.findById.mockResolvedValue({
         id: 'user-1',
-        platformRoles: [PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.USER],
       });
 
       await expect(guard.canActivate(context)).rejects.toThrow(
@@ -131,9 +129,9 @@ describe('Platform Authorization (TASK_005_016)', () => {
       };
       const context = createMockContext(user);
 
-      jest.spyOn(reflector, 'get').mockReturnValue([
-        { action: Action.Manage, subject: Subject.User },
-      ]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([{ action: Action.Manage, subject: Subject.User }]);
 
       mockUserRepository.findById.mockResolvedValue({
         id: 'user-1',
@@ -144,10 +142,10 @@ describe('Platform Authorization (TASK_005_016)', () => {
       expect(result).toBe(true);
     });
 
-    it('should UNION permissions for ADMIN + MEMBER', async () => {
+    it('should UNION permissions for ADMIN + USER', async () => {
       const user = {
         sub: 'user-1',
-        platformRoles: [PlatformRole.ADMIN, PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.ADMIN, PlatformRole.USER],
         tenantId: undefined,
       };
       const context = createMockContext(user);
@@ -159,7 +157,7 @@ describe('Platform Authorization (TASK_005_016)', () => {
 
       mockUserRepository.findById.mockResolvedValue({
         id: 'user-1',
-        platformRoles: [PlatformRole.ADMIN, PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.ADMIN, PlatformRole.USER],
       });
 
       const result = await guard.canActivate(context);
@@ -177,13 +175,17 @@ describe('Platform Authorization (TASK_005_016)', () => {
       };
       const context = createMockContext(user);
 
-      jest.spyOn(reflector, 'get').mockReturnValue([
-        { action: Action.Read, subject: Subject.User },
-      ]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([{ action: Action.Read, subject: Subject.User }]);
 
       // Since tenantId exists, guard reads tenantRoles from membership
       mockMembershipRepository.findByUserId.mockResolvedValue([
-        { userId: 'user-1', tenantId: 'tenant-1', tenantRoles: [TenantRole.ADMIN] },
+        {
+          userId: 'user-1',
+          tenantId: 'tenant-1',
+          tenantRoles: [TenantRole.ADMIN],
+        },
       ]);
 
       // Tenant ADMIN can only Manage Membership, NOT Read User
@@ -197,17 +199,21 @@ describe('Platform Authorization (TASK_005_016)', () => {
       const user = {
         sub: 'user-1',
         tenantId: 'tenant-1',
-        platformRoles: [PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.USER],
       };
       const context = createMockContext(user);
 
-      jest.spyOn(reflector, 'get').mockReturnValue([
-        { action: Action.Read, subject: Subject.User },
-      ]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([{ action: Action.Read, subject: Subject.User }]);
 
       // With tenantId, guard defaults to tenant scope
       mockMembershipRepository.findByUserId.mockResolvedValue([
-        { userId: 'user-1', tenantId: 'tenant-1', tenantRoles: [TenantRole.USER] },
+        {
+          userId: 'user-1',
+          tenantId: 'tenant-1',
+          tenantRoles: [TenantRole.USER],
+        },
       ]);
 
       // Tenant USER can read Membership but NOT User subject

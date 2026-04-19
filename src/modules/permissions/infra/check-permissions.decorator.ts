@@ -19,5 +19,6 @@ export const PERMISSIONS_KEY = 'permissions';
  * @CheckPermissions({ action: Action.Read, subject: Subject.User })
  * @CheckPermissions({ action: Action.Create, subject: Subject.Tenant })
  */
-export const CheckPermissions = (...rules: { action: Action; subject: Subject }[]) =>
-  SetMetadata(PERMISSIONS_KEY, rules);
+export const CheckPermissions = (
+  ...rules: { action: Action; subject: Subject }[]
+) => SetMetadata(PERMISSIONS_KEY, rules);

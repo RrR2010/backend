@@ -4,8 +4,8 @@ import { CreateMembershipUseCase } from '@modules/memberships/application/create
 import { ListMembershipUseCase } from '@modules/memberships/application/list-memberships.usecase';
 import { CreateMembershipDto } from '@modules/memberships/interface/create-membership.dto';
 import { CreateMembershipResponseDto } from '@modules/memberships/interface/create-membership-response.dto';
-import { JwtAuthGuard } from '@modules/auth/infra/jwt-auth.guard';
-import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
+import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
+import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
 
 @ApiTags('memberships')
 @ApiBearerAuth('accessToken')

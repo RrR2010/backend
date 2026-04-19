@@ -4,7 +4,7 @@ import {
   TokenService,
   PreAuthPayload,
   AuthTokenPayload,
-} from '@modules/auth/domain/token.service';
+} from '@modules/authentication/domain/token.service';
 
 @Injectable()
 export class JwtService implements TokenService {

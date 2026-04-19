@@ -3,8 +3,8 @@ import { MembershipRepository } from '@modules/memberships/domain/membership.rep
 import {
   UserHasNoMembershipsError,
   UserDoesNotHaveAccessToTenantError,
-} from '@modules/auth/domain/auth.errors';
-import { TokenService } from '@modules/auth/domain/token.service';
+} from '@modules/authentication/domain/auth.errors';
+import { TokenService } from '@modules/authentication/domain/token.service';
 
 @Injectable()
 export class SelectTenantUseCase {

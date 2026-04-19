@@ -31,19 +31,19 @@ model Tenant {
 
 enum PlatformRole {
   ADMIN
-  MEMBER
+  USER
 }
 
 model User {
-  id           String         @id @default(uuid())
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  systemState  SystemState    @default(ACTIVE)
-  platformRoles PlatformRole[] @default([MEMBER])
-  name         String
-  email        String         @unique
-  passwordHash String
-  code         String?        @unique
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  systemState   SystemState    @default(ACTIVE)
+  platformRoles PlatformRole[] @default([USER])
+  name          String
+  email         String         @unique
+  passwordHash  String
+  code          String?        @unique
 
   memberships Membership[]
 }

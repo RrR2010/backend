@@ -23,27 +23,31 @@ describe('AbilityFactory', () => {
       expect(ability.can(Action.Read, Subject.User)).toBe(false);
     });
 
-    it('should grant READ permissions for MEMBER role', () => {
-      const ability = factory.createForUser({ platformRoles: [PlatformRole.MEMBER] });
+    it('should grant READ permissions for USER role', () => {
+      const ability = factory.createForUser({
+        platformRoles: [PlatformRole.USER],
+      });
       expect(ability.can(Action.Read, Subject.User)).toBe(true);
       expect(ability.can(Action.Read, Subject.Tenant)).toBe(true);
       expect(ability.can(Action.Manage, Subject.User)).toBe(false);
     });
 
     it('should grant MANAGE permissions for ADMIN role', () => {
-      const ability = factory.createForUser({ platformRoles: [PlatformRole.ADMIN] });
+      const ability = factory.createForUser({
+        platformRoles: [PlatformRole.ADMIN],
+      });
       expect(ability.can(Action.Manage, Subject.User)).toBe(true);
       expect(ability.can(Action.Manage, Subject.Tenant)).toBe(true);
       expect(ability.can(Action.Manage, Subject.Membership)).toBe(true);
     });
 
-    it('should UNION permissions for ADMIN + MEMBER', () => {
+    it('should UNION permissions for ADMIN + USER', () => {
       const ability = factory.createForUser({
-        platformRoles: [PlatformRole.ADMIN, PlatformRole.MEMBER],
+        platformRoles: [PlatformRole.ADMIN, PlatformRole.USER],
       });
       // Has all ADMIN permissions
       expect(ability.can(Action.Manage, Subject.User)).toBe(true);
-      // AND all MEMBER permissions
+      // AND all USER permissions
       expect(ability.can(Action.Read, Subject.User)).toBe(true);
     });
   });
@@ -55,13 +59,17 @@ describe('AbilityFactory', () => {
     });
 
     it('should grant READ for USER role', () => {
-      const ability = factory.createForMembership({ tenantRoles: [TenantRole.USER] });
+      const ability = factory.createForMembership({
+        tenantRoles: [TenantRole.USER],
+      });
       expect(ability.can(Action.Read, Subject.Membership)).toBe(true);
       expect(ability.can(Action.Manage, Subject.Membership)).toBe(false);
     });
 
     it('should grant MANAGE for ADMIN role', () => {
-      const ability = factory.createForMembership({ tenantRoles: [TenantRole.ADMIN] });
+      const ability = factory.createForMembership({
+        tenantRoles: [TenantRole.ADMIN],
+      });
       expect(ability.can(Action.Manage, Subject.Membership)).toBe(true);
     });
 

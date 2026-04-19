@@ -4,8 +4,8 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { AuthTokenPayload } from '@modules/auth/domain/token.service';
-import { MissingTenantContextError } from '@modules/auth/domain/auth.errors';
+import { AuthTokenPayload } from '@modules/authentication/domain/token.service';
+import { MissingTenantContextError } from '@modules/authentication/domain/auth.errors';
 
 @Injectable()
 export class TenantContextGuard implements CanActivate {

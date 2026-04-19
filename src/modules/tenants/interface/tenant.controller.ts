@@ -4,8 +4,8 @@ import { CreateTenantUseCase } from '../application/create-tenant.usecase';
 import { ListTenantsUseCase } from '../application/list-tenants.usecase';
 import { CreateTenantDto } from './create-tenant.dto';
 import { CreateTenantResponseDto } from './create-tenant-response.dto';
-import { JwtAuthGuard } from '@modules/auth/infra/jwt-auth.guard';
-import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
+import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
+import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
 
 @ApiTags('Tenants')
 @ApiBearerAuth('accessToken')

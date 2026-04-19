@@ -4,8 +4,8 @@ import { CreateUserUseCase } from '@modules/users/application/create-user.usecas
 import { ListUsersUseCase } from '@modules/users/application/list-users.usecase';
 import { CreateUserDto } from '@modules/users/interface/create-user.dto';
 import { CreateUserResponseDto } from '@modules/users/interface/create-user-response.dto';
-import { JwtAuthGuard } from '@modules/auth/infra/jwt-auth.guard';
-import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
+import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
+import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
 
 @ApiTags('Users')
 @ApiBearerAuth('accessToken')

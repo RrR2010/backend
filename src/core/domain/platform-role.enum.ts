@@ -6,7 +6,7 @@
  *
  * Canonical Definition:
  * - ADMIN: Platform administrator with full system access
- * - MEMBER: Standard platform user with basic access
+ * - USER: Standard platform user with basic access
  *
  * Multi-Role Semantics:
  * - Multiple roles allowed per user
@@ -15,7 +15,7 @@
  */
 export enum PlatformRole {
   ADMIN = 'ADMIN',
-  MEMBER = 'MEMBER',
+  USER = 'USER',
 }
 
 /**
@@ -40,6 +40,6 @@ export const PlatformRoleHelpers = {
    * Get default role for new users
    */
   getDefault(): PlatformRole[] {
-    return [PlatformRole.MEMBER];
+    return [PlatformRole.USER];
   },
 };

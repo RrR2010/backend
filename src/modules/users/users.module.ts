@@ -8,7 +8,7 @@ import { ListUsersUseCase } from './application/list-users.usecase';
 
 import { UserRepository } from './domain/user.repository';
 import { PrismaUserRepository } from './infra/prisma-user.repository';
-import { AuthModule } from '@modules/auth/auth.module';
+import { AuthModule } from '@modules/authentication/auth.module';
 
 @Module({
   imports: [PrismaModule, forwardRef(() => AuthModule)],

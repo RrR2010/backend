@@ -5,10 +5,10 @@ export class CreateUserDto {
   @ApiPropertyOptional({
     enum: PlatformRole,
     isArray: true,
-    default: [PlatformRole.MEMBER],
-    example: [PlatformRole.MEMBER],
+    default: [PlatformRole.USER],
+    example: [PlatformRole.USER],
     description:
-      'The roles of the user on the platform. ADMIN represents a user with transversal platform permissions - non tenant. MEMBER is the default role and represents a tenant user. Multiple roles are allowed and permissions are resolved by union.',
+      'The roles of the user on the platform. ADMIN represents a user with transversal platform permissions - non tenant. USER is the default role and represents a tenant user. Multiple roles are allowed and permissions are resolved by union.',
   })
   platformRoles?: PlatformRole[];
 

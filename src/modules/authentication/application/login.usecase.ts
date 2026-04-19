@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from '@modules/users/domain/user.repository';
-import { PasswordHasher } from '@modules/auth/domain/password-hasher';
+import { PasswordHasher } from '@modules/authentication/domain/password-hasher';
 import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
 import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
 import { UserResponseDto } from '@modules/users/interface/user-response.dto';
 import { TenantResponseDto } from '@modules/tenants/interface/tenant-response.dto';
-import { InvalidCredentialsError } from '@modules/auth/domain/auth.errors';
+import { InvalidCredentialsError } from '@modules/authentication/domain/auth.errors';
 
 @Injectable()
 export class LoginUseCase {

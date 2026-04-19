@@ -71,7 +71,7 @@ export class AbilityFactory {
         can(Action.Manage, Subject.Tenant);
         can(Action.Manage, Subject.Membership);
         break;
-      case PlatformRole.MEMBER:
+      case PlatformRole.USER:
         can(Action.Read, Subject.User);
         can(Action.Read, Subject.Tenant);
         break;

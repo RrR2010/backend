@@ -5,7 +5,7 @@ import {
 } from '@core/domain/platform-role.enum';
 import { User } from '@modules/users/domain/user.entity';
 import { UserRepository } from '@modules/users/domain/user.repository';
-import { PasswordHasher } from '@modules/auth/domain/password-hasher';
+import { PasswordHasher } from '@modules/authentication/domain/password-hasher';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -25,8 +25,7 @@ export class CreateUserUseCase {
     const passwordHash = await this.passwordHasher.hash(input.password);
     const user = await this.userRepository.save(
       User.create({
-        platformRoles:
-          input.platformRoles || PlatformRoleHelpers.getDefault(),
+        platformRoles: input.platformRoles || PlatformRoleHelpers.getDefault(),
         name: input.name,
         email: Email.from(input.email),
         passwordHash: passwordHash,

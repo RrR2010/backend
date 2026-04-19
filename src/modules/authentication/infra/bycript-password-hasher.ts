@@ -1,4 +1,4 @@
-import { PasswordHasher } from '@modules/auth/domain/password-hasher';
+import { PasswordHasher } from '@modules/authentication/domain/password-hasher';
 import * as bcrypt from 'bcrypt';
 
 export class BcryptPasswordHasher implements PasswordHasher {

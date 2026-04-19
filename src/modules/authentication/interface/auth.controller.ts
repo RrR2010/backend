@@ -17,19 +17,19 @@ import { LoginDto } from './login.dto';
 import {
   LoginResponseResult,
   LoginUseCase,
-} from '@modules/auth/application/login.usecase';
-import { SelectTenantUseCase } from '@modules/auth/application/select-tenant.usecase';
-import { MeUseCase } from '@modules/auth/application/me.usecase';
+} from '@modules/authentication/application/login.usecase';
+import { SelectTenantUseCase } from '@modules/authentication/application/select-tenant.usecase';
+import { MeUseCase } from '@modules/authentication/application/me.usecase';
 import { SelectTenantDto } from './select-tenant.dto';
 import { SelectTenantResponseDto } from './select-tenant-response.dto';
 import {
   TokenService,
   AuthTokenPayload,
-} from '@modules/auth/domain/token.service';
-import { JwtAuthGuard } from '@modules/auth/infra/jwt-auth.guard';
-import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
+} from '@modules/authentication/domain/token.service';
+import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
+import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
 import type { Request, Response } from 'express';
-import { InvalidOrExpiredPreAuthTokenError } from '@modules/auth/domain/auth.errors';
+import { InvalidOrExpiredPreAuthTokenError } from '@modules/authentication/domain/auth.errors';
 import { Membership } from '@modules/memberships/domain/membership.entity';
 import { MeResponseDto } from './me-response.dto';
 

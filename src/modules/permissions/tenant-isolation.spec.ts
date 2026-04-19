@@ -15,9 +15,9 @@
  * - Tenant membership mandatory for tenant actions - guard validates membership
  */
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
-import { AuthTokenPayload } from '@modules/auth/domain/token.service';
-import { MissingTenantContextError } from '@modules/auth/domain/auth.errors';
+import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
+import { AuthTokenPayload } from '@modules/authentication/domain/token.service';
+import { MissingTenantContextError } from '@modules/authentication/domain/auth.errors';
 
 describe('Tenant Isolation (TASK_005_015)', () => {
   describe('TenantContextGuard', () => {
@@ -31,24 +31,37 @@ describe('Tenant Isolation (TASK_005_015)', () => {
       } as Partial<Request>;
     });
 
-    const createContext = (user: AuthTokenPayload | undefined): ExecutionContext => ({
-      switchToHttp: () => ({
-        getRequest: () => ({ user }),
-      }),
-    } as ExecutionContext);
+    const createContext = (
+      user: AuthTokenPayload | undefined,
+    ): ExecutionContext =>
+      ({
+        switchToHttp: () => ({
+          getRequest: () => ({ user }),
+        }),
+      }) as ExecutionContext;
 
     it('should reject request without user', () => {
       const context = createContext(undefined);
-      expect(() => guard.canActivate(context)).toThrow(MissingTenantContextError);
+      expect(() => guard.canActivate(context)).toThrow(
+        MissingTenantContextError,
+      );
     });
 
     it('should reject request without tenantId', () => {
-      const context = createContext({ sub: 'user-1', tenantId: undefined } as AuthTokenPayload);
-      expect(() => guard.canActivate(context)).toThrow(MissingTenantContextError);
+      const context = createContext({
+        sub: 'user-1',
+        tenantId: undefined,
+      } as AuthTokenPayload);
+      expect(() => guard.canActivate(context)).toThrow(
+        MissingTenantContextError,
+      );
     });
 
     it('should allow request with valid tenantId', () => {
-      const context = createContext({ sub: 'user-1', tenantId: 'tenant-1' } as AuthTokenPayload);
+      const context = createContext({
+        sub: 'user-1',
+        tenantId: 'tenant-1',
+      } as AuthTokenPayload);
       expect(guard.canActivate(context)).toBe(true);
     });
   });

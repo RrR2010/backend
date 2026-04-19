@@ -17,7 +17,7 @@ import { Request } from 'express';
 import { AbilityFactory } from '@modules/permissions/application/ability.factory';
 import { Action } from '@core/domain/casl/actions.enum';
 import { Subject } from '@core/domain/casl/subjects.enum';
-import { AuthTokenPayload } from '@modules/auth/domain/token.service';
+import { AuthTokenPayload } from '@modules/authentication/domain/token.service';
 import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
 import { UserRepository } from '@modules/users/domain/user.repository';
 import { PlatformRole } from '@core/domain/platform-role.enum';
