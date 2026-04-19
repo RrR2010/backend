@@ -46,6 +46,7 @@ settings.json
 # temp directory
 .temp
 .tmp
+.docs/*
 
 # Runtime data
 pids

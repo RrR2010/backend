@@ -1,13 +1,4 @@
 {
-  "explorer.fileNesting.enabled": true,
-  "explorer.fileNesting.expand": false,
-  "explorer.fileNesting.patterns": {
-    "package.json": ".env, .gitignore, .prettierrc, .repomixignore, eslint.config.mjs, jest.config.ts, nest-cli.json, package-lock.json, plopfile.js, prisma.config.ts, README.md, tsconfig.json, tsconfig.build.json",
-    "repomix.config.json": "repomix-output.txt",
-    "*.ts": "${capture}.spec.ts",
-    "*.usecase.ts": "${capture}.dto.ts, ${capture}-response.dto.ts",
-    "explorer.compactFolders": "true"
-  },
   "todo-tree.tree.showCountsInTree": true,
   "todo-tree.tree.disableCompactFolders": false,
   "todo-tree.tree.showBadges": true

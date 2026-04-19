@@ -2,10 +2,21 @@ import { Id } from '@core/domain/id.vo';
 import { Email } from '@core/domain/email.vo';
 import { CreateEntityProps, Entity, EntityProps } from '@core/domain/entity';
 import { SystemState } from '@core/domain/system-state.enum';
-import { PlatformRoles } from '@core/domain/platform-roles.enum';
+import { PlatformRole } from '@core/domain/platform-role.enum';
+
+/**
+ * User Entity
+ *
+ * Represents a user account at the platform level.
+ * Contains platform-level role (PlatformRole) that defines global permissions.
+ *
+ * Canonical Vocabulary:
+ * - platformRole: PlatformRole (ADMIN, MEMBER) - global scope
+ * - scope: platform (vs tenant for TenantRole)
+ */
 
 type UserProps = EntityProps & {
-  platformRole: PlatformRoles;
+  platformRole: PlatformRole;
   name: string;
   email: Email;
   passwordHash: string;
@@ -41,7 +52,7 @@ export class User extends Entity<UserProps> {
   }
 
   // --------------- Getters ---------------
-  get platformRole(): PlatformRoles {
+  get platformRole(): PlatformRole {
     return this._props.platformRole;
   }
 

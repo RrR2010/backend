@@ -3,7 +3,7 @@ import { User } from '@modules/users/domain/user.entity';
 import { Id } from '@core/domain/id.vo';
 import { SystemState } from '@core/domain/system-state.enum';
 import { Email } from '@core/domain/email.vo';
-import { PlatformRoles } from '@core/domain/platform-roles.enum';
+import { PlatformRole } from '@core/domain/platform-role.enum';
 
 export class PrismaUserMapper {
   static toDomain(prismaUser: PrismaUser): User {
@@ -14,7 +14,7 @@ export class PrismaUserMapper {
       systemState:
         SystemState[prismaUser.systemState as keyof typeof SystemState],
       platformRole:
-        PlatformRoles[prismaUser.platformRole as keyof typeof PlatformRoles],
+        PlatformRole[prismaUser.platformRole as keyof typeof PlatformRole],
       name: prismaUser.name,
       email: Email.from(prismaUser.email),
       passwordHash: prismaUser.passwordHash,

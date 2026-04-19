@@ -23,3 +23,12 @@ export class UserDoesNotHaveAccessToTenantError extends DomainError {
     super('User does not have access to this tenant', 'TENANT_ACCESS_DENIED');
   }
 }
+
+export class MissingTenantContextError extends DomainError {
+  constructor() {
+    super(
+      'Tenant context is required to access this resource',
+      'MISSING_TENANT_CONTEXT',
+    );
+  }
+}

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
 import {
-  JwtService,
+  TokenService,
   PreAuthPayload,
   AuthTokenPayload,
-} from '../domain/jwt.service';
+} from '@modules/auth/domain/token.service';
 
 @Injectable()
-export class JwtServiceImpl implements JwtService {
+export class JwtService implements TokenService {
   constructor(private readonly nestJwtService: NestJwtService) {}
 
   signPreAuth(payload: PreAuthPayload): string {

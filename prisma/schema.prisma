@@ -29,38 +29,39 @@ model Tenant {
   memberships Membership[]
 }
 
-enum PlatformRoles {
+enum PlatformRole {
   ADMIN
-  MEMBER
+  USER
+  NONE
 }
 
 model User {
-  id           String        @id @default(uuid())
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  systemState  SystemState   @default(ACTIVE)
-  platformRole PlatformRoles @default(MEMBER)
+  id           String         @id @default(uuid())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  systemState  SystemState    @default(ACTIVE)
+  platformRole PlatformRole[] @default([NONE])
   name         String
-  email        String        @unique
+  email        String         @unique
   passwordHash String
-  code         String?       @unique
+  code         String?        @unique
 
   memberships Membership[]
 }
 
-enum Role {
+enum TenantRole {
   ADMIN
   USER
 }
 
 model Membership {
-  id          String      @id @unique @default(uuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  systemState SystemState @default(ACTIVE)
+  id          String       @id @unique @default(uuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  systemState SystemState  @default(ACTIVE)
   userId      String
-  user        User        @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
   tenantId    String
-  tenant      Tenant      @relation(fields: [tenantId], references: [id])
-  roles       Role[]
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  roles       TenantRole[] @default([USER])
 }

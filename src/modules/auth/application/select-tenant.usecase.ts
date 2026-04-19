@@ -1,30 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '../domain/jwt.service';
 import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
-import { SelectTenantResponseDto } from '../interface/select-tenant-response.dto';
 import {
-  InvalidOrExpiredPreAuthTokenError,
   UserHasNoMembershipsError,
   UserDoesNotHaveAccessToTenantError,
 } from '@modules/auth/domain/auth.errors';
+import { TokenService } from '@modules/auth/domain/token.service';
 
 @Injectable()
 export class SelectTenantUseCase {
   constructor(
-    private readonly jwtService: JwtService,
     private readonly membershipRepository: MembershipRepository,
+    private readonly tokenService: TokenService,
   ) {}
 
-  async execute(
-    preAuthToken: string,
-    tenantId: string,
-  ): Promise<SelectTenantResponseDto> {
-    const payload = this.jwtService.verifyPreAuth(preAuthToken);
-    if (!payload || payload.type !== 'pre-auth') {
-      throw new InvalidOrExpiredPreAuthTokenError();
-    }
-
-    const userId = payload.sub;
+  async execute(userId: string, tenantId: string): Promise<SelectTenantResult> {
     const memberships = await this.membershipRepository.findByUserId(userId);
 
     if (!memberships) {
@@ -36,7 +25,7 @@ export class SelectTenantUseCase {
       throw new UserDoesNotHaveAccessToTenantError();
     }
 
-    const accessToken = this.jwtService.sign({
+    const accessToken = this.tokenService.sign({
       sub: userId,
       tenantId: tenantId,
       roles: membership.roles,
@@ -45,3 +34,7 @@ export class SelectTenantUseCase {
     return { accessToken };
   }
 }
+
+export type SelectTenantResult = {
+  accessToken: string;
+};

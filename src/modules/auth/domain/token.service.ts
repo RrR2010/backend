@@ -13,7 +13,7 @@ export interface AuthTokenPayload {
   exp?: number;
 }
 
-export abstract class JwtService {
+export abstract class TokenService {
   abstract signPreAuth(payload: PreAuthPayload): string;
   abstract sign(payload: AuthTokenPayload): string;
   abstract verifyPreAuth(token: string): PreAuthPayload | null;

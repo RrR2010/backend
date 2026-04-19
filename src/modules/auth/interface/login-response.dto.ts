@@ -14,12 +14,6 @@ export class LoginResponseDto {
   user!: UserResponseDto;
 
   @ApiProperty({
-    description:
-      'A pre auth token that expires in 5 minutes and serves to proceed with tenant selection.',
-  })
-  preAuthToken!: string;
-
-  @ApiProperty({
     example: [
       { id: '123e4567-e89b-12d3-a456-426655440000', name: 'My Company Name' },
       {

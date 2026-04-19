@@ -1,12 +1,16 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateTenantUseCase } from '../application/create-tenant.usecase';
 import { ListTenantsUseCase } from '../application/list-tenants.usecase';
 import { CreateTenantDto } from './create-tenant.dto';
 import { CreateTenantResponseDto } from './create-tenant-response.dto';
+import { JwtAuthGuard } from '@modules/auth/infra/jwt-auth.guard';
+import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
 
 @ApiTags('Tenants')
+@ApiBearerAuth('accessToken')
 @Controller('tenants')
+@UseGuards(JwtAuthGuard, TenantContextGuard)
 export class TenantsController {
   constructor(
     private readonly createTenantUseCase: CreateTenantUseCase,

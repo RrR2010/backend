@@ -1,20 +1,27 @@
 import { Entity, EntityProps, CreateEntityProps } from '@core/domain/entity';
 import { SystemState } from '@core/domain/system-state.enum';
+import { TenantRole } from '@core/domain/tenant-role.enum';
 import { Id } from '@core/domain/id.vo';
 
-export enum Role {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-}
+/**
+ * Membership Entity
+ *
+ * Represents a user's association with a tenant.
+ * Contains tenant-level roles (TenantRole) that define permissions within the tenant.
+ *
+ * Canonical Vocabulary:
+ * - role: TenantRole (ADMIN, USER) - per-tenant scope
+ * - scope: tenant (vs platform for PlatformRole)
+ */
 
 type MembershipProps = EntityProps & {
   userId: string;
   tenantId: string;
-  roles: Role[];
+  roles: TenantRole[];
 };
 
 type CreateMembershipProps = CreateEntityProps<MembershipProps> & {
-  roles?: Role[];
+  roles?: TenantRole[];
 };
 
 export class Membership extends Entity<MembershipProps> {
@@ -31,7 +38,7 @@ export class Membership extends Entity<MembershipProps> {
       createdAt: now,
       updatedAt: now,
       systemState: SystemState.ACTIVE,
-      roles: props.roles || [Role.USER],
+      roles: props.roles || [TenantRole.USER],
     });
     return membership;
   }
@@ -49,7 +56,7 @@ export class Membership extends Entity<MembershipProps> {
     return this._props.tenantId;
   }
 
-  get roles(): Role[] {
+  get roles(): TenantRole[] {
     return this._props.roles;
   }
 

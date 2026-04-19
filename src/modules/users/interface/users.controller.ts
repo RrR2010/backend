@@ -1,12 +1,16 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateUserUseCase } from '@modules/users/application/create-user.usecase';
 import { ListUsersUseCase } from '@modules/users/application/list-users.usecase';
 import { CreateUserDto } from '@modules/users/interface/create-user.dto';
 import { CreateUserResponseDto } from '@modules/users/interface/create-user-response.dto';
+import { JwtAuthGuard } from '@modules/auth/infra/jwt-auth.guard';
+import { TenantContextGuard } from '@modules/auth/infra/tenant-context.guard';
 
 @ApiTags('Users')
+@ApiBearerAuth('accessToken')
 @Controller('users')
+@UseGuards(JwtAuthGuard, TenantContextGuard)
 export class UsersController {
   constructor(
     private readonly createUserUseCase: CreateUserUseCase,
