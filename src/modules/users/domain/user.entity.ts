@@ -2,21 +2,29 @@ import { Id } from '@core/domain/id.vo';
 import { Email } from '@core/domain/email.vo';
 import { CreateEntityProps, Entity, EntityProps } from '@core/domain/entity';
 import { SystemState } from '@core/domain/system-state.enum';
-import { PlatformRole } from '@core/domain/platform-role.enum';
+import {
+  PlatformRole,
+  PlatformRoleHelpers,
+} from '@core/domain/platform-role.enum';
 
 /**
  * User Entity
  *
  * Represents a user account at the platform level.
- * Contains platform-level role (PlatformRole) that defines global permissions.
+ * Contains platform-level roles (PlatformRole[]) that define global permissions.
  *
  * Canonical Vocabulary:
- * - platformRole: PlatformRole (ADMIN, MEMBER) - global scope
+ * - platformRoles: PlatformRole[] (ADMIN, MEMBER) - global scope
  * - scope: platform (vs tenant for TenantRole)
+ *
+ * Multi-Role Semantics:
+ * - Multiple PlatformRoles allowed per user
+ * - PlatformRole.NONE is a DERIVED state when platformRoles array is empty
+ * - Permissions resolved by UNION (additive)
  */
 
 type UserProps = EntityProps & {
-  platformRole: PlatformRole;
+  platformRoles: PlatformRole[];
   name: string;
   email: Email;
   passwordHash: string;
@@ -37,7 +45,7 @@ export class User extends Entity<UserProps> {
     const user = new User({
       ...props,
       id: Id.generate(),
-      platformRole: props.platformRole,
+      platformRoles: props.platformRoles || PlatformRoleHelpers.getDefault(),
       name: props.name,
       createdAt: now,
       updatedAt: now,
@@ -52,8 +60,8 @@ export class User extends Entity<UserProps> {
   }
 
   // --------------- Getters ---------------
-  get platformRole(): PlatformRole {
-    return this._props.platformRole;
+  get platformRoles(): PlatformRole[] {
+    return this._props.platformRoles;
   }
 
   get name(): string {
@@ -70,6 +78,14 @@ export class User extends Entity<UserProps> {
 
   get code(): string | null {
     return this._props.code;
+  }
+
+  // --------------- Role Helper Methods ---------------
+  /**
+   * Returns true if user has no platform roles (derived NONE state)
+   */
+  get isPlatformRoleNone(): boolean {
+    return PlatformRoleHelpers.isNone(this._props.platformRoles);
   }
 
   // --------------- Behaviours ---------------

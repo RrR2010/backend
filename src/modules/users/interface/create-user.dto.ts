@@ -4,12 +4,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateUserDto {
   @ApiPropertyOptional({
     enum: PlatformRole,
-    default: PlatformRole.MEMBER,
-    example: PlatformRole.MEMBER,
+    isArray: true,
+    default: [PlatformRole.MEMBER],
+    example: [PlatformRole.MEMBER],
     description:
-      'The role of the user on the platform. ADMIN represents an user that have transversal platform permissions - non tenant. MEMBER is the default role and represents a tenant user.',
+      'The roles of the user on the platform. ADMIN represents a user with transversal platform permissions - non tenant. MEMBER is the default role and represents a tenant user. Multiple roles are allowed and permissions are resolved by union.',
   })
-  platformRole!: PlatformRole;
+  platformRoles?: PlatformRole[];
 
   @ApiProperty({ example: 'João da Silva', description: 'User full name.' })
   name!: string;

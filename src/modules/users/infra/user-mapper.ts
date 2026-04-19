@@ -13,8 +13,8 @@ export class PrismaUserMapper {
       updatedAt: prismaUser.updatedAt,
       systemState:
         SystemState[prismaUser.systemState as keyof typeof SystemState],
-      platformRole:
-        PlatformRole[prismaUser.platformRole as keyof typeof PlatformRole],
+      platformRoles:
+        prismaUser.platformRoles as PlatformRole[],
       name: prismaUser.name,
       email: Email.from(prismaUser.email),
       passwordHash: prismaUser.passwordHash,
@@ -28,7 +28,7 @@ export class PrismaUserMapper {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       systemState: user.systemState,
-      platformRole: user.platformRole,
+      platformRoles: user.platformRoles,
       name: user.name,
       email: user.email.value,
       passwordHash: user.passwordHash,

@@ -1,5 +1,8 @@
 import { Email } from '@core/domain/email.vo';
-import { PlatformRole } from '@core/domain/platform-role.enum';
+import {
+  PlatformRole,
+  PlatformRoleHelpers,
+} from '@core/domain/platform-role.enum';
 import { User } from '@modules/users/domain/user.entity';
 import { UserRepository } from '@modules/users/domain/user.repository';
 import { PasswordHasher } from '@modules/auth/domain/password-hasher';
@@ -16,13 +19,14 @@ export class CreateUserUseCase {
     email: string;
     password: string;
     name: string;
-    platformRole: PlatformRole | null;
+    platformRoles?: PlatformRole[];
     code: string | null;
   }): Promise<User> {
     const passwordHash = await this.passwordHasher.hash(input.password);
     const user = await this.userRepository.save(
       User.create({
-        platformRole: input.platformRole || PlatformRole.MEMBER,
+        platformRoles:
+          input.platformRoles || PlatformRoleHelpers.getDefault(),
         name: input.name,
         email: Email.from(input.email),
         passwordHash: passwordHash,

@@ -31,8 +31,7 @@ model Tenant {
 
 enum PlatformRole {
   ADMIN
-  USER
-  NONE
+  MEMBER
 }
 
 model User {
@@ -40,7 +39,7 @@ model User {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   systemState  SystemState    @default(ACTIVE)
-  platformRole PlatformRole[] @default([NONE])
+  platformRoles PlatformRole[] @default([MEMBER])
   name         String
   email        String         @unique
   passwordHash String
