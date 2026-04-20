@@ -1,6 +1,6 @@
 ---
 id: TASK_XXX
-title: <SHORT NAME>
+title: Example Task (template)
 type: task
 status: template
 priority: high
@@ -10,19 +10,10 @@ tags:
   - template
   - task
 related:
-  - [[EPIC_XXX]]
+  - EPIC_XXX
 ---
 
-# TASK: <SHORT NAME>
-
-<!--
-RULES:
-- Task must be atomic (single execution cycle)
-- Execution must result in either DONE or BLOCKED
-- Do not split execution across multiple steps or sessions
-- Be explicit about expected output
-- All fields must be filled (use "N/A" if needed)
--->
+# TASK: Example Task
 
 ---
 
@@ -31,7 +22,7 @@ RULES:
 <!-- What needs to be done -->
 
 - Summary (1 sentence):
-- ## Steps (max 5):
+- Steps (max 5):
 
 ---
 
@@ -39,9 +30,11 @@ RULES:
 
 <!-- What must be produced -->
 
-- Output Type: [code | document | update | decision | data]
-- Output Location (file/path if applicable):
-- Output Description:
+| Field              | Value |
+| ------------------ | ----- |
+| Output Type        | N/A   |
+| Output Location    | N/A   |
+| Output Description | N/A   |
 
 ---
 
@@ -51,29 +44,39 @@ RULES:
 
 - ...
 
+---
+
 ## TESTS (OPTIONAL)
 
-- Test Type: [unit | integration | manual]
-- Validation:
-- Expected Result:
+| Field           | Value |
+| --------------- | ----- |
+| Test Type       | N/A   |
+| Validation      | N/A   |
+| Expected Result | N/A   |
 
 ---
 
-## 5. DEPENDENCIES
+## DEPENDENCIES
 
-- Tasks:
-- Epics:
-- External:
+| Field    | Value |
+| -------- | ----- |
+| Tasks    | N/A   |
+| Epics    | N/A   |
+| External | N/A   |
 
 ---
 
 ## REFERENCES
 
-- ...
+- Document name with link
+
+---
 
 ## TAGS
 
-- ...
+- N/A
+
+---
 
 ## EXECUTION SUMMARY
 
@@ -91,13 +94,13 @@ RULES:
 
 ---
 
-## NOTES
+## 10. NOTES
 
 - ...
 
-## REVISION HISTORY
+---
 
-<!-- Use this section to track changes to this task when anything changes -->
+## REVISION HISTORY
 
 | Date       | Author | Change Summary |
 | ---------- | ------ | -------------- |

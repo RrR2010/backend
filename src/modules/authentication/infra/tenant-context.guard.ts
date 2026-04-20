@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { AuthTokenPayload } from '@modules/authentication/domain/token.service';
 import { MissingTenantContextError } from '@modules/authentication/domain/auth.errors';
 
