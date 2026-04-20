@@ -5,8 +5,7 @@
  * Used with PermissionsGuard for CASL-based authorization.
  */
 import { SetMetadata } from '@nestjs/common';
-import { Action } from '@core/domain/casl/actions.enum';
-import { Subject } from '@core/domain/casl/subjects.enum';
+import { PermissionSpec } from '@core/domain/permission-spec';
 
 export const PERMISSIONS_KEY = 'permissions';
 
@@ -20,5 +19,5 @@ export const PERMISSIONS_KEY = 'permissions';
  * @CheckPermissions({ action: Action.Create, subject: Subject.Tenant })
  */
 export const CheckPermissions = (
-  ...rules: { action: Action; subject: Subject }[]
+  ...rules: PermissionSpec[]
 ) => SetMetadata(PERMISSIONS_KEY, rules);

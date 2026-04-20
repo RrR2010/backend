@@ -17,6 +17,7 @@ import { Request } from 'express';
 import { AbilityFactory } from '@modules/permissions/application/ability.factory';
 import { Action } from '@core/domain/casl/actions.enum';
 import { Subject } from '@core/domain/casl/subjects.enum';
+import { PermissionSpec } from '@core/domain/permission-spec';
 import { AuthTokenPayload } from '@modules/authentication/domain/token.service';
 import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
 import { UserRepository } from '@modules/users/domain/user.repository';
@@ -52,9 +53,10 @@ export class PermissionsGuard implements CanActivate {
     }
 
     // Extract action and subject from metadata
-    const permissions = this.reflector.get<
-      { action: Action; subject: Subject }[]
-    >(PERMISSIONS_KEY, context.getHandler());
+    const permissions = this.reflector.get<PermissionSpec[]>(
+      PERMISSIONS_KEY,
+      context.getHandler(),
+    );
 
     if (!permissions || permissions.length === 0) {
       // No explicit permissions - reject (fail-safe default)
