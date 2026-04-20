@@ -5,7 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '@modules/users/users.module';
 import { TenantModule } from '@modules/tenants/tenant.module';
 import { AuthModule } from '@modules/authentication/auth.module';
-import { PermissionsModule } from '@modules/permissions/permissions.module';
+import { CaslModule } from 'nest-casl';
+import { PlatformRole } from '@core/domain/platform-role.enum';
 
 @Module({
   imports: [
@@ -15,7 +16,10 @@ import { PermissionsModule } from '@modules/permissions/permissions.module';
     TenantModule,
     MembershipModule,
     PrismaModule,
-    PermissionsModule,
+    CaslModule.forRoot({
+      superuserRole: PlatformRole.ADMIN,
+      getUserFromRequest: (request) => request.user,
+    }),
   ],
 })
 export class AppModule {}
