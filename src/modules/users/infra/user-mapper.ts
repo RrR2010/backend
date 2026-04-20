@@ -1,4 +1,8 @@
-import { User as PrismaUser, PlatformRole as PrismaPlatformRole, SystemState as PrismaSystemState } from '@prisma/client';
+import {
+  User as PrismaUser,
+  PlatformRole as PrismaPlatformRole,
+  SystemState as PrismaSystemState,
+} from '@prisma/client';
 import { User } from '@modules/users/domain/user.entity';
 import { Id } from '@core/domain/id.vo';
 import { SystemState } from '@core/domain/system-state.enum';
@@ -13,8 +17,7 @@ export class PrismaUserMapper {
       updatedAt: prismaUser.updatedAt,
       systemState:
         SystemState[prismaUser.systemState as keyof typeof SystemState],
-      platformRoles:
-        prismaUser.platformRoles as PlatformRole[],
+      platformRoles: prismaUser.platformRoles as PlatformRole[],
       name: prismaUser.name,
       email: Email.from(prismaUser.email),
       passwordHash: prismaUser.passwordHash,

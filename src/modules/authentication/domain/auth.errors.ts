@@ -1,14 +1,39 @@
 import { DomainError } from '@core/domain/domain-error';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
-export class InvalidCredentialsError extends DomainError {
+export class InvalidCredentialsError extends HttpException {
   constructor() {
-    super('Invalid credentials', 'INVALID_CREDENTIALS');
+    super(
+      {
+        message: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS',
+      },
+      HttpStatus.UNAUTHORIZED,
+    );
   }
 }
 
-export class InvalidOrExpiredPreAuthTokenError extends DomainError {
+export class InvalidOrExpiredPreAuthTokenError extends HttpException {
   constructor() {
-    super('Invalid or expired pre-auth token', 'INVALID_PRE_AUTH_TOKEN');
+    super(
+      {
+        message: 'Invalid or expired pre-auth token',
+        code: 'INVALID_PRE_AUTH_TOKEN',
+      },
+      HttpStatus.UNAUTHORIZED,
+    );
+  }
+}
+
+export class InvalidOrExpiredAccessTokenError extends HttpException {
+  constructor() {
+    super(
+      {
+        message: 'Invalid or expired access token',
+        code: 'INVALID_ACCESS_TOKEN',
+      },
+      HttpStatus.UNAUTHORIZED,
+    );
   }
 }
 
@@ -29,6 +54,18 @@ export class MissingTenantContextError extends DomainError {
     super(
       'Tenant context is required to access this resource',
       'MISSING_TENANT_CONTEXT',
+    );
+  }
+}
+
+export class InvalidOrExpiredRefreshTokenError extends HttpException {
+  constructor() {
+    super(
+      {
+        message: 'Invalid or expired refresh token',
+        code: 'INVALID_REFRESH_TOKEN',
+      },
+      HttpStatus.UNAUTHORIZED,
     );
   }
 }

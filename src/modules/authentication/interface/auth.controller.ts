@@ -6,6 +6,8 @@ import {
   Res,
   Req,
   UseGuards,
+  HttpCode,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiConsumes,
@@ -20,6 +22,7 @@ import {
 } from '@modules/authentication/application/login.usecase';
 import { SelectTenantUseCase } from '@modules/authentication/application/select-tenant.usecase';
 import { MeUseCase } from '@modules/authentication/application/me.usecase';
+import { RefreshTokenUseCase } from '@modules/authentication/application/refresh-token.usecase';
 import { SelectTenantDto } from './select-tenant.dto';
 import { SelectTenantResponseDto } from './select-tenant-response.dto';
 import {
@@ -29,7 +32,10 @@ import {
 import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
 import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
 import type { Request, Response } from 'express';
-import { InvalidOrExpiredPreAuthTokenError } from '@modules/authentication/domain/auth.errors';
+import {
+  InvalidOrExpiredRefreshTokenError,
+  InvalidOrExpiredPreAuthTokenError,
+} from '@modules/authentication/domain/auth.errors';
 import { Membership } from '@modules/memberships/domain/membership.entity';
 import { MeResponseDto } from './me-response.dto';
 
@@ -40,6 +46,7 @@ export class AuthController {
     private loginUseCase: LoginUseCase,
     private selectTenantUseCase: SelectTenantUseCase,
     private meUseCase: MeUseCase,
+    private refreshTokenUseCase: RefreshTokenUseCase,
     private jwtService: TokenService,
   ) {}
   @Post('login')
@@ -106,6 +113,37 @@ export class AuthController {
   logout(@Res({ passthrough: true }) res: Response): void {
     res.clearCookie('preAuthToken');
     res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+  }
+
+  @Post('refresh')
+  @ApiConsumes('application/json')
+  @HttpCode(200)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string }> {
+    const refreshToken = req.cookies?.refreshToken as string | undefined;
+    const accessToken = req.cookies?.accessToken as string | undefined;
+
+    if (!refreshToken || !accessToken) {
+      throw new InvalidOrExpiredRefreshTokenError();
+    }
+
+    const result = await this.refreshTokenUseCase.execute(
+      refreshToken,
+      accessToken,
+    );
+
+    // Set new refresh token cookie (HttpOnly, Secure)
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    return { accessToken: result.accessToken };
   }
 
   @Get('me')

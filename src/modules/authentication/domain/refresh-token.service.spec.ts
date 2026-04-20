@@ -24,7 +24,9 @@ describe('RefreshTokenService', () => {
       session: {
         create: jest.fn().mockResolvedValue(mockSession),
         findFirst: jest.fn().mockResolvedValue(null),
-        update: jest.fn().mockResolvedValue({ ...mockSession, isRevoked: true }),
+        update: jest
+          .fn()
+          .mockResolvedValue({ ...mockSession, isRevoked: true }),
       },
     } as unknown as PrismaService;
 

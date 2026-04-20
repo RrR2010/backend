@@ -25,7 +25,7 @@ Links and IDs must match canonical filenames exactly.
 | ------------- | ------------ | --------------------------------------- | ------- | -------- | -------- | -------------------------- |
 | TASK_004_001  | [[EPIC_004]] | Add Session/RefreshToken Model          | backlog | dev      | high     | [[tasks/TASK_004_001]]     |
 | TASK_004_002  | [[EPIC_004]] | Implement Refresh Token Service        | backlog | dev      | high     | [[tasks/TASK_004_002]]     |
-| TASK_004_003  | [[EPIC_004]] | Add Refresh Token Endpoint             | backlog | dev      | high     | [[tasks/TASK_004_003]]     |
+| TASK_004_003  | [[EPIC_004]] | Add Refresh Token Endpoint             | done    | dev      | high     | [[tasks/TASK_004_003]]     |
 | TASK_004_004  | [[EPIC_004]] | Implement Session Listing UseCase      | backlog | dev      | medium   | [[tasks/TASK_004_004]]     |
 | TASK_004_005  | [[EPIC_004]] | Implement Session Revocation UseCase   | backlog | dev      | medium   | [[tasks/TASK_004_005]]     |
 | TASK_004_006  | [[EPIC_004]] | Implement Global Session Revocation    | backlog | dev      | medium   | [[tasks/TASK_004_006]]     |
