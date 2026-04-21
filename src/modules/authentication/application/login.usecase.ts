@@ -3,7 +3,6 @@ import { UserRepository } from '@modules/users/domain/user.repository';
 import { PasswordHasher } from '@modules/authentication/domain/password-hasher';
 import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
 import { TenantRepository } from '@modules/tenants/domain/tenant.repository';
-import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
 import { UserResponseDto } from '@modules/users/interface/user-response.dto';
 import { TenantResponseDto } from '@modules/tenants/interface/tenant-response.dto';
 import { InvalidCredentialsError } from '@modules/authentication/domain/auth.errors';
@@ -15,7 +14,6 @@ export class LoginUseCase {
     private readonly passwordHasher: PasswordHasher,
     private readonly membershipRepository: MembershipRepository,
     private readonly tenantRepository: TenantRepository,
-    private readonly refreshTokenService: RefreshTokenService,
   ) {}
   async execute(input: {
     email: string;
@@ -44,20 +42,9 @@ export class LoginUseCase {
       tenants.push(TenantResponseDto.fromDomain(tenant));
     }
 
-    // Generate and save refresh token
-    const refreshToken = this.refreshTokenService.generateRefreshToken();
-    const refreshTokenResult = await this.refreshTokenService.saveRefreshToken(
-      user.id.value,
-      refreshToken,
-      input.deviceInfo,
-      input.ipAddress,
-    );
-
     return {
       user: UserResponseDto.fromDomain(user),
       tenants,
-      refreshToken: refreshTokenResult.token,
-      refreshTokenExpiresAt: refreshTokenResult.expiresAt,
     };
   }
 }
@@ -65,6 +52,4 @@ export class LoginUseCase {
 export type LoginResponseResult = {
   user: UserResponseDto;
   tenants: TenantResponseDto[];
-  refreshToken: string;
-  refreshTokenExpiresAt: Date;
 };

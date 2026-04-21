@@ -88,13 +88,8 @@ export class AuthController {
       maxAge: 5 * 60 * 1000,
     });
 
-    // Set refresh token cookie (7 days)
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    // NOTE: refreshToken is NOT set here - it's set after tenant selection
+    // This ensures full session only starts after tenant selection
 
     return result;
   }
@@ -118,16 +113,31 @@ export class AuthController {
       throw new InvalidOrExpiredPreAuthTokenError();
     }
 
+    // Extract device info from request
+    const deviceInfo = req.headers['user-agent'] as string | undefined;
+    const ipAddress = req.ip || req.socket?.remoteAddress || undefined;
+
     const result = await this.selectTenantUseCase.execute(
       payload.sub,
       input.tenantId,
+      deviceInfo,
+      ipAddress,
     );
 
+    // Set access token cookie (15 minutes)
     res.cookie('accessToken', result.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 15 * 60 * 1000,
+    });
+
+    // Set refresh token cookie (7 days) - This is where full session starts
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     res.clearCookie('preAuthToken');
