@@ -17,6 +17,7 @@ import { MeUseCase } from '@modules/authentication/application/me.usecase';
 import { RefreshTokenUseCase } from '@modules/authentication/application/refresh-token.usecase';
 import { ListSessionsUseCase } from '@modules/authentication/application/list-sessions.usecase';
 import { RevokeSessionUseCase } from '@modules/authentication/application/revoke-session.usecase';
+import { RevokeAllSessionsUseCase } from '@modules/authentication/application/revoke-all-sessions.usecase';
 import { UsersModule } from '@modules/users/users.module';
 import { MembershipModule } from '@modules/memberships/membership.module';
 import { TenantModule } from '@modules/tenants/tenant.module';
@@ -50,6 +51,7 @@ import { TenantModule } from '@modules/tenants/tenant.module';
     RefreshTokenUseCase,
     ListSessionsUseCase,
     RevokeSessionUseCase,
+    RevokeAllSessionsUseCase,
   ],
   exports: [
     PasswordHasher,

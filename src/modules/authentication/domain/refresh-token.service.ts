@@ -201,6 +201,26 @@ export class RefreshTokenService {
   }
 
   /**
+   * Revokes all sessions for a user (logout from all devices).
+   * Returns the count of revoked sessions.
+   */
+  async revokeAllSessions(userId: string): Promise<number> {
+    const result = await this.prisma.session.updateMany({
+      where: {
+        userId,
+        isRevoked: false,
+        revokedAt: null,
+      },
+      data: {
+        isRevoked: true,
+        revokedAt: new Date(),
+      },
+    });
+
+    return result.count;
+  }
+
+  /**
    * Hashes a refresh token using SHA-256.
    */
   private hashToken(token: string): string {

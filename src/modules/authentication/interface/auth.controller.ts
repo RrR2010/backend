@@ -42,6 +42,7 @@ import { Membership } from '@modules/memberships/domain/membership.entity';
 import { MeResponseDto } from './me-response.dto';
 import { ListSessionsUseCase } from '@modules/authentication/application/list-sessions.usecase';
 import { RevokeSessionUseCase } from '@modules/authentication/application/revoke-session.usecase';
+import { RevokeAllSessionsUseCase } from '@modules/authentication/application/revoke-all-sessions.usecase';
 import { ListSessionsResponseDto } from './session-response.dto';
 
 @ApiTags('auth')
@@ -54,6 +55,7 @@ export class AuthController {
     private refreshTokenUseCase: RefreshTokenUseCase,
     private listSessionsUseCase: ListSessionsUseCase,
     private revokeSessionUseCase: RevokeSessionUseCase,
+    private revokeAllSessionsUseCase: RevokeAllSessionsUseCase,
     private jwtService: TokenService,
   ) {}
   @Post('login')
@@ -133,6 +135,23 @@ export class AuthController {
 
     return {
       sessions: result.sessions,
+    };
+  }
+
+  @Delete('sessions')
+  @ApiBearerAuth('accessToken')
+  @ApiSecurity('accessToken')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  async revokeAllSessions(
+    @Req() req: Request,
+  ): Promise<{ revokedCount: number; revokedAt: Date }> {
+    const payload = req.user as AuthTokenPayload;
+    const result = await this.revokeAllSessionsUseCase.execute(payload.sub);
+
+    return {
+      revokedCount: result.revokedCount,
+      revokedAt: result.revokedAt,
     };
   }
 
