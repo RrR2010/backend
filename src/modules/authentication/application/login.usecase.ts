@@ -32,14 +32,16 @@ export class LoginUseCase {
     const memberships = await this.membershipRepository.findByUserId(
       user.id.value,
     );
-    if (!memberships || memberships.length === 0)
-      throw new Error('Invalid credentials');
+    // Platform users don't have memberships - this is valid
+    // Just continue with empty memberships
 
     const tenants = [];
-    for (const membership of memberships) {
-      const tenant = await this.tenantRepository.findById(membership.tenantId);
-      if (!tenant) continue;
-      tenants.push(TenantResponseDto.fromDomain(tenant));
+    if (memberships) {
+      for (const membership of memberships) {
+        const tenant = await this.tenantRepository.findById(membership.tenantId);
+        if (!tenant) continue;
+        tenants.push(TenantResponseDto.fromDomain(tenant));
+      }
     }
 
     return {

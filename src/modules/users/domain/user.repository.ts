@@ -7,4 +7,5 @@ export abstract class UserRepository {
   abstract findAll(tenantId: string): Promise<User[]>;
   abstract save(user: User): Promise<User>;
   abstract delete(id: string): Promise<void>;
+  abstract count(): Promise<number>;
 }

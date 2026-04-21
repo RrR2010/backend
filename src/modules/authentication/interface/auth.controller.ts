@@ -44,6 +44,7 @@ import { ListSessionsUseCase } from '@modules/authentication/application/list-se
 import { RevokeSessionUseCase } from '@modules/authentication/application/revoke-session.usecase';
 import { RevokeAllSessionsUseCase } from '@modules/authentication/application/revoke-all-sessions.usecase';
 import { ListSessionsResponseDto } from './session-response.dto';
+import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -57,6 +58,7 @@ export class AuthController {
     private revokeSessionUseCase: RevokeSessionUseCase,
     private revokeAllSessionsUseCase: RevokeAllSessionsUseCase,
     private jwtService: TokenService,
+    private refreshTokenService: RefreshTokenService,
   ) {}
   @Post('login')
   @ApiConsumes('application/json')
@@ -66,7 +68,7 @@ export class AuthController {
     @Body() input: LoginDto,
   ): Promise<LoginResponseResult> {
     // Extract device info from headers
-    const deviceInfo = req.headers['user-agent'] as string | undefined;
+    const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip || req.socket?.remoteAddress || undefined;
 
     const result = await this.loginUseCase.execute({
@@ -76,6 +78,46 @@ export class AuthController {
       ...(ipAddress && { ipAddress }),
     });
 
+    // Platform user - generate tokens directly (no tenant selection needed)
+    if (result.user.platformRoles && result.user.platformRoles.length > 0) {
+      // Generate access token without tenant scope
+      const accessToken = this.jwtService.sign({
+        sub: result.user.id,
+      });
+
+      // Generate and save refresh token
+      const refreshToken = this.refreshTokenService.generateRefreshToken();
+      const refreshTokenResult = await this.refreshTokenService.saveRefreshToken(
+        result.user.id,
+        refreshToken,
+        deviceInfo,
+        ipAddress,
+      );
+
+      // Set access token cookie (15 minutes)
+      res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000,
+      });
+
+      // Set refresh token cookie (7 days)
+      res.cookie('refreshToken', refreshTokenResult.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      // Return with empty tenants - user is already authenticated
+      return {
+        user: result.user,
+        tenants: [],
+      };
+    }
+
+    // Regular user - require tenant selection
     const preAuthToken = this.jwtService.signPreAuth({
       sub: result.user.id,
       type: 'pre-auth',
@@ -114,7 +156,7 @@ export class AuthController {
     }
 
     // Extract device info from request
-    const deviceInfo = req.headers['user-agent'] as string | undefined;
+    const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip || req.socket?.remoteAddress || undefined;
 
     const result = await this.selectTenantUseCase.execute(
@@ -210,7 +252,7 @@ export class AuthController {
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{}> {
+  ): Promise<object> {
     const refreshToken = req.cookies?.refreshToken as string | undefined;
     const accessToken = req.cookies?.accessToken as string | undefined;
 
