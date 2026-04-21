@@ -8,6 +8,7 @@ export interface PreAuthPayload {
 export interface AuthTokenPayload {
   sub: string; // user ID
   tenantId?: string; // tenant ID (optional for platform scope)
+  platformRoles?: string[]; // TODO: EPIC_005 - Add platformRoles for platform admin users
   iat?: number;
   exp?: number;
 }

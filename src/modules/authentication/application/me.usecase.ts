@@ -10,10 +10,16 @@ export class MeUseCase {
     private readonly userRepository: UserRepository,
     private readonly tenantRepository: TenantRepository,
   ) {}
-  async execute(userId: string, tenantId: string): Promise<MeUseCaseResult> {
+  async execute(userId: string, tenantId?: string): Promise<MeUseCaseResult> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new Error('User not found');
+    }
+
+    // TODO: EPIC_005 - Refactor for platform-only users
+    // If no tenantId, return user data without tenant
+    if (!tenantId) {
+      return { user: UserResponseDto.fromDomain(user), tenant: null };
     }
 
     const tenant = await this.tenantRepository.findById(tenantId);
@@ -30,5 +36,5 @@ export class MeUseCase {
 
 export type MeUseCaseResult = {
   user: UserResponseDto;
-  tenant: TenantResponseDto;
+  tenant: TenantResponseDto | null; // TODO: EPIC_005 - Allow null for platform-only users
 };

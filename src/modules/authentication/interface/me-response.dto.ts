@@ -7,5 +7,5 @@ export class MeResponseDto {
   user!: UserResponseDto;
 
   @ApiProperty()
-  tenant!: TenantResponseDto;
+  tenant!: TenantResponseDto | null; // TODO: EPIC_005 - Allow null for platform-only users
 }

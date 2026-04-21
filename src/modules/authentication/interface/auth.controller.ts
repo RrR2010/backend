@@ -290,8 +290,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, TenantContextGuard)
   async me(@Req() req: Request): Promise<MeResponseDto> {
     const payload = req.user as AuthTokenPayload;
-    // tenantId is guaranteed to be defined after TenantContextGuard passes
-    const result = await this.meUseCase.execute(payload.sub, payload.tenantId!);
+    // TODO: EPIC_005 - tenantId may be undefined for platform-only users
+    // TenantContextGuard passes for platform users (with platformRoles)
+    const result = await this.meUseCase.execute(payload.sub, payload.tenantId);
 
     return {
       user: result.user,
