@@ -210,7 +210,7 @@ export class AuthController {
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{}> {
     const refreshToken = req.cookies?.refreshToken as string | undefined;
     const accessToken = req.cookies?.accessToken as string | undefined;
 
@@ -223,7 +223,15 @@ export class AuthController {
       accessToken,
     );
 
-    // Set new refresh token cookie (HttpOnly, Secure)
+    // Set new access token cookie (HttpOnly, 15 minutes)
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // 15 min
+    });
+
+    // Set new refresh token cookie (HttpOnly, 30 days)
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -231,7 +239,8 @@ export class AuthController {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
-    return { accessToken: result.accessToken };
+    // Return empty body - tokens should not be accessible to JavaScript
+    return {};
   }
 
   @Get('me')
