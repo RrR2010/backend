@@ -38,6 +38,8 @@ import {
 } from '@modules/authentication/domain/auth.errors';
 import { Membership } from '@modules/memberships/domain/membership.entity';
 import { MeResponseDto } from './me-response.dto';
+import { ListSessionsUseCase } from '@modules/authentication/application/list-sessions.usecase';
+import { ListSessionsResponseDto } from './session-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -47,6 +49,7 @@ export class AuthController {
     private selectTenantUseCase: SelectTenantUseCase,
     private meUseCase: MeUseCase,
     private refreshTokenUseCase: RefreshTokenUseCase,
+    private listSessionsUseCase: ListSessionsUseCase,
     private jwtService: TokenService,
   ) {}
   @Post('login')
@@ -114,6 +117,19 @@ export class AuthController {
     res.clearCookie('preAuthToken');
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
+  }
+
+  @Get('sessions')
+  @ApiBearerAuth('accessToken')
+  @ApiSecurity('accessToken')
+  @UseGuards(JwtAuthGuard)
+  async listSessions(@Req() req: Request): Promise<ListSessionsResponseDto> {
+    const payload = req.user as AuthTokenPayload;
+    const result = await this.listSessionsUseCase.execute(payload.sub);
+
+    return {
+      sessions: result.sessions,
+    };
   }
 
   @Post('refresh')

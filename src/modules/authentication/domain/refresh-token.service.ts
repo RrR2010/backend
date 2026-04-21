@@ -51,11 +51,14 @@ export class RefreshTokenService {
       expiresAt.getHours() + RefreshTokenService.REFRESH_TOKEN_EXPIRY_HOURS,
     );
 
+    const now = new Date();
+
     await this.prisma.session.create({
       data: {
         userId,
         refreshTokenHash: tokenHash,
         expiresAt,
+        lastUsedAt: now,
         isRevoked: false,
         ...(deviceInfo && { deviceInfo }),
         ...(ipAddress && { ipAddress }),
@@ -128,6 +131,7 @@ export class RefreshTokenService {
       data: {
         isRevoked: true,
         revokedAt: new Date(),
+        lastUsedAt: new Date(),
       },
     });
 
@@ -155,6 +159,45 @@ export class RefreshTokenService {
         revokedAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Lists all sessions for a user, excluding revoked ones.
+   * Sorted by last used (most recent first).
+   */
+  async listSessionsByUserId(userId: string): Promise<
+    {
+      id: string;
+      deviceInfo: string | null;
+      ipAddress: string | null;
+      createdAt: Date;
+      lastUsedAt: Date;
+      isRevoked: boolean;
+      revokedAt: Date | null;
+    }[]
+  > {
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        userId,
+        isRevoked: false,
+        revokedAt: null,
+      },
+      orderBy: {
+        lastUsedAt: 'desc',
+      },
+      select: {
+        id: true,
+        deviceInfo: true,
+        ipAddress: true,
+        createdAt: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        isRevoked: true,
+        revokedAt: true,
+      },
+    });
+
+    return sessions;
   }
 
   /**

@@ -74,11 +74,13 @@ model Session {
   deviceInfo       String?
   ipAddress        String?
   createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime  @default(now())
   expiresAt        DateTime
   revokedAt        DateTime?
   isRevoked        Boolean   @default(false)
 
   @@index([userId])
+  @@index([lastUsedAt])
   @@index([expiresAt])
   @@index([refreshTokenHash])
 }
