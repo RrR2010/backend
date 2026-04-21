@@ -34,7 +34,7 @@ import { TenantModule } from '@modules/tenants/tenant.module';
         secret:
           configService.get<string>('JWT_SECRET') ||
           'default-secret-change-in-production',
-        signOptions: { expiresIn: '1h' },
+        signOptions: { expiresIn: '15m' },
       }),
     }),
   ],

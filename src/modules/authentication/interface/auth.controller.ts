@@ -61,10 +61,20 @@ export class AuthController {
   @Post('login')
   @ApiConsumes('application/json')
   async login(
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Body() input: LoginDto,
   ): Promise<LoginResponseResult> {
-    const result = await this.loginUseCase.execute(input);
+    // Extract device info from headers
+    const deviceInfo = req.headers['user-agent'] as string | undefined;
+    const ipAddress = req.ip || req.socket?.remoteAddress || undefined;
+
+    const result = await this.loginUseCase.execute({
+      email: input.email,
+      password: input.password,
+      ...(deviceInfo && { deviceInfo }),
+      ...(ipAddress && { ipAddress }),
+    });
 
     const preAuthToken = this.jwtService.signPreAuth({
       sub: result.user.id,
@@ -76,6 +86,14 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 5 * 60 * 1000,
+    });
+
+    // Set refresh token cookie (7 days)
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return result;
@@ -109,7 +127,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 5 * 60 * 1000,
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.clearCookie('preAuthToken');

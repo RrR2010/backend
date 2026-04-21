@@ -15,7 +15,7 @@ export class JwtService implements TokenService {
   }
 
   sign(payload: AuthTokenPayload): string {
-    return this.nestJwtService.sign(payload, { expiresIn: '1h' });
+    return this.nestJwtService.sign(payload, { expiresIn: '15m' });
   }
 
   verifyPreAuth(token: string): PreAuthPayload | null {
