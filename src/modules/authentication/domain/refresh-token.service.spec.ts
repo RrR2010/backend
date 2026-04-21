@@ -245,6 +245,203 @@ describe('RefreshTokenService', () => {
     });
   });
 
+  describe('listSessionsByUserId', () => {
+    beforeEach(() => {
+      prismaService.session = {
+        ...prismaService.session,
+        findMany: jest.fn().mockResolvedValue([]),
+      } as any;
+    });
+
+    it('should list active sessions for a user', async () => {
+      const mockSessions = [
+        {
+          id: 'session-1',
+          userId: 'user-123',
+          deviceInfo: 'Chrome',
+          ipAddress: '192.168.1.1',
+          createdAt: new Date(),
+          lastUsedAt: new Date(),
+          expiresAt: new Date(Date.now() + 86400000),
+          isRevoked: false,
+          revokedAt: null,
+        },
+        {
+          id: 'session-2',
+          userId: 'user-123',
+          deviceInfo: 'Firefox',
+          ipAddress: '192.168.1.2',
+          createdAt: new Date(),
+          lastUsedAt: new Date(),
+          expiresAt: new Date(Date.now() + 86400000),
+          isRevoked: false,
+          revokedAt: null,
+        },
+      ];
+
+      (prismaService.session as any).findMany = jest
+        .fn()
+        .mockResolvedValue(mockSessions);
+
+      const result = await service.listSessionsByUserId('user-123');
+
+      expect(result).toHaveLength(2);
+      expect(prismaService.session.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-123',
+          isRevoked: false,
+          revokedAt: null,
+        },
+        orderBy: {
+          lastUsedAt: 'desc',
+        },
+        select: {
+          id: true,
+          deviceInfo: true,
+          ipAddress: true,
+          createdAt: true,
+          lastUsedAt: true,
+          expiresAt: true,
+          isRevoked: true,
+          revokedAt: true,
+        },
+      });
+    });
+
+    it('should return empty array when user has no sessions', async () => {
+      (prismaService.session as any).findMany = jest
+        .fn()
+        .mockResolvedValue([]);
+
+      const result = await service.listSessionsByUserId('user-no-sessions');
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should exclude revoked sessions', async () => {
+      const mockSessions = [
+        {
+          id: 'session-active',
+          userId: 'user-123',
+          deviceInfo: 'Chrome',
+          ipAddress: '192.168.1.1',
+          createdAt: new Date(),
+          lastUsedAt: new Date(),
+          expiresAt: new Date(Date.now() + 86400000),
+          isRevoked: false,
+          revokedAt: null,
+        },
+      ];
+
+      (prismaService.session as any).findMany = jest
+        .fn()
+        .mockResolvedValue(mockSessions);
+
+      const result = await service.listSessionsByUserId('user-123');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('session-active');
+    });
+  });
+
+  describe('listAllSessionsByUserId', () => {
+    beforeEach(() => {
+      prismaService.session = {
+        ...prismaService.session,
+        findMany: jest.fn().mockResolvedValue([]),
+      } as any;
+    });
+
+    it('should list all sessions including revoked for admin', async () => {
+      const mockSessions = [
+        {
+          id: 'session-1',
+          userId: 'user-123',
+          deviceInfo: 'Chrome',
+          ipAddress: '192.168.1.1',
+          createdAt: new Date(),
+          lastUsedAt: new Date(),
+          expiresAt: new Date(Date.now() + 86400000),
+          isRevoked: false,
+          revokedAt: null,
+        },
+        {
+          id: 'session-2',
+          userId: 'user-123',
+          deviceInfo: 'Firefox',
+          ipAddress: '192.168.1.2',
+          createdAt: new Date(),
+          lastUsedAt: new Date(),
+          expiresAt: new Date(Date.now() + 86400000),
+          isRevoked: true,
+          revokedAt: new Date(),
+        },
+      ];
+
+      (prismaService.session as any).findMany = jest
+        .fn()
+        .mockResolvedValue(mockSessions);
+
+      const result = await service.listAllSessionsByUserId('user-123');
+
+      expect(result).toHaveLength(2);
+      expect(prismaService.session.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-123',
+        },
+        orderBy: {
+          lastUsedAt: 'desc',
+        },
+        select: {
+          id: true,
+          deviceInfo: true,
+          ipAddress: true,
+          createdAt: true,
+          lastUsedAt: true,
+          expiresAt: true,
+          isRevoked: true,
+          revokedAt: true,
+        },
+      });
+    });
+  });
+
+  describe('revokeAllSessions', () => {
+    beforeEach(() => {
+      prismaService.session = {
+        ...prismaService.session,
+        updateMany: jest.fn().mockResolvedValue({ count: 3 }),
+      } as any;
+    });
+
+    it('should revoke all sessions for a user', async () => {
+      const result = await service.revokeAllSessions('user-123');
+
+      expect(result).toBe(3);
+      expect(prismaService.session.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-123',
+          isRevoked: false,
+          revokedAt: null,
+        },
+        data: {
+          isRevoked: true,
+          revokedAt: expect.any(Date),
+        },
+      });
+    });
+
+    it('should return 0 when no sessions to revoke', async () => {
+      (prismaService.session as any).updateMany = jest
+        .fn()
+        .mockResolvedValue({ count: 0 });
+
+      const result = await service.revokeAllSessions('user-no-sessions');
+
+      expect(result).toBe(0);
+    });
+  });
+
   describe('security features', () => {
     it('should generate tokens with sufficient entropy', () => {
       const tokens = new Set<string>();
