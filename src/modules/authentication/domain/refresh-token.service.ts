@@ -201,6 +201,44 @@ export class RefreshTokenService {
   }
 
   /**
+   * Lists all sessions for a user, including revoked ones.
+   * Used by admin for audit purposes.
+   * Sorted by last used (most recent first).
+   */
+  async listAllSessionsByUserId(userId: string): Promise<
+    {
+      id: string;
+      deviceInfo: string | null;
+      ipAddress: string | null;
+      createdAt: Date;
+      lastUsedAt: Date;
+      isRevoked: boolean;
+      revokedAt: Date | null;
+    }[]
+  > {
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        lastUsedAt: 'desc',
+      },
+      select: {
+        id: true,
+        deviceInfo: true,
+        ipAddress: true,
+        createdAt: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        isRevoked: true,
+        revokedAt: true,
+      },
+    });
+
+    return sessions;
+  }
+
+  /**
    * Revokes all sessions for a user (logout from all devices).
    * Returns the count of revoked sessions.
    */

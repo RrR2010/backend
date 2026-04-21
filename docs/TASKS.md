@@ -29,7 +29,7 @@ Links and IDs must match canonical filenames exactly.
 | TASK_004_004  | [[EPIC_004]] | Implement Session Listing UseCase      | backlog | dev      | medium   | [[tasks/TASK_004_004]]     |
 | TASK_004_005  | [[EPIC_004]] | Implement Session Revocation UseCase   | backlog | dev      | medium   | [[tasks/TASK_004_005]]     |
 | TASK_004_006  | [[EPIC_004]] | Implement Global Session Revocation    | backlog | dev      | medium   | [[tasks/TASK_004_006]]     |
-| TASK_004_007  | [[EPIC_004]] | Implement Platform Admin Session Mgmt  | backlog | dev      | medium   | [[tasks/TASK_004_007]]     |
+| TASK_004_007  | [[EPIC_004]] | Implement Platform Admin Session Mgmt  | done    | dev      | medium   | [[tasks/TASK_004_007]]     |
 | TASK_004_008  | [[EPIC_004]] | Update Login Flow to Issue Refresh Token | backlog | dev      | high     | [[tasks/TASK_004_008]]     |
 | TASK_004_009  | [[EPIC_004]] | Update Select-Tenant Flow              | backlog | dev      | high     | [[tasks/TASK_004_009]]     |
 | TASK_004_010  | [[EPIC_004]] | Add Unit/Integration Tests             | backlog | dev      | medium   | [[tasks/TASK_004_010]]     |

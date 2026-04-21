@@ -19,9 +19,8 @@ export class RevokeAllSessionsUseCase {
       action: 'REVOKE_ALL_SESSIONS',
     });
 
-    const revokedCount = await this.refreshTokenService.revokeAllSessions(
-      userId,
-    );
+    const revokedCount =
+      await this.refreshTokenService.revokeAllSessions(userId);
 
     this.logger.log({
       message: 'All sessions revoked successfully',
