@@ -9,7 +9,6 @@ import {
   Param,
   UseGuards,
   HttpCode,
-  Headers,
 } from '@nestjs/common';
 import {
   ApiConsumes,
@@ -30,7 +29,6 @@ import { SelectTenantResponseDto } from './select-tenant-response.dto';
 import {
   TokenService,
   AuthTokenPayload,
-  AuthScope,
 } from '@modules/authentication/domain/token.service';
 import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
 import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
@@ -47,6 +45,7 @@ import { RevokeAllSessionsUseCase } from '@modules/authentication/application/re
 import { ListSessionsResponseDto } from './session-response.dto';
 import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
 import { LoginResponseDto } from './login-response.dto';
+import { SessionService } from '@modules/authentication/infra/session.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -61,6 +60,7 @@ export class AuthController {
     private revokeAllSessionsUseCase: RevokeAllSessionsUseCase,
     private jwtService: TokenService,
     private refreshTokenService: RefreshTokenService,
+    private sessionService: SessionService,
   ) {}
 
   /**
@@ -91,45 +91,16 @@ export class AuthController {
       ...(ipAddress && { ipAddress }),
     });
 
-    // TODO: Refactor - use nextStepHint to determine flow instead of scope
-    // For now, check scope for backward compatibility
-
-    // Platform user - generate tokens directly
+    // Use sessionService for token issuance based on scope
     if (result.scope === 'platform') {
-      // Generate access token with platform scope
-      const accessToken = this.jwtService.sign({
-        sub: result.user.id,
-        scope: AuthScope.Platform,
-        platformRoles: result.user.platformRoles,
-      });
+      // Platform user - create full platform session
+      await this.sessionService.createPlatformSession(
+        res,
+        result.user,
+        deviceInfo,
+        ipAddress,
+      );
 
-      // Generate and save refresh token
-      const refreshToken = this.refreshTokenService.generateRefreshToken();
-      const refreshTokenResult =
-        await this.refreshTokenService.saveRefreshToken(
-          result.user.id,
-          refreshToken,
-          deviceInfo,
-          ipAddress,
-        );
-
-      // Set access token cookie (15 minutes)
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 15 * 60 * 1000,
-      });
-
-      // Set refresh token cookie (7 days)
-      res.cookie('refreshToken', refreshTokenResult.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      // Return unified result
       return {
         user: result.user,
         scope: result.scope,
@@ -138,24 +109,9 @@ export class AuthController {
       };
     }
 
-    // Tenant user - require tenant selection first (unless single tenant auto-login)
-    // Issue pre-auth token to hold user session while selecting tenant
-    const preAuthToken = this.jwtService.signPreAuth({
-      sub: result.user.id,
-      type: 'pre-auth',
-    });
+    // Tenant user - create pre-auth session for tenant selection
+    await this.sessionService.createPreAuthSession(res, result.user);
 
-    res.cookie('preAuthToken', preAuthToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 5 * 60 * 1000,
-    });
-
-    // NOTE: refreshToken is NOT set here - it's set after tenant selection
-    // This ensures full session only starts after tenant selection
-
-    // Return unified result
     return {
       user: result.user,
       scope: result.scope,
@@ -194,22 +150,14 @@ export class AuthController {
       ipAddress,
     );
 
-    // Set access token cookie (15 minutes)
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-    });
-
-    // Set refresh token cookie (7 days) - This is where full session starts
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
+    // Set tokens from use case result using sessionService cookie configuration
+    // Note: Token generation stays in use case to maintain consistency
+    // Cookie config is centralized in sessionService
+    this.sessionService.setTokensFromUseCase(
+      res,
+      result.accessToken,
+      result.refreshToken,
+    );
     res.clearCookie('preAuthToken');
 
     return result;
@@ -218,9 +166,7 @@ export class AuthController {
   @Post('logout')
   @ApiConsumes('application/json')
   logout(@Res({ passthrough: true }) res: Response): void {
-    res.clearCookie('preAuthToken');
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    this.sessionService.clearAllSessionCookies(res);
   }
 
   @Get('sessions')
@@ -293,21 +239,12 @@ export class AuthController {
       accessToken,
     );
 
-    // Set new access token cookie (HttpOnly, 15 minutes)
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 min
-    });
-
-    // Set new refresh token cookie (HttpOnly, 30 days)
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    // Set new access token and refresh token cookies using sessionService
+    this.sessionService.setRotationCookies(
+      res,
+      result.accessToken,
+      result.refreshToken,
+    );
 
     // Return empty body - tokens should not be accessible to JavaScript
     return {};

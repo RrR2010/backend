@@ -10,6 +10,7 @@ import { RefreshTokenService } from '@modules/authentication/domain/refresh-toke
 import { JwtStrategy } from '@modules/authentication/infra/jwt.strategy';
 import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
 import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
+import { SessionService } from '@modules/authentication/infra/session.service';
 import { AuthController } from '@modules/authentication/interface/auth.controller';
 import { LoginUseCase } from '@modules/authentication/application/login.usecase';
 import { SelectTenantUseCase } from '@modules/authentication/application/select-tenant.usecase';
@@ -42,6 +43,7 @@ import { TenantModule } from '@modules/tenants/tenant.module';
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
     { provide: TokenService, useClass: JwtService },
     RefreshTokenService,
+    SessionService,
     JwtStrategy,
     JwtAuthGuard,
     TenantContextGuard,
@@ -57,6 +59,7 @@ import { TenantModule } from '@modules/tenants/tenant.module';
     PasswordHasher,
     TokenService,
     RefreshTokenService,
+    SessionService,
     JwtAuthGuard,
     TenantContextGuard,
   ],
