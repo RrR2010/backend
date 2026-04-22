@@ -30,6 +30,7 @@ import { SelectTenantResponseDto } from './select-tenant-response.dto';
 import {
   TokenService,
   AuthTokenPayload,
+  AuthScope,
 } from '@modules/authentication/domain/token.service';
 import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
 import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
@@ -80,9 +81,11 @@ export class AuthController {
 
     // Platform user - generate tokens directly (no tenant selection needed)
     if (result.user.platformRoles && result.user.platformRoles.length > 0) {
-      // Generate access token without tenant scope
+      // Generate access token with platform scope
       const accessToken = this.jwtService.sign({
         sub: result.user.id,
+        scope: AuthScope.Platform,
+        platformRoles: result.user.platformRoles,
       });
 
       // Generate and save refresh token
@@ -184,7 +187,7 @@ export class AuthController {
 
     res.clearCookie('preAuthToken');
 
-    return {};
+    return result;
   }
 
   @Post('logout')

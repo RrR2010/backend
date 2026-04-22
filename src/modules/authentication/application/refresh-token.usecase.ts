@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
-import { TokenService } from '@modules/authentication/domain/token.service';
+import {
+  TokenService,
+  AuthScope,
+  AuthTokenPayload,
+} from '@modules/authentication/domain/token.service';
 import {
   InvalidOrExpiredRefreshTokenError,
   InvalidOrExpiredAccessTokenError,
@@ -24,8 +28,11 @@ export class RefreshTokenUseCase {
       throw new InvalidOrExpiredAccessTokenError();
     }
 
-    // Tenant context is required for token refresh
-    if (!accessPayload.tenantId) {
+    // TODO: EPIC_005 - Consider adding platform-scoped refresh support
+    // For now, platform users can also refresh tokens
+    // TODO: EPIC_005 - Currently allows platform users to refresh without tenant
+    // Tenant context is required for token refresh (unless platform scope)
+    if (accessPayload.scope === AuthScope.Tenant && !accessPayload.tenantId) {
       throw new MissingTenantContextError();
     }
 
@@ -37,11 +44,27 @@ export class RefreshTokenUseCase {
       throw new InvalidOrExpiredRefreshTokenError();
     }
 
-    // Issue new access token with same tenant context
-    const newAccessToken = this.tokenService.sign({
-      sub: accessPayload.sub,
-      tenantId: accessPayload.tenantId,
-    });
+    // Issue new access token with same scope context
+    let newAccessToken: string;
+
+    if (accessPayload.scope === AuthScope.Tenant && accessPayload.tenantId) {
+      // Tenant-scoped token refresh
+      newAccessToken = this.tokenService.sign({
+        sub: accessPayload.sub,
+        scope: AuthScope.Tenant,
+        tenantId: accessPayload.tenantId,
+      });
+    } else if (accessPayload.scope === AuthScope.Platform && accessPayload.platformRoles) {
+      // Platform-scoped token refresh
+      newAccessToken = this.tokenService.sign({
+        sub: accessPayload.sub,
+        scope: AuthScope.Platform,
+        platformRoles: accessPayload.platformRoles,
+      });
+    } else {
+      // Fallback (should not happen if validation above is correct)
+      throw new InvalidOrExpiredAccessTokenError();
+    }
 
     return {
       accessToken: newAccessToken,

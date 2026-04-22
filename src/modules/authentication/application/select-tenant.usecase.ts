@@ -4,7 +4,7 @@ import {
   UserHasNoMembershipsError,
   UserDoesNotHaveAccessToTenantError,
 } from '@modules/authentication/domain/auth.errors';
-import { TokenService } from '@modules/authentication/domain/token.service';
+import { TokenService, AuthScope } from '@modules/authentication/domain/token.service';
 import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
 
 @Injectable()
@@ -34,6 +34,7 @@ export class SelectTenantUseCase {
 
     const accessToken = this.tokenService.sign({
       sub: userId,
+      scope: AuthScope.Tenant,
       tenantId: tenantId,
     });
 

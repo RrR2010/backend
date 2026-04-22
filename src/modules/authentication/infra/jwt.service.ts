@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
+import { randomUUID } from 'crypto';
 import {
   TokenService,
   PreAuthPayload,
@@ -15,7 +16,9 @@ export class JwtService implements TokenService {
   }
 
   sign(payload: AuthTokenPayload): string {
-    return this.nestJwtService.sign(payload, { expiresIn: '15m' });
+    // Generate unique JTI for token revocation tracking
+    const jti = randomUUID();
+    return this.nestJwtService.sign({ ...payload, jti }, { expiresIn: '15m' });
   }
 
   verifyPreAuth(token: string): PreAuthPayload | null {

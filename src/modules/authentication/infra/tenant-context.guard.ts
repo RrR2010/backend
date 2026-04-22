@@ -1,5 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { AuthTokenPayload } from '@modules/authentication/domain/token.service';
+import {
+  AuthTokenPayload,
+  AuthScope,
+} from '@modules/authentication/domain/token.service';
 import { MissingTenantContextError } from '@modules/authentication/domain/auth.errors';
 
 @Injectable()
@@ -8,13 +11,12 @@ export class TenantContextGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user as AuthTokenPayload | undefined;
 
-    // TODO: EPIC_005 - Refactor this guard for platform vs tenant scope
-    // Platform users (with platformRoles) should not require tenantId
-    if ((user?.platformRoles?.length ?? 0) > 0) {
-      // Platform admin - skip tenant check
+    // Platform users have explicit scope - skip tenant check
+    if (user?.scope === AuthScope.Platform) {
       return true;
     }
 
+    // Tenant-scoped users must have tenantId
     if (!user?.tenantId) {
       throw new MissingTenantContextError();
     }
