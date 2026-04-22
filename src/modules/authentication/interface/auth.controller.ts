@@ -69,9 +69,6 @@ export class AuthController {
    * Returns unified result with explicit scope and nextStepHint:
    * - Platform user: scope=platform, nextStepHint=direct-login -> tokens issued immediately
    * - Tenant user: scope=tenant, nextStepHint=select-tenant -> require tenant selection first
-   *
-   * TODO: Consider supporting nextStepHint=direct-login for tenant users with single tenant
-   * for auto-login flow without requiring extra round-trip
    */
   @Post('login')
   @ApiConsumes('application/json')
@@ -255,8 +252,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, TenantContextGuard)
   async me(@Req() req: Request): Promise<MeResponseDto> {
     const payload = req.user as AuthTokenPayload;
-    // TODO: EPIC_005 - tenantId may be undefined for platform-only users
-    // TenantContextGuard passes for platform users (with platformRoles)
+    // tenantId may be undefined for platform-only users (TenantContextGuard passes for platform users with platformRoles)
     const result = await this.meUseCase.execute(payload.sub, payload.tenantId);
 
     return {

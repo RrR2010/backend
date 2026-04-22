@@ -10,8 +10,6 @@ import {
   InvalidOrExpiredAccessTokenError,
 } from '@modules/authentication/domain/auth.errors';
 
-// TODO: TASK_004_020 - Remove MissingTenantContextError import after confirming no other usage
-
 @Injectable()
 export class RefreshTokenUseCase {
   constructor(

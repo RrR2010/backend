@@ -16,8 +16,7 @@ export class MeUseCase {
       throw new Error('User not found');
     }
 
-    // TODO: EPIC_005 - Refactor for platform-only users
-    // If no tenantId, return user data without tenant
+    // If no tenantId, return user data without tenant (platform-only users)
     if (!tenantId) {
       return { user: UserResponseDto.fromDomain(user), tenant: null };
     }
@@ -36,5 +35,5 @@ export class MeUseCase {
 
 export type MeUseCaseResult = {
   user: UserResponseDto;
-  tenant: TenantResponseDto | null; // TODO: EPIC_005 - Allow null for platform-only users
+  tenant: TenantResponseDto | null;
 };
