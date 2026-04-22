@@ -33,3 +33,4 @@ Links and IDs must match canonical filenames exactly.
 | TASK_004_008  | [[EPIC_004]] | Update Login Flow to Issue Refresh Token | backlog | dev      | high     | [[tasks/TASK_004_008]]     |
 | TASK_004_009  | [[EPIC_004]] | Update Select-Tenant Flow              | backlog | dev      | high     | [[tasks/TASK_004_009]]     |
 | TASK_004_010  | [[EPIC_004]] | Add Unit/Integration Tests             | backlog | dev      | medium   | [[tasks/TASK_004_010]]     |
+| TASK_004_018  | [[EPIC_004]] | Refactor Login UseCase to Return Unified Auth Result | done | dev | high | [[tasks/TASK_004_018]] |

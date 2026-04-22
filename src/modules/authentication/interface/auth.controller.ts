@@ -19,8 +19,8 @@ import {
 } from '@nestjs/swagger';
 import { LoginDto } from './login.dto';
 import {
-  LoginResponseResult,
   LoginUseCase,
+  LoginUseCaseResult,
 } from '@modules/authentication/application/login.usecase';
 import { SelectTenantUseCase } from '@modules/authentication/application/select-tenant.usecase';
 import { MeUseCase } from '@modules/authentication/application/me.usecase';
@@ -46,6 +46,7 @@ import { RevokeSessionUseCase } from '@modules/authentication/application/revoke
 import { RevokeAllSessionsUseCase } from '@modules/authentication/application/revoke-all-sessions.usecase';
 import { ListSessionsResponseDto } from './session-response.dto';
 import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
+import { LoginResponseDto } from './login-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -61,13 +62,24 @@ export class AuthController {
     private jwtService: TokenService,
     private refreshTokenService: RefreshTokenService,
   ) {}
+
+  /**
+   * Login endpoint.
+   *
+   * Returns unified result with explicit scope and nextStepHint:
+   * - Platform user: scope=platform, nextStepHint=direct-login -> tokens issued immediately
+   * - Tenant user: scope=tenant, nextStepHint=select-tenant -> require tenant selection first
+   *
+   * TODO: Consider supporting nextStepHint=direct-login for tenant users with single tenant
+   * for auto-login flow without requiring extra round-trip
+   */
   @Post('login')
   @ApiConsumes('application/json')
   async login(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Body() input: LoginDto,
-  ): Promise<LoginResponseResult> {
+  ): Promise<LoginResponseDto> {
     // Extract device info from headers
     const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip || req.socket?.remoteAddress || undefined;
@@ -79,8 +91,11 @@ export class AuthController {
       ...(ipAddress && { ipAddress }),
     });
 
-    // Platform user - generate tokens directly (no tenant selection needed)
-    if (result.user.platformRoles && result.user.platformRoles.length > 0) {
+    // TODO: Refactor - use nextStepHint to determine flow instead of scope
+    // For now, check scope for backward compatibility
+
+    // Platform user - generate tokens directly
+    if (result.scope === 'platform') {
       // Generate access token with platform scope
       const accessToken = this.jwtService.sign({
         sub: result.user.id,
@@ -90,12 +105,13 @@ export class AuthController {
 
       // Generate and save refresh token
       const refreshToken = this.refreshTokenService.generateRefreshToken();
-      const refreshTokenResult = await this.refreshTokenService.saveRefreshToken(
-        result.user.id,
-        refreshToken,
-        deviceInfo,
-        ipAddress,
-      );
+      const refreshTokenResult =
+        await this.refreshTokenService.saveRefreshToken(
+          result.user.id,
+          refreshToken,
+          deviceInfo,
+          ipAddress,
+        );
 
       // Set access token cookie (15 minutes)
       res.cookie('accessToken', accessToken, {
@@ -113,14 +129,17 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      // Return with empty tenants - user is already authenticated
+      // Return unified result
       return {
         user: result.user,
-        tenants: [],
+        scope: result.scope,
+        availableContexts: result.availableContexts,
+        nextStepHint: result.nextStepHint,
       };
     }
 
-    // Regular user - require tenant selection
+    // Tenant user - require tenant selection first (unless single tenant auto-login)
+    // Issue pre-auth token to hold user session while selecting tenant
     const preAuthToken = this.jwtService.signPreAuth({
       sub: result.user.id,
       type: 'pre-auth',
@@ -136,7 +155,13 @@ export class AuthController {
     // NOTE: refreshToken is NOT set here - it's set after tenant selection
     // This ensures full session only starts after tenant selection
 
-    return result;
+    // Return unified result
+    return {
+      user: result.user,
+      scope: result.scope,
+      availableContexts: result.availableContexts,
+      nextStepHint: result.nextStepHint,
+    };
   }
 
   @Post('select-tenant')
