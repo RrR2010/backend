@@ -8,8 +8,9 @@ import {
 import {
   InvalidOrExpiredRefreshTokenError,
   InvalidOrExpiredAccessTokenError,
-  MissingTenantContextError,
 } from '@modules/authentication/domain/auth.errors';
+
+// TODO: TASK_004_020 - Remove MissingTenantContextError import after confirming no other usage
 
 @Injectable()
 export class RefreshTokenUseCase {
@@ -28,13 +29,9 @@ export class RefreshTokenUseCase {
       throw new InvalidOrExpiredAccessTokenError();
     }
 
-    // TODO: EPIC_005 - Consider adding platform-scoped refresh support
-    // For now, platform users can also refresh tokens
-    // TODO: EPIC_005 - Currently allows platform users to refresh without tenant
-    // Tenant context is required for token refresh (unless platform scope)
-    if (accessPayload.scope === AuthScope.Tenant && !accessPayload.tenantId) {
-      throw new MissingTenantContextError();
-    }
+    // TASK_004_020: Scope-aware validation - allow both platform and tenant sessions
+    // Note: tenantId/platformRoles are optional per AuthTokenPayload contract
+    // If tenant was deleted, we accept stale token and refresh with available context
 
     // Rotate refresh token (invalidates old, creates new)
     const rotationResult =
@@ -45,24 +42,34 @@ export class RefreshTokenUseCase {
     }
 
     // Issue new access token with same scope context
+    // TASK_004_020: Handle scope-aware token refresh, including stale tokens
+    // Note: Only include optional properties when defined (tsconfig exactOptionalPropertyTypes)
     let newAccessToken: string;
 
-    if (accessPayload.scope === AuthScope.Tenant && accessPayload.tenantId) {
-      // Tenant-scoped token refresh
-      newAccessToken = this.tokenService.sign({
+    if (accessPayload.scope === AuthScope.Tenant) {
+      // Tenant-scoped token refresh (tenantId may be missing if tenant deleted)
+      const payload: AuthTokenPayload = {
         sub: accessPayload.sub,
         scope: AuthScope.Tenant,
-        tenantId: accessPayload.tenantId,
-      });
-    } else if (accessPayload.scope === AuthScope.Platform && accessPayload.platformRoles) {
-      // Platform-scoped token refresh
-      newAccessToken = this.tokenService.sign({
+      };
+      // Only include tenantId if present (stale token handling)
+      if (accessPayload.tenantId) {
+        payload.tenantId = accessPayload.tenantId;
+      }
+      newAccessToken = this.tokenService.sign(payload);
+    } else if (accessPayload.scope === AuthScope.Platform) {
+      // Platform-scoped token refresh (platformRoles may be missing if stale)
+      const payload: AuthTokenPayload = {
         sub: accessPayload.sub,
         scope: AuthScope.Platform,
-        platformRoles: accessPayload.platformRoles,
-      });
+      };
+      // Only include platformRoles if present (stale token handling)
+      if (accessPayload.platformRoles) {
+        payload.platformRoles = accessPayload.platformRoles;
+      }
+      newAccessToken = this.tokenService.sign(payload);
     } else {
-      // Fallback (should not happen if validation above is correct)
+      // Fallback for unknown scope - should not happen
       throw new InvalidOrExpiredAccessTokenError();
     }
 
