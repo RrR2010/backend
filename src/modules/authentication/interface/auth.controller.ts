@@ -162,8 +162,24 @@ export class AuthController {
 
   @Post('logout')
   @ApiConsumes('application/json')
-  logout(@Res({ passthrough: true }) res: Response): void {
-    this.sessionService.clearAllSessionCookies(res);
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+      if (refreshToken) {
+        const validation =
+          await this.refreshTokenService.validateRefreshToken(refreshToken);
+        if (validation && validation.sessionId) {
+          await this.refreshTokenService.revokeRefreshToken(validation.sessionId);
+        }
+      }
+    } catch (error) {
+      // Continue with logout even if revocation fails
+    } finally {
+      this.sessionService.clearAllSessionCookies(res);
+    }
   }
 
   @Get('sessions')

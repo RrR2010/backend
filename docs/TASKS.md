@@ -3,7 +3,7 @@ id: backend/TASKS
 title: Backend Tasks Index
 type: index
 created: 2026-04-11
-updated: 2026-04-19
+updated: 2026-04-22
 tags:
   - tasks
   - backend
@@ -35,3 +35,6 @@ Links and IDs must match canonical filenames exactly.
 | TASK_004_010  | [[EPIC_004]] | Add Unit/Integration Tests             | backlog | dev      | medium   | [[tasks/TASK_004_010]]     |
 | TASK_004_018  | [[EPIC_004]] | Refactor Login UseCase to Return Unified Auth Result | done | dev | high | [[tasks/TASK_004_018]] |
 | TASK_004_019  | [[EPIC_004]] | Refactor Token Issuance and Session Setup by Auth Scope | done | dev | high | [[tasks/TASK_004_019]] |
+| TASK_004_021  | [[EPIC_004]] | Simplify Authentication Guards and Context Resolution | done | dev | high | [[tasks/TASK_004_021]] |
+| TASK_004_022  | [[EPIC_004]] | Update Authentication Tests and Remove Legacy Flow Branches | backlog | dev | medium | [[tasks/TASK_004_022]] |
+| TASK_004_023  | [[EPIC_004]] | Logout Should Revoke Session in Database | done    | dev      | high     | [[tasks/TASK_004_023]] |
