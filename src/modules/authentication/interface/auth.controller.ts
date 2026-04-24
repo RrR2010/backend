@@ -9,6 +9,7 @@ import {
   Param,
   UseGuards,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiConsumes,
@@ -17,10 +18,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LoginDto } from './login.dto';
-import {
-  LoginUseCase,
-  LoginUseCaseResult,
-} from '@modules/authentication/application/login.usecase';
+import { LoginUseCase } from '@modules/authentication/application/login.usecase';
 import { SelectTenantUseCase } from '@modules/authentication/application/select-tenant.usecase';
 import { MeUseCase } from '@modules/authentication/application/me.usecase';
 import { RefreshTokenUseCase } from '@modules/authentication/application/refresh-token.usecase';
@@ -167,16 +165,18 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     try {
-      const refreshToken = req.cookies?.refreshToken;
+      const refreshToken = req.cookies?.refreshToken as string;
       if (refreshToken) {
         const validation =
           await this.refreshTokenService.validateRefreshToken(refreshToken);
         if (validation && validation.sessionId) {
-          await this.refreshTokenService.revokeRefreshToken(validation.sessionId);
+          await this.refreshTokenService.revokeRefreshToken(
+            validation.sessionId,
+          );
         }
       }
     } catch (error) {
-      // Continue with logout even if revocation fails
+      Logger.error(error);
     } finally {
       this.sessionService.clearAllSessionCookies(res);
     }
@@ -274,6 +274,7 @@ export class AuthController {
     return {
       user: result.user,
       tenant: result.tenant,
+      scope: payload.scope,
     };
   }
 }
