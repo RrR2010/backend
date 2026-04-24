@@ -1,5 +1,15 @@
 {
-  "todo-tree.tree.showCountsInTree": true,
-  "todo-tree.tree.disableCompactFolders": false,
-  "todo-tree.tree.showBadges": true
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#0B1F3A",
+    "titleBar.activeBackground": "#123A6B",
+    "titleBar.activeForeground": "#EAF4FF",
+    "titleBar.inactiveBackground": "#0B1F3A",
+    "titleBar.inactiveForeground": "#EAF4FF",
+    "statusBar.background": "#0B1F3A",
+    "statusBar.foreground": "#EAF4FF",
+    "statusBar.debuggingBackground": "#0B1F3A",
+    "statusBar.debuggingForeground": "#EAF4FF",
+    "statusBar.noFolderBackground": "#0B1F3A",
+    "statusBar.noFolderForeground": "#EAF4FF"
+  }
 }
