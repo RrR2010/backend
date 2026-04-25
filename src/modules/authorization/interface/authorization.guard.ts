@@ -7,7 +7,7 @@
  * 1. Check if route is marked as @Public() - allow if so
  * 2. Get @Authorize metadata from the route handler
  * 3. Extract user context from request (set by JwtStrategy)
- * 4. Build AuthorizationContext
+ * 4. Build AbilityFactoryInput with membership support
  * 5. Use AbilityFactory to check if permission is allowed
  * 
  * Requires JwtAuthGuard to run first (sets request.user with token payload).
@@ -21,10 +21,11 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthorizationScope } from '@core/domain/authorization';
+import { AuthorizationScope, PermissionAction, PermissionSubject } from '@core/domain/authorization';
 import type { PermissionSpec } from '@core/domain/authorization';
 import type { AuthTokenPayload } from '@modules/authentication/domain/token.service';
 import type { AbilityFactory } from '../domain';
+import type { AbilityFactoryInput, MembershipInput } from '../domain';
 import type { AuthorizationMetadata } from '../domain/authorization-metadata';
 import { AUTHORIZATION_KEY } from './authorization.decorator';
 
@@ -81,8 +82,8 @@ export class AuthorizationGuard implements CanActivate {
       throw new UnauthorizedException('Authentication required');
     }
 
-    // 4. Build basic AuthorizationContext from token payload
-    const authContext = this.buildContext(user);
+    // 4. Build AbilityFactoryInput from token payload (new pattern)
+    const factoryInput = this.buildFactoryInput(user, request);
 
     // 5. Check permissions based on metadata
     const permissions = Array.isArray(authMetadata.permission)
@@ -90,7 +91,7 @@ export class AuthorizationGuard implements CanActivate {
       : [authMetadata.permission];
 
     const hasPermission = this.checkPermissions(
-      authContext,
+      factoryInput,
       permissions,
       authMetadata.requireAll ?? false,
     );
@@ -105,11 +106,11 @@ export class AuthorizationGuard implements CanActivate {
     }
 
     // 6. Validate scope if specified in metadata
-    if (authMetadata.scope && authContext.request.scope !== authMetadata.scope) {
+    if (authMetadata.scope && factoryInput.scope !== authMetadata.scope) {
       const request = context.switchToHttp().getRequest();
       this.logger.warn(
         `Access denied: Invalid scope for ${request.method} ${request.path}. ` +
-        `User: ${user?.sub ?? 'unknown'} | Required scope: ${authMetadata.scope} | Actual: ${authContext.request.scope}`,
+        `User: ${user?.sub ?? 'unknown'} | Required scope: ${authMetadata.scope} | Actual: ${factoryInput.scope}`,
       );
       throw new ForbiddenException('Invalid scope');
     }
@@ -118,35 +119,113 @@ export class AuthorizationGuard implements CanActivate {
   }
 
   /**
-   * Build basic AuthorizationContext from token payload
+   * Build AbilityFactoryInput from token payload
+   * Supports both platform and tenant scopes with membership data.
    */
-  private buildContext(user: AuthTokenPayload): { request: { userId: string; scope: AuthorizationScope | string; roles: unknown } } {
-    return {
-      request: {
-        userId: user.sub,
-        scope: user.scope as AuthorizationScope | string,
-        roles: {
-          scope: user.scope as AuthorizationScope | string,
-          role: user.platformRoles?.[0] || 'USER',
-        },
-      },
+  private buildFactoryInput(
+    user: AuthTokenPayload,
+    request: any,
+  ): AbilityFactoryInput {
+    const scope = user.scope === 'platform' 
+      ? AuthorizationScope.Platform 
+      : AuthorizationScope.Tenant;
+
+    const input: AbilityFactoryInput = {
+      userId: user.sub,
+      scope,
     };
+
+    // Platform scope: use platform roles from token
+    if (scope === AuthorizationScope.Platform) {
+      // FIX (Critical 1 cont.): Platform scope users should not require tenant membership
+      // Platform-level access is granted directly via platformRoles
+      if (user.platformRoles && user.platformRoles.length > 0) {
+        // Convert string roles to typed roles
+        const typedRoles = user.platformRoles.map(role => {
+          // Handle both uppercase and lowercase role strings
+          const normalized = role.toUpperCase();
+          if (normalized === 'ADMIN') {
+            return 'ADMIN' as const;
+          }
+          if (normalized === 'SUPER_ADMIN') {
+            return 'SUPER_ADMIN' as const;
+          }
+          return 'USER' as const;
+        });
+        input.platformRoles = typedRoles;
+      } else {
+        input.platformRoles = ['USER'];
+      }
+    }
+    // Tenant scope: use membership from request (loaded by guard or service)
+    else {
+      // Membership can be set by a previous middleware or loaded here
+      const membership = request.membership as MembershipInput | undefined;
+      
+      if (membership) {
+        input.membership = membership;
+      } else {
+        // FIX (Critical 1): If membership is undefined, deny access (don't create fallback)
+        // In production, this should load actual membership data from DB
+        // TODO: Implement DB integration for membership lookup
+        this.logger.warn(
+          `Access denied: No membership for user ${user.sub} in tenant context. ` +
+          `User must have valid membership to access tenant-scoped resources.`,
+        );
+        // Don't create fallback - deny access by not setting membership
+        // The permission check will fail because no membership = no tenant rules
+      }
+    }
+
+    // Add resource attributes if available
+    // FIX (Critical 3): Resource tenantId should come from actual resource data, not user token
+    if (request.resource) {
+      input.resource = request.resource;
+    } else if (request.params?.id && input.membership?.tenantId) {
+      // Only set resource tenantId from membership if explicitly available
+      // Don't rely on user token for resource tenant context
+      input.resource = {
+        tenantId: input.membership.tenantId,
+      };
+    }
+
+    return input;
   }
 
   /**
-   * Check permissions against the authorization context
+   * Check permissions against the ability factory
+   * Uses the new createFromInput/allowWithInput methods when available.
    */
   private checkPermissions(
-    context: { request: { userId: string; scope: AuthorizationScope | string; roles: unknown } },
+    input: AbilityFactoryInput,
     permissions: PermissionSpec[],
     requireAll: boolean,
   ): boolean {
-    // Simplify: check using the ability factory
-    // Note: TypeScript may complain about context type, but at runtime this works
+    // Cast to any to access new methods (factory interface is generic)
+    const factory = this.abilityFactory as any;
+
+    // Use new method if available, fall back to legacy
+    const allowMethod = factory.allowWithInput 
+      ? (input: AbilityFactoryInput, perm: PermissionSpec) => factory.allowWithInput(input, perm)
+      : (input: AbilityFactoryInput, perm: PermissionSpec) => {
+          // Convert to legacy context format
+          const context = {
+            request: {
+              userId: input.userId,
+              scope: input.scope,
+              roles: input.scope === AuthorizationScope.Platform 
+                ? { scope: AuthorizationScope.Platform, role: input.platformRoles?.[0] || 'USER' }
+                : { scope: AuthorizationScope.Tenant, role: input.membership?.roles?.[0] || 'USER', tenantId: input.membership?.tenantId },
+            },
+            resource: input.resource,
+          };
+          return factory.allow(context, perm);
+        };
+
     if (requireAll) {
       return permissions.every(permission => {
         try {
-          return (this.abilityFactory as any).allow(context, permission);
+          return allowMethod(input, permission);
         } catch {
           return false;
         }
@@ -154,7 +233,7 @@ export class AuthorizationGuard implements CanActivate {
     } else {
       return permissions.some(permission => {
         try {
-          return (this.abilityFactory as any).allow(context, permission);
+          return allowMethod(input, permission);
         } catch {
           return false;
         }

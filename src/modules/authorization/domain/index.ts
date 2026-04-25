@@ -5,6 +5,13 @@ export { Ability, AbilityFactory, ABILITY_FACTORY, DefaultAbilityFactory } from 
 
 export type { Ability as IAbility, AbilityFactory as IAbilityFactory } from './ability.factory';
 
+export {
+  AbilityFactoryInput,
+  MembershipInput,
+  ResourceAttributes,
+  toAuthorizationContext,
+} from './ability-factory-input';
+
 export { Policy, PolicyRegistry, POLICY_REGISTRY, InMemoryPolicyRegistry } from './policy.registry';
 
 export type { Policy as IPolicy, PolicyRegistry as IPolicyRegistry } from './policy.registry';

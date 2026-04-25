@@ -15,6 +15,7 @@ import type {
   AbilityFactory,
   PolicyRegistry,
   AuthorizationMetadataService,
+  AbilityFactoryInput,
 } from '../domain';
 import { ABILITY_FACTORY, POLICY_REGISTRY, AUTHORIZATION_METADATA } from '../domain';
 import type { AuthorizationMetadata } from '../domain/authorization-metadata';
@@ -123,6 +124,49 @@ export class AuthorizationService {
   ): PermissionCheckResult {
     const context = this.createContext(options);
     return this.can(context, permission);
+  }
+
+  /**
+   * Check permission using AbilityFactoryInput (new request-scoped pattern)
+   * This is the preferred method for guard integration.
+   */
+  canWithInput(
+    input: AbilityFactoryInput,
+    permission: PermissionSpec,
+  ): PermissionCheckResult {
+    if (!this.abilityFactory) {
+      return {
+        allowed: false,
+        context: { request: { userId: input.userId, scope: input.scope, roles: {} } },
+        error: 'AbilityFactory not configured',
+      };
+    }
+
+    const factory = this.abilityFactory as any;
+    let allowed: boolean;
+
+    if (typeof factory.allowWithInput === 'function') {
+      allowed = factory.allowWithInput(input, permission);
+    } else {
+      // Fall back to legacy context format
+      const context = {
+        request: {
+          userId: input.userId,
+          scope: input.scope,
+          roles: input.scope === AuthorizationScope.Platform
+            ? { scope: AuthorizationScope.Platform, role: input.platformRoles?.[0] || 'USER' }
+            : { scope: AuthorizationScope.Tenant, role: input.membership?.roles?.[0] || 'USER', tenantId: input.membership?.tenantId },
+        },
+        resource: input.resource,
+      };
+      allowed = factory.allow(context, permission);
+    }
+
+    return {
+      allowed,
+      context: { request: { userId: input.userId, scope: input.scope, roles: {} } },
+      error: allowed ? undefined : `Permission denied: ${permission.action} ${permission.subject}`,
+    };
   }
 
   getRouteMetadata(
