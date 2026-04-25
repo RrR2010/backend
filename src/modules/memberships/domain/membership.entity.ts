@@ -1,6 +1,6 @@
 import { Entity, EntityProps, CreateEntityProps } from '@core/domain/entity';
 import { SystemState } from '@core/domain/system-state.enum';
-import { TenantRole } from '@core/domain/tenant-role.enum';
+import { TenantRole } from '@core/domain/authorization';
 import { Id } from '@core/domain/id.vo';
 
 /**

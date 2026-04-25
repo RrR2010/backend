@@ -1,6 +1,6 @@
 import { Membership as PrismaMembership } from '@prisma/client';
 import { Membership } from '@modules/memberships/domain/membership.entity';
-import { TenantRole } from '@core/domain/tenant-role.enum';
+import { TenantRole } from '@core/domain/authorization';
 import { Id } from '@core/domain/id.vo';
 import { SystemState } from '@core/domain/system-state.enum';
 

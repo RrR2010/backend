@@ -5,7 +5,7 @@ import { SystemState } from '@core/domain/system-state.enum';
 import {
   PlatformRole,
   PlatformRoleHelpers,
-} from '@core/domain/platform-role.enum';
+} from '@core/domain/authorization';
 
 /**
  * User Entity

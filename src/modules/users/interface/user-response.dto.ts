@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@modules/users/domain/user.entity';
-import { PlatformRole } from '@core/domain/platform-role.enum';
+import { PlatformRole } from '@core/domain/authorization';
 
 export class UserResponseDto {
   @ApiProperty()

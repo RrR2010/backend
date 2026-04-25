@@ -2,7 +2,7 @@ import { Email } from '@core/domain/email.vo';
 import {
   PlatformRole,
   PlatformRoleHelpers,
-} from '@core/domain/platform-role.enum';
+} from '@core/domain/authorization';
 import { User } from '@modules/users/domain/user.entity';
 import { UserRepository } from '@modules/users/domain/user.repository';
 import { PasswordHasher } from '@modules/authentication/domain/password-hasher';

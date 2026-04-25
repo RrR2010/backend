@@ -1,4 +1,4 @@
-import { PlatformRole } from '@core/domain/platform-role.enum';
+import { PlatformRole } from '@core/domain/authorization';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {

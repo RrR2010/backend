@@ -7,7 +7,7 @@ import { User } from '@modules/users/domain/user.entity';
 import { Id } from '@core/domain/id.vo';
 import { SystemState } from '@core/domain/system-state.enum';
 import { Email } from '@core/domain/email.vo';
-import { PlatformRole } from '@core/domain/platform-role.enum';
+import { PlatformRole } from '@core/domain/authorization';
 
 export class PrismaUserMapper {
   static toDomain(prismaUser: PrismaUser): User {
