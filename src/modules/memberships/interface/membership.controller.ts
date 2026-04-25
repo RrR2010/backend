@@ -1,16 +1,15 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateMembershipUseCase } from '@modules/memberships/application/create-membership.usecase';
 import { ListMembershipUseCase } from '@modules/memberships/application/list-memberships.usecase';
 import { CreateMembershipDto } from '@modules/memberships/interface/create-membership.dto';
 import { CreateMembershipResponseDto } from '@modules/memberships/interface/create-membership-response.dto';
-import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
-import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
+import { Authorize } from '@modules/authorization/interface/authorization.decorator';
+import { PermissionAction, PermissionSubject } from '@core/domain/authorization';
 
 @ApiTags('memberships')
 @ApiBearerAuth('accessToken')
 @Controller('memberships')
-@UseGuards(JwtAuthGuard, TenantContextGuard)
 export class MembershipsController {
   constructor(
     private readonly createMembershipUseCase: CreateMembershipUseCase,
@@ -18,6 +17,9 @@ export class MembershipsController {
   ) {}
 
   @Post()
+  @Authorize({
+    permission: { action: PermissionAction.Create, subject: PermissionSubject.Membership },
+  })
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   async create(
     @Body() input: CreateMembershipDto,
@@ -27,6 +29,9 @@ export class MembershipsController {
   }
 
   @Get()
+  @Authorize({
+    permission: { action: PermissionAction.Read, subject: PermissionSubject.Membership },
+  })
   async list(): Promise<CreateMembershipResponseDto[]> {
     const Memberships = await this.listMembershipUseCase.execute();
     return Memberships.map((membership) =>

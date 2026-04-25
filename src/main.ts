@@ -1,7 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Reflector } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
+import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
+import { AuthorizationGuard, ABILITY_FACTORY } from '@modules/authorization';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -46,6 +49,15 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
   });
+
+  // Wire global guards with proper ordering:
+  // 1. JwtAuthGuard - validates JWT and sets request.user
+  // 2. AuthorizationGuard - enforces authorization metadata (fail-closed)
+  const reflector = app.get(Reflector);
+  const abilityFactory = app.get(ABILITY_FACTORY);
+
+  // JwtAuthGuard runs first (sets user context)
+  app.useGlobalGuards(new JwtAuthGuard(reflector), new AuthorizationGuard(reflector, abilityFactory));
 
   await app.listen(process.env.PORT ?? 3001);
 }

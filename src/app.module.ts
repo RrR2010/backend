@@ -6,12 +6,14 @@ import { UsersModule } from '@modules/users/users.module';
 import { TenantModule } from '@modules/tenants/tenant.module';
 import { AuthModule } from '@modules/authentication/auth.module';
 import { AdminModule } from '@modules/admin/admin.module';
+import { AuthorizationModule } from '@modules/authorization/authorization.module';
 import { CaslModule } from 'nest-casl';
-import { PlatformRole } from '@core/domain/platform-role.enum';
+import { PlatformRole } from '@core/domain/authorization';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    AuthorizationModule,
     AuthModule,
     UsersModule,
     TenantModule,

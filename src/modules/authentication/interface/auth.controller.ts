@@ -7,7 +7,6 @@ import {
   Res,
   Req,
   Param,
-  UseGuards,
   HttpCode,
   Logger,
 } from '@nestjs/common';
@@ -28,8 +27,6 @@ import {
   TokenService,
   AuthTokenPayload,
 } from '@modules/authentication/domain/token.service';
-import { JwtAuthGuard } from '@modules/authentication/infra/jwt-auth.guard';
-import { TenantContextGuard } from '@modules/authentication/infra/tenant-context.guard';
 import type { Request, Response } from 'express';
 import {
   InvalidOrExpiredRefreshTokenError,
@@ -44,6 +41,8 @@ import { ListSessionsResponseDto } from './session-response.dto';
 import { RefreshTokenService } from '@modules/authentication/domain/refresh-token.service';
 import { LoginResponseDto } from './login-response.dto';
 import { SessionService } from '@modules/authentication/infra/session.service';
+import { Authorize, Public } from '@modules/authorization/interface/authorization.decorator';
+import { PermissionAction, PermissionSubject } from '@core/domain/authorization';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -66,9 +65,10 @@ export class AuthController {
    *
    * Returns unified result with explicit scope and nextStepHint:
    * - Platform user: scope=platform, nextStepHint=direct-login -> tokens issued immediately
-   * - Tenant user: scope=tenant, nextStepHint=select-tenant -> require tenant selection first
-   */
+* - Tenant user: scope=tenant, nextStepHint=select-tenant -> require tenant selection first
+    */
   @Post('login')
+  @Public()
   @ApiConsumes('application/json')
   async login(
     @Req() req: Request,
@@ -116,6 +116,7 @@ export class AuthController {
   }
 
   @Post('select-tenant')
+  @Public()
   @ApiConsumes('application/json')
   @ApiSecurity('preAuthToken')
   async selectTenant(
@@ -159,6 +160,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @Public()
   @ApiConsumes('application/json')
   async logout(
     @Req() req: Request,
@@ -183,9 +185,11 @@ export class AuthController {
   }
 
   @Get('sessions')
+  @Authorize({
+    permission: { action: PermissionAction.Read, subject: PermissionSubject.User },
+  })
   @ApiBearerAuth('accessToken')
   @ApiSecurity('accessToken')
-  @UseGuards(JwtAuthGuard)
   async listSessions(@Req() req: Request): Promise<ListSessionsResponseDto> {
     const payload = req.user as AuthTokenPayload;
     const result = await this.listSessionsUseCase.execute(payload.sub);
@@ -196,9 +200,11 @@ export class AuthController {
   }
 
   @Delete('sessions')
+  @Authorize({
+    permission: { action: PermissionAction.Delete, subject: PermissionSubject.User },
+  })
   @ApiBearerAuth('accessToken')
   @ApiSecurity('accessToken')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async revokeAllSessions(
     @Req() req: Request,
@@ -213,9 +219,11 @@ export class AuthController {
   }
 
   @Delete('sessions/:id')
+  @Authorize({
+    permission: { action: PermissionAction.Delete, subject: PermissionSubject.User },
+  })
   @ApiBearerAuth('accessToken')
   @ApiSecurity('accessToken')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async revokeSession(
     @Req() req: Request,
@@ -234,6 +242,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Public()
   @ApiConsumes('application/json')
   @HttpCode(200)
   async refresh(
@@ -264,8 +273,10 @@ export class AuthController {
   }
 
   @Get('me')
+  @Authorize({
+    permission: { action: PermissionAction.Read, subject: PermissionSubject.User },
+  })
   @ApiBearerAuth('accessToken')
-  @UseGuards(JwtAuthGuard, TenantContextGuard)
   async me(@Req() req: Request): Promise<MeResponseDto> {
     const payload = req.user as AuthTokenPayload;
     // tenantId may be undefined for platform-only users (TenantContextGuard passes for platform users with platformRoles)
