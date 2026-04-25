@@ -40,3 +40,4 @@ Links and IDs must match canonical filenames exactly.
 | TASK_004_023  | [[EPIC_004]] | Logout Should Revoke Session in Database | done    | dev      | high     | [[tasks/TASK_004_023]] |
 | TASK_005_001  | [[EPIC_005]] | Normalize Authorization Domain Model    | done    | dev      | high     | [[tasks/TASK_005_001]] |
 | TASK_005_002  | [[EPIC_005]] | Create Authorization Module Structure | done   | dev      | high     | [[tasks/TASK_005_002]] |
+| TASK_005_006  | [[EPIC_005]] | Implement Platform Scope Policies      | done   | dev      | high     | [[tasks/TASK_005_006]] |
