@@ -17,12 +17,16 @@ import type {
   AuthorizationMetadataService,
   AbilityFactoryInput,
 } from '../domain';
-import { ABILITY_FACTORY, POLICY_REGISTRY, AUTHORIZATION_METADATA } from '../domain';
+import {
+  ABILITY_FACTORY,
+  POLICY_REGISTRY,
+  AUTHORIZATION_METADATA,
+} from '../domain';
 import type { AuthorizationMetadata } from '../domain/authorization-metadata';
 
 /**
  * Options for creating authorization context
- * 
+ *
  * The roles field should contain the resolved RoleAssignment from the auth token.
  * Use AuthorizationContextHelpers.fromTokenPayload() or extract from request.
  */
@@ -68,13 +72,19 @@ export class AuthorizationService {
   ) {
     // Warn about missing dependencies in constructor (Medium issue 6)
     if (!abilityFactory) {
-      this.logger.warn('AbilityFactory not configured - all permission checks will be denied. Provide ABILITY_FACTORY to enable authorization.');
+      this.logger.warn(
+        'AbilityFactory not configured - all permission checks will be denied. Provide ABILITY_FACTORY to enable authorization.',
+      );
     }
     if (!policyRegistry) {
-      this.logger.warn('PolicyRegistry not configured - policy-based authorization unavailable.');
+      this.logger.warn(
+        'PolicyRegistry not configured - policy-based authorization unavailable.',
+      );
     }
     if (!metadataService) {
-      this.logger.warn('AuthorizationMetadataService not configured - route metadata unavailable.');
+      this.logger.warn(
+        'AuthorizationMetadataService not configured - route metadata unavailable.',
+      );
     }
   }
 
@@ -114,7 +124,9 @@ export class AuthorizationService {
     return {
       allowed,
       context,
-      error: allowed ? undefined : `Permission denied: ${permission.action} ${permission.subject}`,
+      error: allowed
+        ? undefined
+        : `Permission denied: ${permission.action} ${permission.subject}`,
     };
   }
 
@@ -137,7 +149,9 @@ export class AuthorizationService {
     if (!this.abilityFactory) {
       return {
         allowed: false,
-        context: { request: { userId: input.userId, scope: input.scope, roles: {} } },
+        context: {
+          request: { userId: input.userId, scope: input.scope, roles: {} },
+        },
         error: 'AbilityFactory not configured',
       };
     }
@@ -153,9 +167,17 @@ export class AuthorizationService {
         request: {
           userId: input.userId,
           scope: input.scope,
-          roles: input.scope === AuthorizationScope.Platform
-            ? { scope: AuthorizationScope.Platform, role: input.platformRoles?.[0] || 'USER' }
-            : { scope: AuthorizationScope.Tenant, role: input.membership?.roles?.[0] || 'USER', tenantId: input.membership?.tenantId },
+          roles:
+            input.scope === AuthorizationScope.Platform
+              ? {
+                  scope: AuthorizationScope.Platform,
+                  role: input.platformRoles?.[0] || 'USER',
+                }
+              : {
+                  scope: AuthorizationScope.Tenant,
+                  role: input.membership?.roles?.[0] || 'USER',
+                  tenantId: input.membership?.tenantId,
+                },
         },
         resource: input.resource,
       };
@@ -164,8 +186,12 @@ export class AuthorizationService {
 
     return {
       allowed,
-      context: { request: { userId: input.userId, scope: input.scope, roles: {} } },
-      error: allowed ? undefined : `Permission denied: ${permission.action} ${permission.subject}`,
+      context: {
+        request: { userId: input.userId, scope: input.scope, roles: {} },
+      },
+      error: allowed
+        ? undefined
+        : `Permission denied: ${permission.action} ${permission.subject}`,
     };
   }
 
@@ -180,6 +206,8 @@ export class AuthorizationService {
   }
 
   isConfigured(): boolean {
-    return !!this.abilityFactory && !!this.policyRegistry && !!this.metadataService;
+    return (
+      !!this.abilityFactory && !!this.policyRegistry && !!this.metadataService
+    );
   }
 }

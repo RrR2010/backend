@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateUserUseCase } from '@modules/users/application/create-user.usecase';
 import { ListUsersUseCase } from '@modules/users/application/list-users.usecase';
@@ -26,14 +26,12 @@ export class UsersController {
     return CreateUserResponseDto.fromDomain(user);
   }
 
-  @Get(':tenantId')
+  @Get()
   @Authorize({
     permission: { action: PermissionAction.Read, subject: PermissionSubject.User },
   })
-  async list(
-    @Param('tenantId') tenantId: string,
-  ): Promise<CreateUserResponseDto[]> {
-    const users = await this.listUsersUseCase.execute(tenantId);
+  async list(): Promise<CreateUserResponseDto[]> {
+    const users = await this.listUsersUseCase.execute();
     return users.map((user) => CreateUserResponseDto.fromDomain(user));
   }
 }

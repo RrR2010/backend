@@ -137,8 +137,6 @@ export class AuthorizationGuard implements CanActivate {
 
     // Platform scope: use platform roles from token
     if (scope === AuthorizationScope.Platform) {
-      // FIX (Critical 1 cont.): Platform scope users should not require tenant membership
-      // Platform-level access is granted directly via platformRoles
       if (user.platformRoles && user.platformRoles.length > 0) {
         // Convert string roles to typed roles
         const typedRoles = user.platformRoles.map(role => {
@@ -165,20 +163,15 @@ export class AuthorizationGuard implements CanActivate {
       if (membership) {
         input.membership = membership;
       } else {
-        // FIX (Critical 1): If membership is undefined, deny access (don't create fallback)
-        // In production, this should load actual membership data from DB
-        // TODO: Implement DB integration for membership lookup
-        this.logger.warn(
-          `Access denied: No membership for user ${user.sub} in tenant context. ` +
-          `User must have valid membership to access tenant-scoped resources.`,
+        // FIX (Critical 2): If membership is undefined, throw ForbiddenException
+        // Tenant-scoped users MUST have valid membership to access tenant resources
+        throw new ForbiddenException(
+          'Tenant membership required. You must belong to a tenant to access tenant-scoped resources.',
         );
-        // Don't create fallback - deny access by not setting membership
-        // The permission check will fail because no membership = no tenant rules
       }
     }
 
     // Add resource attributes if available
-    // FIX (Critical 3): Resource tenantId should come from actual resource data, not user token
     if (request.resource) {
       input.resource = request.resource;
     } else if (request.params?.id && input.membership?.tenantId) {

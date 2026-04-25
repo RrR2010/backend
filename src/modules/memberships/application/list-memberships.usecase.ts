@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Membership } from '@modules/memberships/domain/membership.entity';
 import { MembershipRepository } from '@modules/memberships/domain/membership.repository';
+import { TenantContextService } from '@core/infra/tenant-context.service';
 
 @Injectable()
 export class ListMembershipUseCase {
-  constructor(private readonly membershipRepository: MembershipRepository) {}
+  constructor(
+    private readonly membershipRepository: MembershipRepository,
+    private readonly tenantContextService: TenantContextService,
+  ) {}
 
   async execute(): Promise<Membership[]> {
-    return this.membershipRepository.findAll();
+    const tenantId = this.tenantContextService.getTenantId();
+    return this.membershipRepository.findAllByTenant(tenantId);
   }
 }
