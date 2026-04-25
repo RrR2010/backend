@@ -38,3 +38,5 @@ Links and IDs must match canonical filenames exactly.
 | TASK_004_021  | [[EPIC_004]] | Simplify Authentication Guards and Context Resolution | done | dev | high | [[tasks/TASK_004_021]] |
 | TASK_004_022  | [[EPIC_004]] | Update Authentication Tests and Remove Legacy Flow Branches | backlog | dev | medium | [[tasks/TASK_004_022]] |
 | TASK_004_023  | [[EPIC_004]] | Logout Should Revoke Session in Database | done    | dev      | high     | [[tasks/TASK_004_023]] |
+| TASK_005_001  | [[EPIC_005]] | Normalize Authorization Domain Model    | done    | dev      | high     | [[tasks/TASK_005_001]] |
+| TASK_005_002  | [[EPIC_005]] | Create Authorization Module Structure | done   | dev      | high     | [[tasks/TASK_005_002]] |
