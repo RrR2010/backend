@@ -18,6 +18,25 @@ export abstract class TokenService {
   ): string
   abstract verify<T extends BaseTokenPayload>(token: string): T | null
   abstract verifyRefreshToken(token: string): RefreshTokenPayload | null
+
+  /**
+   * Generates a random token and returns both the raw value and its SHA-256 hash.
+   * Used for bootstrap handoff tokens and other single-use secrets.
+   */
+  static generateToken(): { raw: string; hash: string } {
+    const raw = crypto.randomBytes(32).toString('hex')
+    const hash = crypto.createHash('sha256').update(raw).digest('hex')
+    return { raw, hash }
+  }
+
+  /**
+   * Verifies a raw token against a stored SHA-256 hash.
+   * Returns true if the token matches the hash.
+   */
+  static verifyToken(raw: string, hash: string): boolean {
+    const computedHash = crypto.createHash('sha256').update(raw).digest('hex')
+    return computedHash === hash
+  }
 }
 
 @Injectable()

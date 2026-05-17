@@ -30,10 +30,7 @@ export class TenantService {
     return tenant
   }
 
-  async findAll(
-    filter: TenantFilter,
-    ctx: RequestContext
-  ): Promise<Tenant[]> {
+  async findAll(filter: TenantFilter, ctx: RequestContext): Promise<Tenant[]> {
     return this.tenantRepository.findAll(filter, ctx)
   }
 

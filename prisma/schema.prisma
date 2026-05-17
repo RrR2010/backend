@@ -81,6 +81,15 @@ enum TenantSiteType {
   OFFICE
 }
 
+enum RegistrationState {
+  PENDING
+  APPROVED
+  PROVISIONING
+  PROVISIONED
+  REJECTED
+  EXPIRED
+}
+
 // ============== TENANT ==============
 
 model Tenant {
@@ -303,6 +312,44 @@ model AuditLog {
   @@index([entityName])
   @@index([entityId])
   @@index([createdAt])
+}
+
+// ============== TENANT REGISTRATION ==============
+
+model TenantRegistration {
+  id                    String   @id @default(uuid())
+  externalRef           String   @unique
+  // Valid values defined in RegistrationState enum (backend/src/shared/enums.ts)
+  state RegistrationState @default(PENDING)
+  paymentId             String?  @unique
+  preferenceId          String?  @unique
+  expiresAt             DateTime
+  handoffTokenHash      String?  @unique
+  handoffTokenExpiresAt DateTime?
+  handoffTokenUsedAt    DateTime?
+  tenantData            Json
+  tenantSiteData        Json
+  userData              Json
+  identityData          Json
+  profileData           Json
+  provisionedUserId       String?
+  provisionedTenantId     String?
+  provisionedMembershipId String?
+  provisionedProfileId    String?
+  provisionedIdentityId   String?
+  provisionedTenantSiteId  String?
+  paymentStatus         String?
+  paymentStatusDetail   String?
+  webhookProcessedAt    DateTime?
+  provisionedAt         DateTime?
+  rejectedAt            DateTime?
+  expiredAt             DateTime?
+  createdAt             DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([state])
+  @@index([expiresAt])
+  @@index([handoffTokenExpiresAt])
 }
 
 // ============== TENANT SITE ==============

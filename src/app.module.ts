@@ -22,6 +22,7 @@ import { PhoneModule } from '@phones/phone.module'
 import { TenantSiteModule } from '@tenant-sites/tenant-site.module'
 import { MemberProfileDocumentModule } from '@member-profile-documents/member-profile-document.module'
 import { AuditLogModule } from '@audit-logs/audit-log.module'
+import { BootstrapModule } from '@bootstrap/bootstrap.module'
 
 @Module({
   imports: [
@@ -41,7 +42,8 @@ import { AuditLogModule } from '@audit-logs/audit-log.module'
     TenantSiteModule,
     MemberProfileDocumentModule,
     AuditLogModule,
-    AuthorizationModule
+    AuthorizationModule,
+    BootstrapModule
     // CaslModule.forRoot({
     //   superuserRole: PlatformRole.ADMIN,
     //   getUserFromRequest: (request) => request.user

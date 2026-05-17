@@ -19,7 +19,6 @@ import {
 import { TenantNotFoundError } from '@tenants/tenant.errors'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import type { RequestContext } from '@authorization/authorization.types'
 import { Tenant } from '@tenants/tenant.entity'
 import { TenantService } from '@tenants/tenant.service'
 
@@ -28,7 +27,6 @@ import { TenantService } from '@tenants/tenant.service'
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly tenantService: TenantService) {}
-
 
   @Post()
   @Authorize(Action.Create, Tenant)

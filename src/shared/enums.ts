@@ -55,3 +55,14 @@ export enum SystemState {
   LOCKED = 'LOCKED',
   HIDDEN = 'HIDDEN'
 }
+
+// ============== BOOTSTRAP ENUMS ==============
+
+export enum RegistrationState {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  PROVISIONING = 'PROVISIONING',
+  PROVISIONED = 'PROVISIONED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED'
+}

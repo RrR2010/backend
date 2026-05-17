@@ -10,7 +10,10 @@ import { UserScope } from '@users/user.types'
 
 export abstract class IdentityRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Identity | null>
-  abstract findAll(filter: IdentityFilter, ctx: RequestContext): Promise<Identity[]>
+  abstract findAll(
+    filter: IdentityFilter,
+    ctx: RequestContext
+  ): Promise<Identity[]>
   abstract save(identity: Identity, ctx: RequestContext): Promise<Identity>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
@@ -42,7 +45,10 @@ export class PrismaIdentityRepository implements IdentityRepository {
     return IdentityMapper.toDomain(prismaIdentity)
   }
 
-  async findAll(filter: IdentityFilter, ctx: RequestContext): Promise<Identity[]> {
+  async findAll(
+    filter: IdentityFilter,
+    ctx: RequestContext
+  ): Promise<Identity[]> {
     const where: Prisma.IdentityWhereInput = {}
 
     if (filter.userId) {
@@ -87,7 +93,9 @@ export class PrismaIdentityRepository implements IdentityRepository {
         }
       })
       if (!user) {
-        throw new ForbiddenException('Cannot modify resource outside your tenant')
+        throw new ForbiddenException(
+          'Cannot modify resource outside your tenant'
+        )
       }
     }
     const prismaIdentity = IdentityMapper.toPersistence(identity)
