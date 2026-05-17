@@ -13,20 +13,17 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============== ENUMS ==============
+
 enum SystemState {
   ACTIVE
   LOCKED
   HIDDEN
 }
 
-model Tenant {
-  id          String      @id @default(uuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  systemState SystemState @default(ACTIVE)
-  name        String
-
-  memberships Membership[]
+enum UserScope {
+  PLATFORM
+  TENANT
 }
 
 enum PlatformRole {
@@ -34,53 +31,295 @@ enum PlatformRole {
   USER
 }
 
-model User {
-  id            String         @id @default(uuid())
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  systemState   SystemState    @default(ACTIVE)
-  platformRoles PlatformRole[] @default([USER])
-  name          String
-  email         String         @unique
-  passwordHash  String
-  code         String?        @unique
-
-  memberships Membership[]
-  sessions    Session[]
-}
-
 enum TenantRole {
   ADMIN
   USER
 }
 
-model Membership {
-  id          String       @id @unique @default(uuid())
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  systemState SystemState  @default(ACTIVE)
-  userId      String
-  user        User         @relation(fields: [userId], references: [id])
-  tenantId    String
-  tenant      Tenant       @relation(fields: [tenantId], references: [id])
-  tenantRoles TenantRole[] @default([USER])
+enum AuthProviderType {
+  EMAIL
+  CPF
 }
 
+// ============== POLYMORPHIC ENUMS ==============
+
+enum OwnerType {
+  MemberProfile
+  TenantSite
+}
+
+enum AddressType {
+  HOME
+  WORK
+  BILLING
+  SHIPPING
+}
+
+enum PhoneType {
+  MOBILE
+  HOME
+  WORK
+  WHATSAPP
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum DocumentType {
+  CPF
+  CNPJ
+  RG
+  PASSPORT
+}
+
+enum TenantSiteType {
+  FACTORY
+  WAREHOUSE
+  OFFICE
+}
+
+// ============== TENANT ==============
+
+model Tenant {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+  name        String
+  slug        String?
+  website     String?     @unique
+  locale      String
+  timezone    String
+  language    String
+  logoUrl     String?
+  settings    Json?
+
+  memberships TenantMembership[]
+  sessions    Session[]
+  sites       TenantSite[]
+  auditLogs   AuditLog[]
+}
+
+// ============== USER ==============
+
+model User {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+  scope       UserScope   @default(TENANT)
+
+  // Relations
+  platformMembership PlatformMembership?
+  tenantMemberships  TenantMembership[]
+  identities         Identity[]
+  sessions           Session[]
+  auditLogs          AuditLog[]
+}
+
+// ============== MEMBERSHIP ==============
+
+model PlatformMembership {
+  id            String         @id @unique @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  systemState   SystemState    @default(ACTIVE)
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id])
+  roles         PlatformRole[] @default([USER])
+  memberProfile MemberProfile?
+}
+
+model TenantMembership {
+  id            String         @id @unique @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  systemState   SystemState    @default(ACTIVE)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  isOwner       Boolean        @default(false)
+  roles         TenantRole[]   @default([USER])
+  memberProfile MemberProfile?
+
+  @@unique([userId, tenantId])
+}
+
+// ============== SESSION ==============
+
 model Session {
-  id               String    @id @default(uuid())
+  id               String    @id @unique @default(uuid())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   userId           String
   user             User      @relation(fields: [userId], references: [id])
-  refreshTokenHash String
+  tenantId         String?
+  tenant           Tenant?   @relation(fields: [tenantId], references: [id])
+  refreshTokenHash String    @unique
   deviceInfo       String?
   ipAddress        String?
-  createdAt        DateTime  @default(now())
-  lastUsedAt       DateTime  @default(now())
   expiresAt        DateTime
   revokedAt        DateTime?
-  isRevoked        Boolean   @default(false)
 
   @@index([userId])
-  @@index([lastUsedAt])
   @@index([expiresAt])
   @@index([refreshTokenHash])
+}
+
+// ============== IDENTITY ==============
+
+model Identity {
+  id               String           @id @default(uuid())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  systemState      SystemState      @default(ACTIVE)
+  authProviderType AuthProviderType
+  identifier       String
+  secretHash       String?
+  user             User             @relation(fields: [userId], references: [id])
+  userId           String
+
+  @@unique([authProviderType, identifier])
+  @@index([identifier])
+}
+
+// ============== POLYMORPHIC ADDRESS ==============
+
+model Address {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+
+  // Polymorphic owner reference
+  ownerId   String
+  ownerType OwnerType
+
+  // Address fields
+  type       AddressType
+  street     String
+  number     String
+  complement String?
+  district   String?
+  city       String
+  state      String
+  postalCode String
+  country    String      @default("BR")
+  isDefault  Boolean     @default(false)
+
+  // Constraints
+  @@unique([ownerId, ownerType, type])
+  @@index([ownerId, ownerType])
+}
+
+// ============== POLYMORPHIC PHONE ==============
+
+model Phone {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  systemState SystemState @default(ACTIVE)
+
+  // Polymorphic owner reference
+  ownerId   String
+  ownerType OwnerType
+
+  // Phone fields
+  type        PhoneType
+  countryCode String    @default("55")
+  number      String
+  isWhatsapp  Boolean   @default(false)
+  isDefault   Boolean   @default(false)
+
+  // Constraints
+  @@unique([ownerId, ownerType, type])
+  @@index([ownerId, ownerType])
+}
+
+// ============== MEMBER PROFILE ==============
+
+model MemberProfile {
+  id                   String              @id @unique @default(uuid())
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  systemState          SystemState         @default(ACTIVE)
+  externalId           String?
+  fullName             String
+  displayName          String?
+  dateOfBirth          DateTime?
+  gender               Gender?
+  photoUrl             String?
+  locale               String
+  timezone             String
+  language             String
+  platformMembershipId String?             @unique
+  platformMembership   PlatformMembership? @relation(fields: [platformMembershipId], references: [id])
+  tenantMembershipId   String?             @unique
+  tenantMembership     TenantMembership?   @relation(fields: [tenantMembershipId], references: [id])
+
+  documents MemberProfileDocument[]
+}
+
+// ============== MEMBER PROFILE DOCUMENT ==============
+
+model MemberProfileDocument {
+  id              String        @id @unique @default(uuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  systemState     SystemState   @default(ACTIVE)
+  memberProfileId String
+  memberProfile   MemberProfile @relation(fields: [memberProfileId], references: [id])
+  type            DocumentType
+  value           String
+  normalizedValue String
+
+  @@unique([memberProfileId, type])
+}
+
+// ============== AUDIT LOG ==============
+
+model AuditLog {
+  id         String   @id @unique @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  tenantId   String?
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id])
+  entityName String
+  entityId   String
+  ipAddress  String?
+  userAgent  String?
+  action     String
+  before     Json?
+  after      Json?
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityName])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+// ============== TENANT SITE ==============
+
+model TenantSite {
+  id             String         @id @unique @default(uuid())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  systemState    SystemState    @default(ACTIVE)
+  tenantId       String
+  tenant         Tenant         @relation(fields: [tenantId], references: [id])
+  name           String
+  legalName      String
+  externalId     String?
+  taxId          String         @unique
+  siteType       TenantSiteType
+  isHeadquarters Boolean        @default(false)
+
+  @@unique([tenantId, taxId])
 }

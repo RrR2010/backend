@@ -1,0 +1,106 @@
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from '@shared/prisma/prisma.service'
+import { Phone } from '@phones/phone.entity'
+import { OwnerType, PhoneType, SystemState } from '@shared/enums'
+import { Id } from '@shared/value-objects'
+import { Phone as PrismaPhone, Prisma } from '@prisma/client'
+
+export abstract class PhoneRepository {
+  abstract findById(id: string): Promise<Phone | null>
+  abstract findAll(filter?: PhoneFilter): Promise<Phone[]>
+  abstract save(phone: Phone): Promise<Phone>
+  abstract delete(id: string): Promise<void>
+}
+
+export type PhoneFilter = {
+  ownerId?: string
+  ownerType?: OwnerType
+  type?: PhoneType
+  isDefault?: boolean
+  isWhatsapp?: boolean
+}
+
+@Injectable()
+export class PrismaPhoneRepository implements PhoneRepository {
+  constructor(private readonly prismaService: PrismaService) {}
+
+  async findById(id: string): Promise<Phone | null> {
+    const prismaPhone = await this.prismaService.phone.findUnique({
+      where: { id }
+    })
+    if (!prismaPhone) return null
+    return PrismaPhoneMapper.toDomain(prismaPhone)
+  }
+
+  async findAll(filter?: PhoneFilter): Promise<Phone[]> {
+    const where: Prisma.PhoneWhereInput = {}
+
+    if (filter?.ownerId) {
+      where.ownerId = filter.ownerId
+    }
+    if (filter?.ownerType) {
+      where.ownerType = filter.ownerType
+    }
+    if (filter?.type) {
+      where.type = filter.type
+    }
+    if (filter?.isDefault !== undefined) {
+      where.isDefault = filter.isDefault
+    }
+    if (filter?.isWhatsapp !== undefined) {
+      where.isWhatsapp = filter.isWhatsapp
+    }
+
+    const prismaPhones = await this.prismaService.phone.findMany({ where })
+    return prismaPhones.map((p) => PrismaPhoneMapper.toDomain(p))
+  }
+
+  async save(phone: Phone): Promise<Phone> {
+    const prismaPhone = PrismaPhoneMapper.toPersistence(phone)
+    await this.prismaService.phone.upsert({
+      where: { id: phone.id.value },
+      update: prismaPhone,
+      create: prismaPhone
+    })
+    return phone
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prismaService.phone.delete({ where: { id } })
+  }
+}
+
+class PrismaPhoneMapper {
+  static toDomain(prismaPhone: PrismaPhone): Phone {
+    return Phone.rehydrate({
+      id: Id.from(prismaPhone.id),
+      createdAt: prismaPhone.createdAt,
+      updatedAt: prismaPhone.updatedAt,
+      systemState:
+        SystemState[prismaPhone.systemState as keyof typeof SystemState],
+      ownerId: prismaPhone.ownerId,
+      ownerType: prismaPhone.ownerType as OwnerType,
+      type: prismaPhone.type as PhoneType,
+      countryCode: prismaPhone.countryCode,
+      number: prismaPhone.number,
+      isWhatsapp: prismaPhone.isWhatsapp,
+      isDefault: prismaPhone.isDefault
+    })
+  }
+
+  static toPersistence(phone: Phone): PrismaPhone {
+    return {
+      id: phone.id.value,
+      createdAt: phone.createdAt,
+      updatedAt: phone.updatedAt,
+      systemState: phone.systemState,
+      ownerId: phone.ownerId,
+      ownerType: phone.ownerType,
+      type: phone.type,
+      countryCode: phone.countryCode,
+      number: phone.number,
+      isWhatsapp: phone.isWhatsapp,
+      isDefault: phone.isDefault
+    }
+  }
+}

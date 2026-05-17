@@ -1,30 +1,24 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { PrismaModule } from '@core/infra/prisma.module';
+import { Module } from '@nestjs/common'
 
-import { UsersController } from './interface/users.controller';
+import { UsersController } from '@users/users.controller'
 
-import { CreateUserUseCase } from './application/create-user.usecase';
-import { ListUsersUseCase } from './application/list-users.usecase';
-
-import { UserRepository } from './domain/user.repository';
-import { PrismaUserRepository } from './infra/prisma-user.repository';
-import { AuthModule } from '@modules/authentication/auth.module';
+import { UserRepository, PrismaUserRepository } from '@users/user.repository'
+import { UserService } from '@users/user.service'
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => AuthModule)],
+  imports: [],
 
   controllers: [UsersController],
 
   providers: [
-    CreateUserUseCase,
-    ListUsersUseCase,
-
+    UserService,
+    PrismaUserRepository,
     {
       provide: UserRepository,
-      useClass: PrismaUserRepository,
-    },
+      useExisting: PrismaUserRepository
+    }
   ],
 
-  exports: [UserRepository],
+  exports: [UserRepository, UserService]
 })
 export class UsersModule {}

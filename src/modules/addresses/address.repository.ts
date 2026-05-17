@@ -1,0 +1,114 @@
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from '@shared/prisma/prisma.service'
+import { Address } from '@addresses/address.entity'
+import { OwnerType, AddressType, SystemState } from '@shared/enums'
+import { Address as PrismaAddress, Prisma } from '@prisma/client'
+import { Id } from '@shared/value-objects'
+
+export abstract class AddressRepository {
+  abstract findById(id: string): Promise<Address | null>
+  abstract findAll(filter?: AddressFilter): Promise<Address[]>
+  abstract save(address: Address): Promise<Address>
+  abstract delete(id: string): Promise<void>
+}
+
+export type AddressFilter = {
+  ownerId?: string
+  ownerType?: OwnerType
+  type?: AddressType
+  isDefault?: boolean
+}
+
+@Injectable()
+export class PrismaAddressRepository implements AddressRepository {
+  constructor(private readonly prismaService: PrismaService) {}
+
+  async findById(id: string): Promise<Address | null> {
+    const prismaAddress = await this.prismaService.address.findUnique({
+      where: { id }
+    })
+    if (!prismaAddress) return null
+    return PrismaAddressMapper.toDomain(prismaAddress)
+  }
+
+  async findAll(filter?: AddressFilter): Promise<Address[]> {
+    const where: Prisma.AddressWhereInput = {}
+
+    if (filter?.ownerId) {
+      where.ownerId = filter.ownerId
+    }
+    if (filter?.ownerType) {
+      where.ownerType = filter.ownerType
+    }
+    if (filter?.type) {
+      where.type = filter.type
+    }
+    if (filter?.isDefault !== undefined) {
+      where.isDefault = filter.isDefault
+    }
+
+    const prismaAddresses = await this.prismaService.address.findMany({ where })
+    return prismaAddresses.map((prismaAddress) =>
+      PrismaAddressMapper.toDomain(prismaAddress)
+    )
+  }
+
+  async save(address: Address): Promise<Address> {
+    const prismaAddress = PrismaAddressMapper.toPersistence(address)
+    await this.prismaService.address.upsert({
+      where: { id: prismaAddress.id },
+      update: prismaAddress,
+      create: prismaAddress
+    })
+    return address
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prismaService.address.delete({ where: { id } })
+  }
+}
+
+class PrismaAddressMapper {
+  static toDomain(prismaAddress: PrismaAddress): Address {
+    return Address.rehydrate({
+      id: Id.from(prismaAddress.id),
+      createdAt: prismaAddress.createdAt,
+      updatedAt: prismaAddress.updatedAt,
+      systemState:
+        SystemState[prismaAddress.systemState as keyof typeof SystemState],
+      ownerId: prismaAddress.ownerId,
+      ownerType: prismaAddress.ownerType as OwnerType,
+      type: prismaAddress.type as AddressType,
+      street: prismaAddress.street,
+      number: prismaAddress.number,
+      complement: prismaAddress.complement,
+      district: prismaAddress.district,
+      city: prismaAddress.city,
+      state: prismaAddress.state,
+      postalCode: prismaAddress.postalCode,
+      country: prismaAddress.country,
+      isDefault: prismaAddress.isDefault
+    })
+  }
+
+  static toPersistence(address: Address): PrismaAddress {
+    return {
+      id: address.id.value,
+      createdAt: address.createdAt,
+      updatedAt: address.updatedAt,
+      systemState: address.systemState,
+      ownerId: address.ownerId,
+      ownerType: address.ownerType,
+      type: address.type,
+      street: address.street,
+      number: address.number,
+      complement: address.complement,
+      district: address.district,
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+      isDefault: address.isDefault
+    }
+  }
+}

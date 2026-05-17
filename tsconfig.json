@@ -25,8 +25,23 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "paths": {
-      "@modules/*": ["src/modules/*"],
-      "@core/*": ["src/core/*"]
-    }
+      "@shared/*": ["src/shared/*"],
+      "@authentication/*": ["src/modules/authentication/*"],
+      "@authorization/*": ["src/modules/authorization/*"],
+      "@identities/*": ["src/modules/identities/*"],
+      "@users/*": ["src/modules/users/*"],
+      "@tenants/*": ["src/modules/tenants/*"],
+      "@platform-memberships/*": ["src/modules/platform-memberships/*"],
+      "@tenant-memberships/*": ["src/modules/tenant-memberships/*"],
+      "@member-profiles/*": ["src/modules/member-profiles/*"],
+      "@member-profile-documents/*": ["src/modules/member-profile-documents/*"],
+      "@tenant-sites/*": ["src/modules/tenant-sites/*"],
+      "@audit-logs/*": ["src/modules/audit-logs/*"],
+      "@admin/*": ["src/modules/admin/*"],
+      "@ingredients/*": ["src/modules/ingredients/*"],
+      "@phones/*": ["src/modules/phones/*"],
+      "@addresses/*": ["src/modules/addresses/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/@types"]
   }
 }

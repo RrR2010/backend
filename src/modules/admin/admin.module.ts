@@ -1,23 +1,15 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { AdminController } from './interface/admin.controller';
-import { AdminListSessionsUseCase } from './application/admin-list-sessions.usecase';
-import { AdminRevokeSessionUseCase } from './application/admin-revoke-session.usecase';
-import { AdminRevokeAllSessionsUseCase } from './application/admin-revoke-all-sessions.usecase';
-import { AuthModule } from '@modules/authentication/auth.module';
-import { UsersModule } from '@modules/users/users.module';
+import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { AdminController } from '@admin/admin.controller'
+import { AdminService } from '@admin/admin.service'
+import { IdentityModule } from '@identities/identity.module'
+import { UsersModule } from '@users/users.module'
+import { AuthenticationModule } from '@authentication/authentication.module'
 
 @Module({
-  imports: [AuthModule, forwardRef(() => UsersModule)],
-  providers: [
-    AdminListSessionsUseCase,
-    AdminRevokeSessionUseCase,
-    AdminRevokeAllSessionsUseCase,
-  ],
+  imports: [ConfigModule, IdentityModule, UsersModule, AuthenticationModule],
   controllers: [AdminController],
-  exports: [
-    AdminListSessionsUseCase,
-    AdminRevokeSessionUseCase,
-    AdminRevokeAllSessionsUseCase,
-  ],
+  providers: [AdminService],
+  exports: [AdminService]
 })
 export class AdminModule {}

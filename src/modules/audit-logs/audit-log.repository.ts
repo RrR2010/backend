@@ -1,0 +1,123 @@
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from '@shared/prisma/prisma.service'
+import { AuditLog } from '@audit-logs/audit-log.entity'
+import { AuditLog as PrismaAuditLog, Prisma } from '@prisma/client'
+import { Id } from '@shared/value-objects'
+
+export abstract class AuditLogRepository {
+  abstract findById(id: string): Promise<AuditLog | null>
+  abstract save(auditLog: AuditLog): Promise<AuditLog>
+  abstract findAll(filter?: AuditLogFilter): Promise<AuditLog[]>
+}
+
+export type AuditLogFilter = {
+  userId?: string
+  tenantId?: string
+  entityName?: string
+  entityId?: string
+  action?: string
+  createdAfter?: Date
+  createdBefore?: Date
+}
+
+@Injectable()
+export class PrismaAuditLogRepository implements AuditLogRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<AuditLog | null> {
+    const prismaAuditLog = await this.prisma.auditLog.findUnique({
+      where: { id }
+    })
+    if (!prismaAuditLog) return null
+    return AuditLogMapper.toDomain(prismaAuditLog)
+  }
+
+  async save(auditLog: AuditLog): Promise<AuditLog> {
+    const prismaAuditLog = AuditLogMapper.toPersistence(auditLog)
+    await this.prisma.auditLog.upsert({
+      where: { id: auditLog.id.value },
+      update: prismaAuditLog,
+      create: prismaAuditLog
+    })
+    return auditLog
+  }
+
+  async findAll(filter?: AuditLogFilter): Promise<AuditLog[]> {
+    const where: Prisma.AuditLogWhereInput = {}
+
+    if (filter?.userId) {
+      where.userId = filter.userId
+    }
+    if (filter?.tenantId) {
+      where.tenantId = filter.tenantId
+    }
+    if (filter?.entityName) {
+      where.entityName = filter.entityName
+    }
+    if (filter?.entityId) {
+      where.entityId = filter.entityId
+    }
+    if (filter?.action) {
+      where.action = filter.action
+    }
+    if (filter?.createdAfter || filter?.createdBefore) {
+      where.createdAt = {}
+      if (filter?.createdAfter) {
+        where.createdAt.gte = filter.createdAfter
+      }
+      if (filter?.createdBefore) {
+        where.createdAt.lte = filter.createdBefore
+      }
+    }
+
+    const prismaAuditLogs = await this.prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    })
+    return prismaAuditLogs.map((prismaAuditLog) =>
+      AuditLogMapper.toDomain(prismaAuditLog)
+    )
+  }
+}
+
+class AuditLogMapper {
+  static toDomain(prismaAuditLog: PrismaAuditLog): AuditLog {
+    return AuditLog.rehydrate({
+      id: Id.from(prismaAuditLog.id),
+      createdAt: prismaAuditLog.createdAt,
+      updatedAt: prismaAuditLog.updatedAt,
+      userId: prismaAuditLog.userId,
+      tenantId: prismaAuditLog.tenantId,
+      entityName: prismaAuditLog.entityName,
+      entityId: prismaAuditLog.entityId,
+      ipAddress: prismaAuditLog.ipAddress,
+      userAgent: prismaAuditLog.userAgent,
+      action: prismaAuditLog.action,
+      before: prismaAuditLog.before as Record<string, unknown> | null,
+      after: prismaAuditLog.after as Record<string, unknown> | null
+    })
+  }
+
+  static toPersistence(auditLog: AuditLog): Prisma.AuditLogUncheckedCreateInput {
+    return {
+      id: auditLog.id.value,
+      createdAt: auditLog.createdAt,
+      updatedAt: auditLog.updatedAt,
+      userId: auditLog.userId,
+      tenantId: auditLog.tenantId,
+      entityName: auditLog.entityName,
+      entityId: auditLog.entityId,
+      ipAddress: auditLog.ipAddress,
+      userAgent: auditLog.userAgent,
+      action: auditLog.action,
+      before:
+        auditLog.before === null
+          ? Prisma.JsonNull
+          : (auditLog.before as Prisma.InputJsonValue),
+      after:
+        auditLog.after === null
+          ? Prisma.JsonNull
+          : (auditLog.after as Prisma.InputJsonValue)
+    }
+  }
+}
