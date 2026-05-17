@@ -6,9 +6,11 @@ import {
   Param,
   Delete,
   Patch,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Req
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
+import type { Request } from 'express'
 import {
   CreateTenantSiteDto,
   CreateTenantSiteResponseDto,
@@ -18,6 +20,7 @@ import {
 import { TenantSiteService } from '@tenant-sites/tenant-site.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
+import type { RequestContext } from '@authorization/authorization.types'
 import { TenantSite } from '@tenant-sites/tenant-site.entity'
 
 @ApiTags('Tenant Sites')
@@ -26,11 +29,13 @@ import { TenantSite } from '@tenant-sites/tenant-site.entity'
 export class TenantSitesController {
   constructor(private readonly service: TenantSiteService) {}
 
+
   @Post()
   @Authorize(Action.Create, TenantSite)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateTenantSiteDto
+    @Body() dto: CreateTenantSiteDto,
+    @Req() request: Request
   ): Promise<CreateTenantSiteResponseDto> {
     const site = await this.service.create(
       {
@@ -42,24 +47,25 @@ export class TenantSitesController {
         siteType: dto.siteType,
         isHeadquarters: dto.isHeadquarters
       },
-      null as any
+      request.context
     )
     return CreateTenantSiteResponseDto.fromDomain(site)
   }
 
   @Get()
   @Authorize(Action.Read, TenantSite)
-  async findAll(): Promise<TenantSiteResponseDto[]> {
-    const sites = await this.service.findAll(undefined, null as any)
+  async findAll(@Req() request: Request): Promise<TenantSiteResponseDto[]> {
+    const sites = await this.service.findAll({}, request.context)
     return sites.map(TenantSiteResponseDto.fromDomain)
   }
 
   @Get(':id')
   @Authorize(Action.Read, TenantSite)
   async findById(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<TenantSiteResponseDto> {
-    const site = await this.service.findById(id, null as any)
+    const site = await this.service.findById(id, request.context)
     return TenantSiteResponseDto.fromDomain(site)
   }
 
@@ -68,9 +74,10 @@ export class TenantSitesController {
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateTenantSiteDto
+    @Body() dto: UpdateTenantSiteDto,
+    @Req() request: Request
   ): Promise<TenantSiteResponseDto> {
-    const site = await this.service.findById(id, null as any)
+    const site = await this.service.findById(id, request.context)
 
     if (dto.name) site.changeName(dto.name)
     if (dto.legalName) site.changeLegalName(dto.legalName)
@@ -80,31 +87,36 @@ export class TenantSitesController {
     if (dto.isHeadquarters === true) site.setAsHeadquarters()
     else if (dto.isHeadquarters === false) site.unsetAsHeadquarters()
 
-    const saved = await this.service.save(site, null as any)
+    const saved = await this.service.save(site, request.context)
     return TenantSiteResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
   @Authorize(Action.Delete, TenantSite)
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.service.delete(id, null as any)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<void> {
+    await this.service.delete(id, request.context)
   }
 
   @Post(':id/activate')
   @Authorize(Action.Update, TenantSite)
   async activate(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<TenantSiteResponseDto> {
-    const site = await this.service.activate(id, null as any)
+    const site = await this.service.activate(id, request.context)
     return TenantSiteResponseDto.fromDomain(site)
   }
 
   @Post(':id/lock')
   @Authorize(Action.Update, TenantSite)
   async lock(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<TenantSiteResponseDto> {
-    const site = await this.service.lock(id, null as any)
+    const site = await this.service.lock(id, request.context)
     return TenantSiteResponseDto.fromDomain(site)
   }
 }

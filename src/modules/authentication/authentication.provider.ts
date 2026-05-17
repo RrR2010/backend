@@ -6,6 +6,8 @@ import {
 } from '@authentication/authentication.types'
 import { PasswordHasher } from '@authentication/password.hasher.service'
 import { Injectable } from '@nestjs/common'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 
 export abstract class AuthenticationProvider<T extends AuthProviderType> {
   abstract readonly providerType: T
@@ -26,10 +28,15 @@ export class EmailAuthenticationProvider extends AuthenticationProvider<AuthProv
     super(identityRepository)
   }
   async authenticate(input: ProviderInputMap[AuthProviderType.EMAIL]) {
+    const ctx: RequestContext = {
+      userId: '',
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
     const identities = await this.identityRepository.findAll({
       authProviderType: AuthProviderType.EMAIL,
       identifier: input.email
-    })
+    }, ctx)
 
     if (identities.length === 0 || identities[0] === undefined) {
       return null
@@ -69,10 +76,15 @@ export class CpfAuthenticationProvider extends AuthenticationProvider<AuthProvid
     // Normalize CPF: remove non-digits
     const normalizedCpf = input.cpf.replace(/\D/g, '')
 
+    const ctx: RequestContext = {
+      userId: '',
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
     const identities = await this.identityRepository.findAll({
       authProviderType: AuthProviderType.CPF,
       identifier: normalizedCpf
-    })
+    }, ctx)
 
     if (identities.length === 0 || identities[0] === undefined) {
       return null

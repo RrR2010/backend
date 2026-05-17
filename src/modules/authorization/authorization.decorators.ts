@@ -6,11 +6,11 @@ export const AUTHORIZE_KEY = 'viversorvete:authorize'
 export interface AuthorizeMetadata {
   action: Action
   subject: Subjects
-  conditions?: Record<string, unknown>
 }
 
 export const Authorize = (
   action: Action,
   subject: Subjects,
-  conditions?: Record<string, unknown>,
-): void => SetMetadata(AUTHORIZE_KEY, { action, subject, conditions })
+) => (target: object, key: string | symbol, descriptor: PropertyDescriptor) => {
+  SetMetadata(AUTHORIZE_KEY, { action, subject })(target, key, descriptor)
+}

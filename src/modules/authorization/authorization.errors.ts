@@ -83,7 +83,7 @@ export class AuthorizationNotDefinedError extends HttpException {
         message: 'Authorization not defined on endpoint',
         code: 'AUTHORIZATION_NOT_DEFINED'
       },
-      HttpStatus.INTERNAL_SERVER_ERROR
+      HttpStatus.BAD_REQUEST
     )
   }
 }

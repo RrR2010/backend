@@ -1,5 +1,7 @@
 import ms, { StringValue } from 'ms'
 
+import { InvalidEnvValueError } from '@shared/errors/value-object.errors'
+
 /**
  * Parses an env value into milliseconds (number).
  *
@@ -39,7 +41,5 @@ export function parseMsEnv(
   }
 
   // 5) Fail fast
-  throw new Error(
-    `[parseMsEnv] Invalid value: "${String(value)}". Expected number (ms) or ms string (e.g., "15m", "7d").`
-  )
+  throw new InvalidEnvValueError(String(value))
 }

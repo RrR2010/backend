@@ -11,9 +11,10 @@ import { TokenService } from '@authentication/token.service'
 import { SessionRepository } from '@authentication/session.repository'
 import { Session } from './session.entity'
 import { Request, Response } from 'express'
-import { SessionNotFoundError } from './authentication.errors'
+import { SessionNotFoundError } from '@authentication/authentication.errors'
 import { UserRepository } from '@users/user.repository'
 import { PlatformRole, TenantRole, UserScope } from '@users/user.types'
+import { RequestContext } from '@authorization/authorization.types'
 import { TenantMembershipRepository } from '@tenant-memberships/tenant-membership.repository'
 import crypto from 'crypto'
 import { PlatformMembershipRepository } from '@platform-memberships/platform-membership.repository'
@@ -80,7 +81,12 @@ export class SessionService {
 
       // Update session with actual hash and save
       tempSession.updateRefreshTokenHash(hashedRefreshToken)
-      const session = await this.sessionRepository.save(tempSession)
+      const platformCtx: RequestContext = {
+        userId: tempSession.userId,
+        scope: UserScope.PLATFORM,
+        roles: []
+      }
+      const session = await this.sessionRepository.save(tempSession, platformCtx)
 
       this.setAuthCookie(res, token)
       this.setRefreshCookie(res, refreshToken)
@@ -112,9 +118,17 @@ export class SessionService {
     // If token is expired, verifyRefreshToken returns null and we throw SessionNotFoundError
 
     // Verify session exists in DB and get full session data
-    const sessions = await this.sessionRepository.findAll({
-      id: tokenPayload.sessionId
-    })
+    const platformCtx: RequestContext = {
+      userId: tokenPayload.userId,
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
+    const sessions = await this.sessionRepository.findAll(
+      {
+        id: tokenPayload.sessionId
+      },
+      platformCtx
+    )
 
     if (!sessions || sessions.length === 0) {
       throw new SessionNotFoundError()
@@ -134,7 +148,12 @@ export class SessionService {
     }
 
     // Get user data from DB (NOT from token - security requirement)
-    const user = await this.userRepository.findById(lastSession.userId)
+    const userCtx: RequestContext = {
+      userId: lastSession.userId,
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
+    const user = await this.userRepository.findById(lastSession.userId, userCtx)
     if (!user) {
       throw new SessionNotFoundError()
     }
@@ -142,10 +161,16 @@ export class SessionService {
     const scope = user.scope
     let roles: TenantRole[] | PlatformRole[]
     if (scope === UserScope.TENANT) {
+      const tenantCtx: RequestContext = {
+        userId: lastSession.userId,
+        scope: UserScope.TENANT,
+        tenantId: lastSession.tenantId!,
+        roles: []
+      }
       const memberships = await this.tenantMembershipRepository.findAll({
         userId: lastSession.userId,
         tenantId: lastSession.tenantId!
-      })
+      }, tenantCtx)
 
       if (memberships.length === 0 || !memberships[0]) {
         throw new SessionNotFoundError()
@@ -156,7 +181,7 @@ export class SessionService {
     } else {
       const memberships = await this.platformMembershipRepository.findAll({
         userId: lastSession.userId
-      })
+      }, platformCtx)
 
       if (memberships.length === 0 || !memberships[0]) {
         throw new SessionNotFoundError()
@@ -187,7 +212,7 @@ export class SessionService {
 
     // Revoke old session
     lastSession.revoke()
-    await this.sessionRepository.save(lastSession)
+    await this.sessionRepository.save(lastSession, platformCtx)
 
     // Create new session with data from DB
     const newSession = await this.createSession(
@@ -229,18 +254,21 @@ export class SessionService {
     res.clearCookie('refreshToken')
   }
 
-  async revokeCurrentSession(req: Request): Promise<void> {
+  async revokeCurrentSession(req: Request, ctx: RequestContext): Promise<void> {
     const refreshToken = req.cookies['refreshToken'] as string
     if (refreshToken) {
       const hashedRefreshToken = this.hashRefreshToken(refreshToken)
-      const sessions = await this.sessionRepository.findAll({
-        refreshTokenHash: hashedRefreshToken
-      })
+      const sessions = await this.sessionRepository.findAll(
+        {
+          refreshTokenHash: hashedRefreshToken
+        },
+        ctx
+      )
 
       if (sessions && sessions.length > 0) {
         for (const session of sessions) {
           session.revoke()
-          await this.sessionRepository.save(session)
+          await this.sessionRepository.save(session, ctx)
         }
       }
     }

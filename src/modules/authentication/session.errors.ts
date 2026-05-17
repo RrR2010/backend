@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class SessionNotFoundError extends HttpException {
-  constructor(id?: string) {
+  constructor() {
     super(
       {
-        message: id ? `Session with id ${id} not found` : 'Session not found',
+        message: 'Session not found',
         code: 'SESSION_NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
@@ -13,10 +13,10 @@ export class SessionNotFoundError extends HttpException {
 }
 
 export class SessionExpiredError extends HttpException {
-  constructor(id: string) {
+  constructor() {
     super(
       {
-        message: `Session with id ${id} has expired`,
+        message: 'Session has expired',
         code: 'SESSION_EXPIRED'
       },
       HttpStatus.UNAUTHORIZED
@@ -25,10 +25,10 @@ export class SessionExpiredError extends HttpException {
 }
 
 export class SessionRevokedError extends HttpException {
-  constructor(id: string) {
+  constructor() {
     super(
       {
-        message: `Session with id ${id} has been revoked`,
+        message: 'Session has been revoked',
         code: 'SESSION_REVOKED'
       },
       HttpStatus.UNAUTHORIZED

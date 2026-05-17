@@ -163,7 +163,7 @@ export class MemberProfile extends Lockable(
   assignPlatformMembership(platformMembershipId: string): void {
     this.ensureActivated('MemberProfile')
     if (this._props.tenantMembershipId) {
-      throw new MemberProfileLockedError(this.id.value)
+      throw new MemberProfileLockedError()
     }
     this._props.platformMembershipId = platformMembershipId
     this.touch()
@@ -172,7 +172,7 @@ export class MemberProfile extends Lockable(
   assignTenantMembership(tenantMembershipId: string): void {
     this.ensureActivated('MemberProfile')
     if (this._props.platformMembershipId) {
-      throw new MemberProfileLockedError(this.id.value)
+      throw new MemberProfileLockedError()
     }
     this._props.tenantMembershipId = tenantMembershipId
     this.touch()

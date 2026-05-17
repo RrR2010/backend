@@ -1,4 +1,4 @@
-import { RequestContext } from '@modules/authorization/authorization.types'
+import { RequestContext } from '@authorization/authorization.types'
 
 /**
  * Application-specific cookies interface

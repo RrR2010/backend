@@ -1,11 +1,22 @@
-import { CreateEntityProps, Entity, EntityBaseProps } from '@shared/base-entity'
 import { Id } from '@shared/value-objects'
+import { Base } from '@shared/base-entity'
+import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
+import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
 
-type IngredientProps = EntityBaseProps & {}
+export type IngredientProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    name: string
+    description: string | null
+    tenantId: string | null
+  }
 
-type CreateIngredientProps = CreateEntityProps<IngredientProps>
+export type CreateIngredientProps = Omit<
+  IngredientProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export class Ingredient extends Entity<IngredientProps> {
+export class Ingredient extends Lockable(Auditable(Base<IngredientProps>)) {
   protected constructor(props: IngredientProps) {
     super(props)
   }
@@ -14,16 +25,34 @@ export class Ingredient extends Entity<IngredientProps> {
 
   static create(props: CreateIngredientProps): Ingredient {
     const now = new Date()
-    const ingredient = new Ingredient({
+    return new Ingredient({
       ...props,
       id: Id.generate(),
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      systemState: SystemState.ACTIVE
     })
-    return ingredient
   }
 
   static rehydrate(props: IngredientProps): Ingredient {
     return new Ingredient(props)
+  }
+
+  // --------------- Getters ---------------
+
+  get id(): Id {
+    return this._props.id
+  }
+
+  get name(): string {
+    return this._props.name
+  }
+
+  get description(): string | null {
+    return this._props.description
+  }
+
+  get tenantId(): string | null {
+    return this._props.tenantId
   }
 }

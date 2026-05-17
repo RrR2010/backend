@@ -8,24 +8,24 @@ import { RequestContext } from '@authorization/authorization.types'
 export class AuditLogService {
   constructor(private readonly repository: AuditLogRepository) {}
 
-  async create(props: CreateAuditLogProps, context: RequestContext): Promise<AuditLog> {
+  async create(props: CreateAuditLogProps, ctx: RequestContext): Promise<AuditLog> {
     const auditLog = AuditLog.create(props)
-    return this.repository.save(auditLog)
+    return this.repository.save(auditLog, ctx)
   }
 
-  async findAll(filter?: AuditLogFilter, context?: RequestContext): Promise<AuditLog[]> {
-    return this.repository.findAll(filter)
+  async findAll(filter: AuditLogFilter, ctx: RequestContext): Promise<AuditLog[]> {
+    return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, context: RequestContext): Promise<AuditLog> {
-    const auditLog = await this.repository.findById(id)
+  async findById(id: string, ctx: RequestContext): Promise<AuditLog> {
+    const auditLog = await this.repository.findById(id, ctx)
     if (!auditLog) {
       throw new AuditLogNotFoundError(id)
     }
     return auditLog
   }
 
-  async save(auditLog: AuditLog, context: RequestContext): Promise<AuditLog> {
-    return this.repository.save(auditLog)
+  async save(auditLog: AuditLog, ctx: RequestContext): Promise<AuditLog> {
+    return this.repository.save(auditLog, ctx)
   }
 }

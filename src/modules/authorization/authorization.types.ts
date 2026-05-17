@@ -11,6 +11,7 @@ import { TenantSite } from '@tenant-sites/tenant-site.entity'
 import { MemberProfile } from '@member-profiles/member-profile.entity'
 import { MemberProfileDocument } from '@member-profile-documents/member-profile-document.entity'
 import { AuditLog } from '@audit-logs/audit-log.entity'
+import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 
 export enum Action {
   Manage = 'manage',
@@ -42,14 +43,21 @@ export type Subjects =
     >
   | 'all'
 
-export type AppConditions = MongoQuery
+export type AppConditions = MongoQuery<any>
 
 export type AppAbility = MongoAbility<[Action, Subjects], AppConditions>
 
-export interface RequestContext {
-  userId: string
-  tenantId?: string
-  platformRoles: string[]
-  tenantRoles: string[]
-  isOwner?: boolean
-}
+// ============== REQUEST CONTEXT ==============
+
+export type RequestContext =
+  | {
+      userId: string
+      scope: UserScope.PLATFORM
+      roles: PlatformRole[]
+    }
+  | {
+      userId: string
+      scope: UserScope.TENANT
+      tenantId: string
+      roles: TenantRole[]
+    }

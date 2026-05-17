@@ -16,7 +16,7 @@ import {
 } from './authorization.errors'
 import { AuthenticatedRequest } from '@authentication/jwt-auth.guard'
 
-export type AuthAbility = AppAbility
+
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
@@ -43,7 +43,7 @@ export class AuthorizationGuard implements CanActivate {
       throw new AuthorizationNotDefinedError()
     }
 
-    const { action, subject, conditions } = authorizeMetadata
+    const { action, subject } = authorizeMetadata
 
     // 3. Get user from request.user
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>()
@@ -60,6 +60,7 @@ export class AuthorizationGuard implements CanActivate {
       // PLATFORM scope: use platform policy
       ability = definePlatformAbility({
         userId: user.userId,
+        scope: UserScope.PLATFORM,
         roles: user.roles as PlatformRole[]
       })
     } else if (user.scope === UserScope.TENANT) {
@@ -77,16 +78,18 @@ export class AuthorizationGuard implements CanActivate {
       // Build tenant ability - function creates its own AbilityBuilder
       ability = defineTenantAbility({
         userId: user.userId,
+        scope: UserScope.TENANT,
         roles: user.roles as TenantRole[],
         tenantId: user.tenantId,
-        isOwner: request.tenantContext.isOwner
+        isOwner: request.tenantContext?.isOwner ?? false
       })
     } else {
       throw new InsufficientPermissionError(action, String(subject))
     }
 
-    // 5. Check ability.can(action, subject, conditions)
-    const canAccess = ability.can(action, subject, conditions)
+    // 5. Check ability.can(action, subject)
+    // Note: conditions are already defined in the ability at build time
+    const canAccess = ability.can(action, subject)
 
     // 6. If !can → throw InsufficientPermissionError
     if (!canAccess) {

@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { Identity } from '@identities/identity.entity'
 import { Identity as PrismaIdentity, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/enums'
 import { AuthProviderType } from '@authentication/authentication.types'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 
 export abstract class IdentityRepository {
-  abstract findById(id: string): Promise<Identity | null>
-  abstract findAll(filter?: IdentityFilter): Promise<Identity[]>
-  abstract save(identity: Identity): Promise<Identity>
-  abstract delete(id: string): Promise<void>
+  abstract findById(id: string, ctx: RequestContext): Promise<Identity | null>
+  abstract findAll(filter: IdentityFilter, ctx: RequestContext): Promise<Identity[]>
+  abstract save(identity: Identity, ctx: RequestContext): Promise<Identity>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 export type IdentityFilter = {
@@ -24,28 +26,46 @@ export type IdentityFilter = {
 export class PrismaIdentityRepository implements IdentityRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<Identity | null> {
-    const prismaIdentity = await this.prisma.identity.findUnique({
-      where: { id }
-    })
+  async findById(id: string, ctx: RequestContext): Promise<Identity | null> {
+    const where: Prisma.IdentityWhereInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.user = {
+        tenantMemberships: {
+          some: {
+            tenantId: ctx.tenantId
+          }
+        }
+      }
+    }
+    const prismaIdentity = await this.prisma.identity.findFirst({ where })
     if (!prismaIdentity) return null
     return IdentityMapper.toDomain(prismaIdentity)
   }
 
-  async findAll(filter?: IdentityFilter): Promise<Identity[]> {
+  async findAll(filter: IdentityFilter, ctx: RequestContext): Promise<Identity[]> {
     const where: Prisma.IdentityWhereInput = {}
 
-    if (filter?.userId) {
+    if (filter.userId) {
       where.userId = filter.userId
     }
-    if (filter?.authProviderType) {
+    if (filter.authProviderType) {
       where.authProviderType = filter.authProviderType
     }
-    if (filter?.identifier) {
+    if (filter.identifier) {
       where.identifier = { contains: filter.identifier, mode: 'insensitive' }
     }
-    if (filter?.systemState) {
+    if (filter.systemState) {
       where.systemState = filter.systemState
+    }
+
+    if (ctx.scope === UserScope.TENANT) {
+      where.user = {
+        tenantMemberships: {
+          some: {
+            tenantId: ctx.tenantId
+          }
+        }
+      }
     }
 
     const prismaIdentities = await this.prisma.identity.findMany({ where })
@@ -54,7 +74,22 @@ export class PrismaIdentityRepository implements IdentityRepository {
     )
   }
 
-  async save(identity: Identity): Promise<Identity> {
+  async save(identity: Identity, ctx: RequestContext): Promise<Identity> {
+    if (ctx.scope === UserScope.TENANT) {
+      const user = await this.prisma.user.findFirst({
+        where: {
+          id: identity.userId,
+          tenantMemberships: {
+            some: {
+              tenantId: ctx.tenantId
+            }
+          }
+        }
+      })
+      if (!user) {
+        throw new ForbiddenException('Cannot modify resource outside your tenant')
+      }
+    }
     const prismaIdentity = IdentityMapper.toPersistence(identity)
     await this.prisma.identity.upsert({
       where: { id: prismaIdentity.id },
@@ -64,8 +99,18 @@ export class PrismaIdentityRepository implements IdentityRepository {
     return identity
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.identity.delete({ where: { id } })
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const where: Prisma.IdentityWhereInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.user = {
+        tenantMemberships: {
+          some: {
+            tenantId: ctx.tenantId
+          }
+        }
+      }
+    }
+    await this.prisma.identity.deleteMany({ where })
   }
 }
 

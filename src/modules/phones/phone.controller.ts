@@ -50,7 +50,7 @@ export class PhonesController {
   @Get()
   @Authorize(Action.Read, Phone)
   async findAll(): Promise<PhoneResponseDto[]> {
-    const phones = await this.service.findAll(undefined, null as any)
+    const phones = await this.service.findAll({}, null as any)
     return phones.map(PhoneResponseDto.fromDomain)
   }
 

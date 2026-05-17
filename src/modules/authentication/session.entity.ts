@@ -90,7 +90,7 @@ export class Session extends Auditable(Base<SessionProps>) {
 
   revoke(): void {
     if (this._props.revokedAt !== null) {
-      throw new SessionRevokedError(this.id.value)
+      throw new SessionRevokedError()
     }
     this._props.revokedAt = new Date()
     this.touch()

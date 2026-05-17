@@ -22,7 +22,8 @@ import {
 } from '@authentication/authentication.types'
 import { InvalidCredentialsError } from '@authentication/authentication.errors'
 import { UserRepository } from '@users/user.repository'
-import { UserScope } from '@users/user.types'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 import { TenantRepository } from '@tenants/tenant.repository'
 import { TenantMembershipRepository } from '@tenant-memberships/tenant-membership.repository'
 import { PlatformMembershipRepository } from '@platform-memberships/platform-membership.repository'
@@ -59,7 +60,12 @@ export class AuthenticationController {
       throw new InvalidCredentialsError()
     }
 
-    const user = await this.userRepository.findById(payload.userId)
+    const platformCtx: RequestContext = {
+      userId: payload.userId,
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
+    const user = await this.userRepository.findById(payload.userId, platformCtx)
     if (!user) {
       throw new InvalidCredentialsError()
     }
@@ -68,14 +74,15 @@ export class AuthenticationController {
 
     if (user.scope === UserScope.TENANT) {
       const tenantMemberships =
-        await this.tenantMembershipRepository.findByUserId(payload.userId)
+        await this.tenantMembershipRepository.findByUserId(payload.userId, platformCtx)
 
       if (tenantMemberships.length === 0 || !tenantMemberships[0]) {
         throw new InvalidCredentialsError()
       }
 
       const tenant = await this.tenantRepository.findById(
-        tenantMemberships[0].tenantId
+        tenantMemberships[0].tenantId,
+        platformCtx
       )
 
       if (!tenant) {
@@ -194,8 +201,31 @@ export class AuthenticationController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response
   ): Promise<void> {
+    const accessToken = req.cookies['accessToken'] as string
+    let ctx: RequestContext | undefined = undefined
+    
+    if (accessToken) {
+      const payload = this.tokenService.verify<AuthTokenPayload>(accessToken)
+      if (payload) {
+        if (payload.scope === UserScope.PLATFORM) {
+          ctx = {
+            userId: payload.userId,
+            scope: UserScope.PLATFORM,
+            roles: payload.roles as PlatformRole[]
+          }
+        } else if (payload.scope === UserScope.TENANT && payload.tenantId) {
+          ctx = {
+            userId: payload.userId,
+            scope: UserScope.TENANT,
+            tenantId: payload.tenantId,
+            roles: payload.roles as TenantRole[]
+          }
+        }
+      }
+    }
+    
     // Revoke current session in DB
-    await this.sessionService.revokeCurrentSession(req)
+    await this.sessionService.revokeCurrentSession(req, ctx!)
     // Clear cookies
     this.sessionService.clearCookies(res)
   }

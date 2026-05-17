@@ -6,9 +6,11 @@ import {
   Param,
   Delete,
   Patch,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Req
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
+import type { Request } from 'express'
 import {
   CreateMemberProfileDto,
   CreateMemberProfileResponseDto,
@@ -18,6 +20,7 @@ import {
 import { MemberProfileService } from '@member-profiles/member-profile.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
+import type { RequestContext } from '@authorization/authorization.types'
 import { MemberProfile } from '@member-profiles/member-profile.entity'
 
 @ApiTags('Member Profiles')
@@ -26,11 +29,13 @@ import { MemberProfile } from '@member-profiles/member-profile.entity'
 export class MemberProfilesController {
   constructor(private readonly service: MemberProfileService) {}
 
+
   @Post()
   @Authorize(Action.Create, MemberProfile)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateMemberProfileDto
+    @Body() dto: CreateMemberProfileDto,
+    @Req() request: Request
   ): Promise<CreateMemberProfileResponseDto> {
     const profile = await this.service.create(
       {
@@ -46,24 +51,25 @@ export class MemberProfilesController {
         platformMembershipId: dto.platformMembershipId ?? null,
         tenantMembershipId: dto.tenantMembershipId ?? null
       },
-      null as any
+      request.context
     )
     return CreateMemberProfileResponseDto.fromDomain(profile)
   }
 
   @Get()
   @Authorize(Action.Read, MemberProfile)
-  async findAll(): Promise<MemberProfileResponseDto[]> {
-    const profiles = await this.service.findAll(undefined, null as any)
+  async findAll(@Req() request: Request): Promise<MemberProfileResponseDto[]> {
+    const profiles = await this.service.findAll({}, request.context)
     return profiles.map(MemberProfileResponseDto.fromDomain)
   }
 
   @Get(':id')
   @Authorize(Action.Read, MemberProfile)
   async findById(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<MemberProfileResponseDto> {
-    const profile = await this.service.findById(id, null as any)
+    const profile = await this.service.findById(id, request.context)
     return MemberProfileResponseDto.fromDomain(profile)
   }
 
@@ -72,9 +78,10 @@ export class MemberProfilesController {
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateMemberProfileDto
+    @Body() dto: UpdateMemberProfileDto,
+    @Req() request: Request
   ): Promise<MemberProfileResponseDto> {
-    const profile = await this.service.findById(id, null as any)
+    const profile = await this.service.findById(id, request.context)
 
     if (dto.fullName) profile.changeFullName(dto.fullName)
     if (dto.displayName !== undefined) profile.changeDisplayName(dto.displayName)
@@ -86,31 +93,36 @@ export class MemberProfilesController {
     if (dto.language) profile.changeLanguage(dto.language)
     if (dto.externalId !== undefined) profile.changeExternalId(dto.externalId)
 
-    const saved = await this.service.save(profile, null as any)
+    const saved = await this.service.save(profile, request.context)
     return MemberProfileResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
   @Authorize(Action.Delete, MemberProfile)
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.service.delete(id, null as any)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<void> {
+    await this.service.delete(id, request.context)
   }
 
   @Post(':id/activate')
   @Authorize(Action.Update, MemberProfile)
   async activate(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<MemberProfileResponseDto> {
-    const profile = await this.service.activate(id, null as any)
+    const profile = await this.service.activate(id, request.context)
     return MemberProfileResponseDto.fromDomain(profile)
   }
 
   @Post(':id/lock')
   @Authorize(Action.Update, MemberProfile)
   async lock(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<MemberProfileResponseDto> {
-    const profile = await this.service.lock(id, null as any)
+    const profile = await this.service.lock(id, request.context)
     return MemberProfileResponseDto.fromDomain(profile)
   }
 }

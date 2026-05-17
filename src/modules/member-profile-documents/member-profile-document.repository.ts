@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { MemberProfileDocument } from '@member-profile-documents/member-profile-document.entity'
 import {
@@ -8,6 +8,8 @@ import {
 import { DocumentType, SystemState } from '@shared/enums'
 import { DocumentType as PrismaDocumentType } from '@prisma/client'
 import { Id } from '@shared/value-objects'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 
 export interface MemberProfileDocumentFilter {
   memberProfileId?: string
@@ -15,50 +17,97 @@ export interface MemberProfileDocumentFilter {
 }
 
 export abstract class MemberProfileDocumentRepository {
-  abstract findById(id: string): Promise<MemberProfileDocument | null>
-  abstract findAll(filter?: MemberProfileDocumentFilter): Promise<MemberProfileDocument[]>
-  abstract save(document: MemberProfileDocument): Promise<MemberProfileDocument>
-  abstract delete(id: string): Promise<void>
+  abstract findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<MemberProfileDocument | null>
+  abstract findAll(
+    filter: MemberProfileDocumentFilter,
+    ctx: RequestContext
+  ): Promise<MemberProfileDocument[]>
+  abstract save(
+    document: MemberProfileDocument,
+    ctx: RequestContext
+  ): Promise<MemberProfileDocument>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 @Injectable()
 export class PrismaMemberProfileDocumentRepository implements MemberProfileDocumentRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-async findById(id: string): Promise<MemberProfileDocument | null> {
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<MemberProfileDocument | null> {
+    const where: Prisma.MemberProfileDocumentWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT)
+      where.memberProfile = { tenantMembership: { tenantId: ctx.tenantId } }
     const document = await this.prismaService.memberProfileDocument.findUnique({
-      where: { id }
+      where
     })
     if (!document) return null
-    return MemberProfileDocumentMapper.toDomain(document)
+    return PrismaMemberProfileDocumentMapper.toDomain(document)
   }
 
-  async findAll(filter?: MemberProfileDocumentFilter): Promise<MemberProfileDocument[]> {
+  async findAll(
+    filter: MemberProfileDocumentFilter,
+    ctx: RequestContext
+  ): Promise<MemberProfileDocument[]> {
     const where: Record<string, unknown> = {}
-    if (filter?.memberProfileId) where.memberProfileId = filter.memberProfileId
-    if (filter?.type) where.type = filter.type
+    if (filter.memberProfileId) where.memberProfileId = filter.memberProfileId
+    if (filter.type) where.type = filter.type
+    if (ctx.scope === UserScope.TENANT) {
+      where.memberProfile = { tenantMembership: { tenantId: ctx.tenantId } }
+    }
 
-    const documents = await this.prismaService.memberProfileDocument.findMany({ where })
-    return documents.map(MemberProfileDocumentMapper.toDomain)
+    const documents = await this.prismaService.memberProfileDocument.findMany({
+      where
+    })
+    return documents.map(PrismaMemberProfileDocumentMapper.toDomain)
   }
 
-  async save(document: MemberProfileDocument): Promise<MemberProfileDocument> {
+  async save(
+    document: MemberProfileDocument,
+    ctx: RequestContext
+  ): Promise<MemberProfileDocument> {
     const data = PrismaMemberProfileDocumentMapper.toPersistence(document)
-    await this.prismaService.memberProfileDocument.upsert({
-      where: { id: document.id.value },
-      update: {
-        value: data.value,
-        normalizedValue: data.normalizedValue,
-        systemState: data.systemState,
-        updatedAt: data.updatedAt
-      },
-      create: data
-    })
+    const where: Prisma.MemberProfileDocumentWhereUniqueInput = { id: document.id.value }
+    if (ctx.scope === UserScope.TENANT) {
+      where.memberProfile = { tenantMembership: { tenantId: ctx.tenantId } }
+    }
+    try {
+      await this.prismaService.memberProfileDocument.upsert({
+        where,
+        update: {
+          value: data.value,
+          normalizedValue: data.normalizedValue,
+          systemState: data.systemState,
+          updatedAt: data.updatedAt
+        },
+        create: data
+      })
+    } catch (error) {
+      if (
+        ctx.scope === UserScope.TENANT &&
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ForbiddenException(
+          'Cannot modify resource outside your tenant'
+        )
+      }
+      throw error
+    }
     return document
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prismaService.memberProfileDocument.delete({ where: { id } })
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const where: Prisma.MemberProfileDocumentWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.memberProfile = { tenantMembership: { tenantId: ctx.tenantId } }
+    }
+    await this.prismaService.memberProfileDocument.delete({ where })
   }
 }
 

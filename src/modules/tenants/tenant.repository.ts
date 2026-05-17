@@ -1,16 +1,21 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { Tenant } from '@tenants/tenant.entity'
 import { Tenant as PrismaTenant, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/enums'
 import { Json } from '@shared/types'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 
 export abstract class TenantRepository {
-  abstract findById(id: string): Promise<Tenant | null>
-  abstract findAll(filter?: TenantFilter): Promise<Tenant[]>
-  abstract save(tenant: Tenant): Promise<Tenant>
-  abstract delete(id: string): Promise<void>
+  abstract findById(id: string, ctx: RequestContext): Promise<Tenant | null>
+  abstract findAll(
+    filter: TenantFilter,
+    ctx: RequestContext
+  ): Promise<Tenant[]>
+  abstract save(tenant: Tenant, ctx: RequestContext): Promise<Tenant>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 export type TenantFilter = {
@@ -22,19 +27,30 @@ export type TenantFilter = {
 export class PrismaTenantRepository implements TenantRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<Tenant | null> {
-    const prismaTenant = await this.prisma.tenant.findUnique({ where: { id } })
+  async findById(id: string, ctx: RequestContext): Promise<Tenant | null> {
+    const where: Prisma.TenantWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.id = ctx.tenantId
+    }
+    const prismaTenant = await this.prisma.tenant.findUnique({ where })
     if (!prismaTenant) return null
     return PrismaTenantMapper.toDomain(prismaTenant)
   }
 
-  async findAll(filter?: TenantFilter): Promise<Tenant[]> {
+  async findAll(
+    filter: TenantFilter,
+    ctx: RequestContext
+  ): Promise<Tenant[]> {
     const where: Prisma.TenantWhereInput = {}
 
-    if (filter?.name) {
+    if (ctx.scope === UserScope.TENANT) {
+      where.id = ctx.tenantId
+    }
+
+    if (filter.name) {
       where.name = { contains: filter.name, mode: 'insensitive' }
     }
-    if (filter?.systemState) {
+    if (filter.systemState) {
       where.systemState = filter.systemState
     }
 
@@ -44,7 +60,10 @@ export class PrismaTenantRepository implements TenantRepository {
     )
   }
 
-  async save(tenant: Tenant): Promise<Tenant> {
+  async save(tenant: Tenant, ctx: RequestContext): Promise<Tenant> {
+    if (ctx.scope === UserScope.TENANT && tenant.id.value !== ctx.tenantId) {
+      throw new ForbiddenException('Cannot modify resource outside your tenant')
+    }
     const prismaTenant = PrismaTenantMapper.toPersistence(tenant)
     await this.prisma.tenant.upsert({
       where: { id: tenant.id.value },
@@ -54,8 +73,12 @@ export class PrismaTenantRepository implements TenantRepository {
     return tenant
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.tenant.delete({ where: { id } })
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const where: Prisma.TenantWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.id = ctx.tenantId
+    }
+    await this.prisma.tenant.delete({ where })
   }
 }
 

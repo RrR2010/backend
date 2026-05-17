@@ -17,7 +17,7 @@ export class IdentityService {
 
   async create(
     dto: CreateIdentityDto,
-    context: RequestContext
+    ctx: RequestContext
   ): Promise<Identity> {
     const secretHash = dto.secret
       ? await this.passwordHasher.hash(dto.secret)
@@ -29,29 +29,29 @@ export class IdentityService {
       secretHash: secretHash
     })
 
-    await this.identityRepository.save(identity)
+    await this.identityRepository.save(identity, ctx)
     return identity
   }
 
   async findAll(
-    filter?: IdentityFilter,
-    context?: RequestContext
+    filter: IdentityFilter,
+    ctx: RequestContext
   ): Promise<Identity[]> {
-    return this.identityRepository.findAll(filter)
+    return this.identityRepository.findAll(filter, ctx)
   }
 
   async findById(
     id: string,
-    context: RequestContext
+    ctx: RequestContext
   ): Promise<Identity | null> {
-    return this.identityRepository.findById(id)
+    return this.identityRepository.findById(id, ctx)
   }
 
-  async save(identity: Identity, context: RequestContext): Promise<Identity> {
-    return this.identityRepository.save(identity)
+  async save(identity: Identity, ctx: RequestContext): Promise<Identity> {
+    return this.identityRepository.save(identity, ctx)
   }
 
-  async delete(id: string, context: RequestContext): Promise<void> {
-    await this.identityRepository.delete(id)
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    await this.identityRepository.delete(id, ctx)
   }
 }

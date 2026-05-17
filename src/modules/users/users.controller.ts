@@ -6,9 +6,12 @@ import {
   Param,
   Delete,
   Patch,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Req,
+  BadRequestException
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
+import type { Request } from 'express'
 import {
   CreateUserDto,
   CreateUserResponseDto,
@@ -17,8 +20,10 @@ import {
 import { UserNotFoundError } from '@users/user.errors'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
+// import type { RequestContext } from '@authorization/authorization.types' // unused import removed
 import { User } from '@users/user.entity'
 import { UserService } from '@users/user.service'
+import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 
 @ApiTags('Users')
 @ApiBearerAuth('accessToken')
@@ -26,27 +31,34 @@ import { UserService } from '@users/user.service'
 export class UsersController {
   constructor(private readonly userService: UserService) {}
 
+
+
+
   @Post()
   @Authorize(Action.Create, User)
   @ApiConsumes('application/json')
-  async create(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
-    const user = await this.userService.create(dto, null as any)
+  async create(
+    @Body() dto: CreateUserDto,
+    @Req() request: Request
+  ): Promise<CreateUserResponseDto> {
+    const user = await this.userService.create(dto, request.context)
     return CreateUserResponseDto.fromDomain(user)
   }
 
   @Get()
   @Authorize(Action.Read, User)
-  async findAll(): Promise<UserResponseDto[]> {
-    const users = await this.userService.findAll(undefined, null as any)
+  async findAll(@Req() request: Request): Promise<UserResponseDto[]> {
+    const users = await this.userService.findAll({}, request.context)
     return users.map((user) => UserResponseDto.fromDomain(user))
   }
 
   @Get(':id')
   @Authorize(Action.Read, User)
   async findById(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<UserResponseDto | null> {
-    const user = await this.userService.findById(id, null as any)
+    const user = await this.userService.findById(id, request.context)
     return user ? UserResponseDto.fromDomain(user) : null
   }
 
@@ -55,9 +67,10 @@ export class UsersController {
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: CreateUserDto
+    @Body() dto: CreateUserDto,
+    @Req() request: Request
   ): Promise<UserResponseDto> {
-    const existingUser = await this.userService.findById(id, null as any)
+    const existingUser = await this.userService.findById(id, request.context)
     if (!existingUser) {
       throw new UserNotFoundError(id)
     }
@@ -68,13 +81,16 @@ export class UsersController {
       // Could add domain methods to handle this
     }
 
-    const user = await this.userService.save(existingUser, null as any)
+    const user = await this.userService.save(existingUser, request.context)
     return UserResponseDto.fromDomain(user)
   }
 
   @Delete(':id')
   @Authorize(Action.Delete, User)
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.userService.delete(id, null as any)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<void> {
+    await this.userService.delete(id, request.context)
   }
 }

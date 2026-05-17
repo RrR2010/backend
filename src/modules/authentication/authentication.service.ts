@@ -1,4 +1,5 @@
 import { UserRepository } from '@users/user.repository'
+import { RequestContext } from '@authorization/authorization.types'
 import {
   InvalidCredentialsError,
   InvalidScopeError,
@@ -53,7 +54,11 @@ export class AuthenticationService {
       throw new InvalidCredentialsError()
     }
 
-    const user = await this.userRepository.findById(result.userId)
+    const user = await this.userRepository.findById(result.userId, {
+      userId: result.userId,
+      scope: UserScope.PLATFORM,
+      roles: []
+    })
     if (!user) {
       throw new UserNotFoundAfterAuthenticationError()
     }
@@ -63,6 +68,10 @@ export class AuthenticationService {
       const platformMembership =
         await this.platformMembershipRepository.findAll({
           userId: user.id.value
+        }, {
+          userId: user.id.value,
+          scope: UserScope.PLATFORM,
+          roles: []
         })
       if (platformMembership.length === 0 || !platformMembership[0]) {
         throw new InvalidCredentialsError()
@@ -85,17 +94,22 @@ export class AuthenticationService {
     }
 
     if (user.scope === UserScope.TENANT) {
+      const tenantCtx: RequestContext = {
+        userId: user.id.value,
+        scope: UserScope.PLATFORM,
+        roles: []
+      }
       const memberships = await this.tenantMembershipRepository
         .findAll({
           userId: user.id.value
-        })
+        }, tenantCtx)
         .then((memberships) => memberships.filter((membership) => !!membership))
 
       if (memberships.length === 0) throw new InvalidCredentialsError()
 
       const tenants = await Promise.all(
         memberships.map((membership) =>
-          this.tenantRepository.findById(membership.tenantId)
+          this.tenantRepository.findById(membership.tenantId, tenantCtx)
         )
       ).then((tenants) => tenants.filter((tenant) => !!tenant))
 
@@ -136,7 +150,11 @@ export class AuthenticationService {
   async selectTenant(
     selectTenantInput: SelectTenantInput
   ): Promise<SelectTenantResult> {
-    const user = await this.userRepository.findById(selectTenantInput.userId)
+    const user = await this.userRepository.findById(selectTenantInput.userId, {
+      userId: selectTenantInput.userId,
+      scope: UserScope.PLATFORM,
+      roles: []
+    })
     if (!user) {
       throw new InvalidCredentialsError()
     }
@@ -145,17 +163,22 @@ export class AuthenticationService {
       throw new InvalidScopeError()
     }
 
+    const tenantCtx: RequestContext = {
+      userId: user.id.value,
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
     const memberships = await this.tenantMembershipRepository.findAll({
       userId: user.id.value,
       tenantId: selectTenantInput.tenantId
-    })
+    }, tenantCtx)
 
     if (memberships.length === 0 || !memberships[0]) {
       throw new TenantNotFoundError()
     }
 
     const membership = memberships[0]
-    const tenant = await this.tenantRepository.findById(membership.tenantId)
+    const tenant = await this.tenantRepository.findById(membership.tenantId, tenantCtx)
     if (!tenant) {
       throw new TenantNotFoundError()
     }

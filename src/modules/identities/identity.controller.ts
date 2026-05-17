@@ -6,8 +6,10 @@ import {
   Param,
   Delete,
   Patch,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Req
 } from '@nestjs/common'
+import type { Request } from 'express'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import {
   CreateIdentityDto,
@@ -15,7 +17,7 @@ import {
   IdentityResponseDto
 } from '@identities/identity.dto'
 import { Authorize } from '@authorization/authorization.decorators'
-import { Action } from '@authorization/authorization.types'
+import { Action, RequestContext } from '@authorization/authorization.types'
 import { Identity } from '@identities/identity.entity'
 import { IdentityService } from '@identities/identity.service'
 
@@ -25,22 +27,25 @@ import { IdentityService } from '@identities/identity.service'
 export class IdentitiesController {
   constructor(private readonly identityService: IdentityService) {}
 
+
+
   @Post()
   @Authorize(Action.Create, Identity)
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   async create(
-    @Body() dto: CreateIdentityDto
+    @Body() dto: CreateIdentityDto,
+    @Req() request: Request
   ): Promise<CreateIdentityResponseDto> {
-    const identity = await this.identityService.create(dto, null as any)
+    const identity = await this.identityService.create(dto, request.context)
     return CreateIdentityResponseDto.fromDomain(identity)
   }
 
   @Get()
   @Authorize(Action.Read, Identity)
-  async findAll(): Promise<IdentityResponseDto[]> {
+  async findAll(@Req() request: Request): Promise<IdentityResponseDto[]> {
     const identities = await this.identityService.findAll(
-      undefined,
-      null as any
+      {},
+      request.context
     )
     return identities.map((identity) =>
       IdentityResponseDto.fromDomain(identity)
@@ -50,9 +55,10 @@ export class IdentitiesController {
   @Get(':id')
   @Authorize(Action.Read, Identity)
   async findById(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<IdentityResponseDto | null> {
-    const identity = await this.identityService.findById(id, null as any)
+    const identity = await this.identityService.findById(id, request.context)
     return identity ? IdentityResponseDto.fromDomain(identity) : null
   }
 
@@ -61,7 +67,8 @@ export class IdentitiesController {
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: CreateIdentityDto
+    @Body() dto: CreateIdentityDto,
+    @Req() request: Request
   ): Promise<IdentityResponseDto> {
     const identity = await this.identityService.save(
       Identity.create({
@@ -70,14 +77,17 @@ export class IdentitiesController {
         identifier: dto.identifier,
         secretHash: dto.secret || null
       }),
-      null as any
+      request.context
     )
     return IdentityResponseDto.fromDomain(identity)
   }
 
   @Delete(':id')
   @Authorize(Action.Delete, Identity)
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.identityService.delete(id, null as any)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<void> {
+    await this.identityService.delete(id, request.context)
   }
 }

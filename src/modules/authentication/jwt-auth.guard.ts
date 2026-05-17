@@ -12,15 +12,18 @@ import { AuthTokenPayload } from '@authentication/authentication.types'
 import { UserScope } from '@users/user.types'
 import { IS_PUBLIC_KEY } from '@shared/decorators/public.decorator'
 import { TenantContext } from '@authentication/tenant-context.guard'
+import { AppAbility, RequestContext } from '@authorization/authorization.types'
 
-export type AuthScope = UserScope.PLATFORM | UserScope.TENANT
+
 
 export interface AuthenticatedRequest extends Request {
   user: AuthTokenPayload
   userId: string
-  authScope: AuthScope
+  authScope: UserScope
   tenantId?: string
   tenantContext?: TenantContext
+  ability?: AppAbility
+  context: RequestContext
 }
 
 @Injectable()

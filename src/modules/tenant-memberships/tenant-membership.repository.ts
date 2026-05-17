@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { TenantMembership } from '@tenant-memberships/tenant-membership.entity'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/enums'
 import { TenantRole } from '@users/user.types'
 import { TenantMembership as PrismaTenantMembership, TenantRole as PrismaTenantRole, Prisma } from '@prisma/client'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 
 export type TenantMembershipFilter = {
   userId?: string
@@ -14,11 +16,11 @@ export type TenantMembershipFilter = {
 }
 
 export abstract class TenantMembershipRepository {
-  abstract findById(id: string): Promise<TenantMembership | null>
-  abstract findByUserId(userId: string): Promise<TenantMembership[]>
-  abstract findAll(filter?: TenantMembershipFilter): Promise<TenantMembership[]>
-  abstract save(membership: TenantMembership): Promise<TenantMembership>
-  abstract delete(id: string): Promise<void>
+  abstract findById(id: string, ctx: RequestContext): Promise<TenantMembership | null>
+  abstract findByUserId(userId: string, ctx: RequestContext): Promise<TenantMembership[]>
+  abstract findAll(filter: TenantMembershipFilter, ctx: RequestContext): Promise<TenantMembership[]>
+  abstract save(membership: TenantMembership, ctx: RequestContext): Promise<TenantMembership>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 @Injectable()
@@ -27,37 +29,54 @@ export class PrismaTenantMembershipRepository
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<TenantMembership | null> {
+  async findById(id: string, ctx: RequestContext): Promise<TenantMembership | null> {
+    const where: Prisma.TenantMembershipWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.tenantId = ctx.tenantId
+    }
     const membership = await this.prisma.tenantMembership.findUnique({
-      where: { id }
+      where
     })
     if (!membership) return null
     return PrismaTenantMembershipMapper.toDomain(membership)
   }
 
-  async findByUserId(userId: string): Promise<TenantMembership[]> {
+  async findByUserId(userId: string, ctx: RequestContext): Promise<TenantMembership[]> {
+    const where: Prisma.TenantMembershipWhereInput = { userId }
+    if (ctx.scope === UserScope.TENANT) {
+      where.tenantId = ctx.tenantId
+    }
     const memberships = await this.prisma.tenantMembership.findMany({
-      where: { userId }
+      where
     })
     return memberships.map((m) => PrismaTenantMembershipMapper.toDomain(m))
   }
 
-  async findAll(filter?: TenantMembershipFilter): Promise<TenantMembership[]> {
+  async findAll(
+    filter: TenantMembershipFilter,
+    ctx: RequestContext
+  ): Promise<TenantMembership[]> {
     const where: Prisma.TenantMembershipWhereInput = {}
 
-    if (filter?.userId) where.userId = filter.userId
-    if (filter?.tenantId) where.tenantId = filter.tenantId
-    if (filter?.isOwner !== undefined) where.isOwner = filter.isOwner
-    if (filter?.roles && filter.roles.length > 0) {
+    if (filter.userId) where.userId = filter.userId
+    if (filter.tenantId) where.tenantId = filter.tenantId
+    if (filter.isOwner !== undefined) where.isOwner = filter.isOwner
+    if (filter.roles && filter.roles.length > 0) {
       const role = filter.roles[0]
       if (role) where.roles = { has: role as PrismaTenantRole }
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.tenantId = ctx.tenantId
     }
 
     const memberships = await this.prisma.tenantMembership.findMany({ where })
     return memberships.map((m) => PrismaTenantMembershipMapper.toDomain(m))
   }
 
-  async save(membership: TenantMembership): Promise<TenantMembership> {
+  async save(membership: TenantMembership, ctx: RequestContext): Promise<TenantMembership> {
+    if (ctx.scope === UserScope.TENANT && membership.tenantId !== ctx.tenantId) {
+      throw new ForbiddenException('Cannot modify resource outside your tenant')
+    }
     const prismaData = PrismaTenantMembershipMapper.toPersistence(membership)
 
     await this.prisma.tenantMembership.upsert({
@@ -69,8 +88,12 @@ export class PrismaTenantMembershipRepository
     return membership
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.tenantMembership.delete({ where: { id } })
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const where: Prisma.TenantMembershipWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.tenantId = ctx.tenantId
+    }
+    await this.prisma.tenantMembership.delete({ where })
   }
 }
 

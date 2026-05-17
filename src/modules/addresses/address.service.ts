@@ -8,42 +8,42 @@ import { RequestContext } from '@authorization/authorization.types'
 export class AddressService {
   constructor(private readonly repository: AddressRepository) {}
 
-  async create(props: CreateAddressProps, context: RequestContext): Promise<Address> {
+  async create(props: CreateAddressProps, ctx: RequestContext): Promise<Address> {
     const address = Address.create(props)
-    return this.repository.save(address)
+    return this.repository.save(address, ctx)
   }
 
-  async findAll(filter?: AddressFilter, context?: RequestContext): Promise<Address[]> {
-    return this.repository.findAll(filter)
+  async findAll(filter: AddressFilter, ctx: RequestContext): Promise<Address[]> {
+    return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, context: RequestContext): Promise<Address> {
-    const address = await this.repository.findById(id)
+  async findById(id: string, ctx: RequestContext): Promise<Address> {
+    const address = await this.repository.findById(id, ctx)
     if (!address) {
       throw new AddressNotFoundError(id)
     }
     return address
   }
 
-  async save(address: Address, context: RequestContext): Promise<Address> {
-    return this.repository.save(address)
+  async save(address: Address, ctx: RequestContext): Promise<Address> {
+    return this.repository.save(address, ctx)
   }
 
-  async delete(id: string, context: RequestContext): Promise<void> {
-    const address = await this.findById(id, context)
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const address = await this.findById(id, ctx)
     address.delete()
-    await this.repository.save(address)
+    await this.repository.save(address, ctx)
   }
 
-  async activate(id: string, context: RequestContext): Promise<Address> {
-    const address = await this.findById(id, context)
+  async activate(id: string, ctx: RequestContext): Promise<Address> {
+    const address = await this.findById(id, ctx)
     address.activate()
-    return this.repository.save(address)
+    return this.repository.save(address, ctx)
   }
 
-  async lock(id: string, context: RequestContext): Promise<Address> {
-    const address = await this.findById(id, context)
+  async lock(id: string, ctx: RequestContext): Promise<Address> {
+    const address = await this.findById(id, ctx)
     address.lock()
-    return this.repository.save(address)
+    return this.repository.save(address, ctx)
   }
 }

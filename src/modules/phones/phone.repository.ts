@@ -4,12 +4,13 @@ import { Phone } from '@phones/phone.entity'
 import { OwnerType, PhoneType, SystemState } from '@shared/enums'
 import { Id } from '@shared/value-objects'
 import { Phone as PrismaPhone, Prisma } from '@prisma/client'
+import { RequestContext } from '@authorization/authorization.types'
 
 export abstract class PhoneRepository {
-  abstract findById(id: string): Promise<Phone | null>
-  abstract findAll(filter?: PhoneFilter): Promise<Phone[]>
-  abstract save(phone: Phone): Promise<Phone>
-  abstract delete(id: string): Promise<void>
+  abstract findById(id: string, ctx: RequestContext): Promise<Phone | null>
+  abstract findAll(filter: PhoneFilter, ctx: RequestContext): Promise<Phone[]>
+  abstract save(phone: Phone, ctx: RequestContext): Promise<Phone>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 export type PhoneFilter = {
@@ -24,7 +25,7 @@ export type PhoneFilter = {
 export class PrismaPhoneRepository implements PhoneRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findById(id: string): Promise<Phone | null> {
+  async findById(id: string, ctx: RequestContext): Promise<Phone | null> {
     const prismaPhone = await this.prismaService.phone.findUnique({
       where: { id }
     })
@@ -32,22 +33,22 @@ export class PrismaPhoneRepository implements PhoneRepository {
     return PrismaPhoneMapper.toDomain(prismaPhone)
   }
 
-  async findAll(filter?: PhoneFilter): Promise<Phone[]> {
+  async findAll(filter: PhoneFilter, ctx: RequestContext): Promise<Phone[]> {
     const where: Prisma.PhoneWhereInput = {}
 
-    if (filter?.ownerId) {
+    if (filter.ownerId) {
       where.ownerId = filter.ownerId
     }
-    if (filter?.ownerType) {
+    if (filter.ownerType) {
       where.ownerType = filter.ownerType
     }
-    if (filter?.type) {
+    if (filter.type) {
       where.type = filter.type
     }
-    if (filter?.isDefault !== undefined) {
+    if (filter.isDefault !== undefined) {
       where.isDefault = filter.isDefault
     }
-    if (filter?.isWhatsapp !== undefined) {
+    if (filter.isWhatsapp !== undefined) {
       where.isWhatsapp = filter.isWhatsapp
     }
 
@@ -55,7 +56,7 @@ export class PrismaPhoneRepository implements PhoneRepository {
     return prismaPhones.map((p) => PrismaPhoneMapper.toDomain(p))
   }
 
-  async save(phone: Phone): Promise<Phone> {
+  async save(phone: Phone, ctx: RequestContext): Promise<Phone> {
     const prismaPhone = PrismaPhoneMapper.toPersistence(phone)
     await this.prismaService.phone.upsert({
       where: { id: phone.id.value },
@@ -65,7 +66,7 @@ export class PrismaPhoneRepository implements PhoneRepository {
     return phone
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, ctx: RequestContext): Promise<void> {
     await this.prismaService.phone.delete({ where: { id } })
   }
 }

@@ -8,31 +8,31 @@ import { User } from '@users/user.entity'
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async create(dto: CreateUserDto, context: RequestContext): Promise<User> {
+  async create(dto: CreateUserDto, ctx: RequestContext): Promise<User> {
     const user = User.create({
       scope: dto.scope
     })
 
-    await this.userRepository.save(user)
+    await this.userRepository.save(user, ctx)
     return user
   }
 
   async findAll(
-    filter?: UserFilter,
-    context?: RequestContext
+    filter: UserFilter,
+    ctx: RequestContext
   ): Promise<User[]> {
-    return this.userRepository.findAll(filter)
+    return this.userRepository.findAll(filter, ctx)
   }
 
-  async findById(id: string, context: RequestContext): Promise<User | null> {
-    return this.userRepository.findById(id)
+  async findById(id: string, ctx: RequestContext): Promise<User | null> {
+    return this.userRepository.findById(id, ctx)
   }
 
-  async save(user: User, context: RequestContext): Promise<User> {
-    return this.userRepository.save(user)
+  async save(user: User, ctx: RequestContext): Promise<User> {
+    return this.userRepository.save(user, ctx)
   }
 
-  async delete(id: string, context: RequestContext): Promise<void> {
-    await this.userRepository.delete(id)
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    await this.userRepository.delete(id, ctx)
   }
 }

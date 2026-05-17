@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { APP_GUARD } from '@nestjs/core'
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
 import { UsersModule } from '@users/users.module'
 import { TenantModule } from '@tenants/tenant.module'
@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '@authentication/jwt-auth.guard'
 import { TenantContextGuard } from '@authentication/tenant-context.guard'
 import { AuthorizationModule } from '@authorization/authorization.module'
 import { AuthorizationGuard } from '@authorization/authorization.guard'
+import { RequestContextInterceptor } from '@shared/interceptors/request-context.interceptor'
 
 // New modules
 import { PlatformMembershipModule } from '@platform-memberships/platform-membership.module'
@@ -47,6 +48,12 @@ import { AuditLogModule } from '@audit-logs/audit-log.module'
     // })
   ],
   providers: [
+    /**
+     * Global Guards order matters:
+     * 1. JwtAuthGuard: Authenticates user via JWT and attaches AuthTokenPayload to request.user.
+     * 2. TenantContextGuard: Determines tenant context for tenant-scoped users and attaches to request.tenantContext.
+     * 3. AuthorizationGuard: Enforces CASL permissions based on request.user and request.tenantContext.
+     */
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard
@@ -58,7 +65,16 @@ import { AuditLogModule } from '@audit-logs/audit-log.module'
     {
       provide: APP_GUARD,
       useClass: AuthorizationGuard
+    },
+    /**
+     * Global Interceptors:
+     * - RequestContextInterceptor: Must run after guards to build a validated RequestContext from request.user and request.tenantContext.
+     */
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestContextInterceptor
     }
   ]
 })
 export class AppModule {}
+

@@ -55,7 +55,7 @@ export class AddressesController {
   @Get()
   @Authorize(Action.Read, Address)
   async findAll(): Promise<AddressResponseDto[]> {
-    const addresses = await this.service.findAll(undefined, null as any)
+    const addresses = await this.service.findAll({}, null as any)
     return addresses.map(AddressResponseDto.fromDomain)
   }
 

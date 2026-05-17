@@ -1,15 +1,17 @@
-import { TenantRole } from '@users/user.types'
+import { TenantRole, UserScope } from '@users/user.types'
 import { AbilityBuilder, createMongoAbility } from '@casl/ability'
-import { Action, AppAbility } from '@authorization/authorization.types'
+import {
+  Action,
+  AppAbility,
+  AppConditions,
+  RequestContext
+} from '@authorization/authorization.types'
 import { User } from '@users/user.entity'
 import { Tenant } from '@tenants/tenant.entity'
 import { Ingredient } from '@ingredients/ingredient.entity'
 import { Identity } from '@identities/identity.entity'
 
-type TenantCtx = {
-  userId: string
-  roles: TenantRole[]
-  tenantId: string
+type TenantContext = Extract<RequestContext, { scope: UserScope.TENANT }> & {
   isOwner: boolean
 }
 
@@ -17,7 +19,7 @@ type TenantCtx = {
  * Defines tenant-scoped abilities with automatic tenantId conditions.
  * All permissions are automatically scoped to the user's tenant.
  */
-export function defineTenantAbility(ctx: TenantCtx): AppAbility {
+export function defineTenantAbility(ctx: TenantContext): AppAbility {
   const { can, cannot, build } = new AbilityBuilder<AppAbility>(
     createMongoAbility
   )
@@ -37,18 +39,22 @@ export function defineTenantAbility(ctx: TenantCtx): AppAbility {
   // Tenant user has limited access within their tenant
   if (ctx.roles.includes(TenantRole.USER)) {
     // Can read and update their own user profile
-    can(Action.Read, User, { tenantId: ctx.tenantId })
-    can(Action.Update, User, { id: ctx.userId })
+    can(Action.Read, User, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Update, User, { id: { $eq: ctx.userId } } as AppConditions)
     cannot(Action.Delete, User)
 
     // Can manage ingredients within their tenant
-    can(Action.Manage, Ingredient, { tenantId: ctx.tenantId })
+    can(Action.Manage, Ingredient, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can read identities within their tenant
-    can(Action.Read, Identity, { tenantId: ctx.tenantId })
+    can(Action.Read, Identity, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can read tenant info
-    can(Action.Read, Tenant, { id: ctx.tenantId })
+    can(Action.Read, Tenant, { id: { $eq: ctx.tenantId } } as AppConditions)
 
     return build()
   }

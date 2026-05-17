@@ -6,8 +6,10 @@ import {
   Param,
   Delete,
   Patch,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Req
 } from '@nestjs/common'
+import type { Request } from 'express'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import {
   CreateTenantDto,
@@ -17,6 +19,7 @@ import {
 import { TenantNotFoundError } from '@tenants/tenant.errors'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
+import type { RequestContext } from '@authorization/authorization.types'
 import { Tenant } from '@tenants/tenant.entity'
 import { TenantService } from '@tenants/tenant.service'
 
@@ -26,27 +29,32 @@ import { TenantService } from '@tenants/tenant.service'
 export class TenantsController {
   constructor(private readonly tenantService: TenantService) {}
 
+
   @Post()
   @Authorize(Action.Create, Tenant)
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
-  async create(@Body() dto: CreateTenantDto): Promise<CreateTenantResponseDto> {
-    const tenant = await this.tenantService.create(dto, null as any)
+  async create(
+    @Body() dto: CreateTenantDto,
+    @Req() request: Request
+  ): Promise<CreateTenantResponseDto> {
+    const tenant = await this.tenantService.create(dto, request.context)
     return CreateTenantResponseDto.fromDomain(tenant)
   }
 
   @Get()
   @Authorize(Action.Read, Tenant)
-  async findAll(): Promise<TenantResponseDto[]> {
-    const tenants = await this.tenantService.findAll(undefined, null as any)
+  async findAll(@Req() request: Request): Promise<TenantResponseDto[]> {
+    const tenants = await this.tenantService.findAll({}, request.context)
     return tenants.map((tenant) => TenantResponseDto.fromDomain(tenant))
   }
 
   @Get(':id')
   @Authorize(Action.Read, Tenant)
   async findById(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<TenantResponseDto | null> {
-    const tenant = await this.tenantService.findById(id, null as any)
+    const tenant = await this.tenantService.findById(id, request.context)
     return tenant ? TenantResponseDto.fromDomain(tenant) : null
   }
 
@@ -55,22 +63,26 @@ export class TenantsController {
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: Partial<CreateTenantDto>
+    @Body() dto: Partial<CreateTenantDto>,
+    @Req() request: Request
   ): Promise<TenantResponseDto> {
-    const tenant = await this.tenantService.findById(id, null as any)
+    const tenant = await this.tenantService.findById(id, request.context)
     if (!tenant) {
       throw new TenantNotFoundError(id)
     }
     if (dto.name) {
       tenant.changeName(dto.name)
     }
-    const saved = await this.tenantService.save(tenant, null as any)
+    const saved = await this.tenantService.save(tenant, request.context)
     return TenantResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
   @Authorize(Action.Delete, Tenant)
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.tenantService.delete(id, null as any)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<void> {
+    await this.tenantService.delete(id, request.context)
   }
 }

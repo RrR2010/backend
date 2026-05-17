@@ -4,12 +4,13 @@ import { Address } from '@addresses/address.entity'
 import { OwnerType, AddressType, SystemState } from '@shared/enums'
 import { Address as PrismaAddress, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
+import { RequestContext } from '@authorization/authorization.types'
 
 export abstract class AddressRepository {
-  abstract findById(id: string): Promise<Address | null>
-  abstract findAll(filter?: AddressFilter): Promise<Address[]>
-  abstract save(address: Address): Promise<Address>
-  abstract delete(id: string): Promise<void>
+  abstract findById(id: string, ctx: RequestContext): Promise<Address | null>
+  abstract findAll(filter: AddressFilter, ctx: RequestContext): Promise<Address[]>
+  abstract save(address: Address, ctx: RequestContext): Promise<Address>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 export type AddressFilter = {
@@ -23,7 +24,7 @@ export type AddressFilter = {
 export class PrismaAddressRepository implements AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findById(id: string): Promise<Address | null> {
+  async findById(id: string, ctx: RequestContext): Promise<Address | null> {
     const prismaAddress = await this.prismaService.address.findUnique({
       where: { id }
     })
@@ -31,19 +32,19 @@ export class PrismaAddressRepository implements AddressRepository {
     return PrismaAddressMapper.toDomain(prismaAddress)
   }
 
-  async findAll(filter?: AddressFilter): Promise<Address[]> {
+  async findAll(filter: AddressFilter, ctx: RequestContext): Promise<Address[]> {
     const where: Prisma.AddressWhereInput = {}
 
-    if (filter?.ownerId) {
+    if (filter.ownerId) {
       where.ownerId = filter.ownerId
     }
-    if (filter?.ownerType) {
+    if (filter.ownerType) {
       where.ownerType = filter.ownerType
     }
-    if (filter?.type) {
+    if (filter.type) {
       where.type = filter.type
     }
-    if (filter?.isDefault !== undefined) {
+    if (filter.isDefault !== undefined) {
       where.isDefault = filter.isDefault
     }
 
@@ -53,7 +54,7 @@ export class PrismaAddressRepository implements AddressRepository {
     )
   }
 
-  async save(address: Address): Promise<Address> {
+  async save(address: Address, ctx: RequestContext): Promise<Address> {
     const prismaAddress = PrismaAddressMapper.toPersistence(address)
     await this.prismaService.address.upsert({
       where: { id: prismaAddress.id },
@@ -63,7 +64,7 @@ export class PrismaAddressRepository implements AddressRepository {
     return address
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, ctx: RequestContext): Promise<void> {
     await this.prismaService.address.delete({ where: { id } })
   }
 }

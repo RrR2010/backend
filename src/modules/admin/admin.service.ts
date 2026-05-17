@@ -4,16 +4,18 @@ import { UserRepository } from '@users/user.repository'
 import { IdentityRepository } from '@identities/identity.repository'
 import { PasswordHasher } from '@authentication/password.hasher.service'
 import { PlatformRole, UserScope } from '@users/user.types'
+import { RequestContext } from '@authorization/authorization.types'
 import { AuthProviderType } from '@authentication/authentication.types'
 import { User } from '@users/user.entity'
 import { Identity } from '@identities/identity.entity'
-import { MembershipRepository } from '@memberships/membership.repository'
-import { SystemState } from '@shared/enums'
+import { PlatformMembershipRepository } from '@platform-memberships/platform-membership.repository'
+import { PlatformMembership } from '@platform-memberships/platform-membership.entity'
+import { MemberProfileRepository } from '@member-profiles/member-profile.repository'
+import { MemberProfile } from '@member-profiles/member-profile.entity'
 import {
   BootstrapAlreadyExistsError,
   BootstrapInvalidKeyError
 } from '@admin/admin.errors'
-import { Id } from '@shared/value-objects'
 
 @Injectable()
 export class AdminService {
@@ -21,7 +23,8 @@ export class AdminService {
     private readonly configService: ConfigService,
     private readonly userRepository: UserRepository,
     private readonly identityRepository: IdentityRepository,
-    private readonly membershipRepository: MembershipRepository,
+    private readonly membershipRepository: PlatformMembershipRepository,
+    private readonly memberProfileRepository: MemberProfileRepository,
     private readonly passwordHasher: PasswordHasher
   ) {}
 
@@ -29,9 +32,19 @@ export class AdminService {
     email: string,
     password: string,
     name: string
-  ): Promise<{ userId: string; identityId: string }> {
+  ): Promise<{
+    userId: string
+    identityId: string
+    membershipId: string
+    memberProfileId: string
+  }> {
     // Check if any user exists
-    const existingUsers = await this.userRepository.findAll()
+    const platformCtx: RequestContext = {
+      userId: 'system',
+      scope: UserScope.PLATFORM,
+      roles: []
+    }
+    const existingUsers = await this.userRepository.findAll({}, platformCtx)
     if (existingUsers.length > 0) {
       throw new BootstrapAlreadyExistsError()
     }
@@ -50,18 +63,30 @@ export class AdminService {
     const user = User.create({
       scope: UserScope.PLATFORM
     })
-    await this.userRepository.save(user)
+    await this.userRepository.save(user, platformCtx)
 
     // Create PlatformMembership with ADMIN role
-    const now = new Date()
-    await this.membershipRepository.savePlatformMembership({
-      id: Id.generate().value,
+    const membership = PlatformMembership.create({
       userId: user.id.value,
-      roles: [PlatformRole.ADMIN],
-      systemState: SystemState.ACTIVE,
-      createdAt: now,
-      updatedAt: now
+      roles: [PlatformRole.ADMIN]
     })
+    await this.membershipRepository.save(membership, platformCtx)
+
+    // Create MemberProfile linked to the platform membership
+    const memberProfile = MemberProfile.create({
+      fullName: name,
+      displayName: null,
+      dateOfBirth: null,
+      gender: null,
+      photoUrl: null,
+      externalId: null,
+      locale: 'pt-BR',
+      timezone: 'America/Sao_Paulo',
+      language: 'pt',
+      platformMembershipId: membership.id.value,
+      tenantMembershipId: null
+    })
+    await this.memberProfileRepository.save(memberProfile, platformCtx)
 
     // Hash password and create identity
     const secretHash = await this.passwordHasher.hash(password)
@@ -71,11 +96,13 @@ export class AdminService {
       identifier: email,
       secretHash
     })
-    await this.identityRepository.save(identity)
+    await this.identityRepository.save(identity, platformCtx)
 
     return {
       userId: user.id.value,
-      identityId: identity.id.value
+      identityId: identity.id.value,
+      membershipId: membership.id.value,
+      memberProfileId: memberProfile.id.value
     }
   }
 }

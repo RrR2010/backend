@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { AuditLog } from '@audit-logs/audit-log.entity'
 import { AuditLog as PrismaAuditLog, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
+import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 
 export abstract class AuditLogRepository {
-  abstract findById(id: string): Promise<AuditLog | null>
-  abstract save(auditLog: AuditLog): Promise<AuditLog>
-  abstract findAll(filter?: AuditLogFilter): Promise<AuditLog[]>
+  abstract findById(id: string, ctx: RequestContext): Promise<AuditLog | null>
+  abstract save(auditLog: AuditLog, ctx: RequestContext): Promise<AuditLog>
+  abstract findAll(filter: AuditLogFilter, ctx: RequestContext): Promise<AuditLog[]>
 }
 
 export type AuditLogFilter = {
@@ -24,15 +26,22 @@ export type AuditLogFilter = {
 export class PrismaAuditLogRepository implements AuditLogRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<AuditLog | null> {
+  async findById(id: string, ctx: RequestContext): Promise<AuditLog | null> {
+    const where: Prisma.AuditLogWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.tenantId = ctx.tenantId
+    }
     const prismaAuditLog = await this.prisma.auditLog.findUnique({
-      where: { id }
+      where
     })
     if (!prismaAuditLog) return null
     return AuditLogMapper.toDomain(prismaAuditLog)
   }
 
-  async save(auditLog: AuditLog): Promise<AuditLog> {
+  async save(auditLog: AuditLog, ctx: RequestContext): Promise<AuditLog> {
+    if (ctx.scope === UserScope.TENANT && auditLog.tenantId !== ctx.tenantId) {
+      throw new ForbiddenException('Cannot modify resource outside your tenant')
+    }
     const prismaAuditLog = AuditLogMapper.toPersistence(auditLog)
     await this.prisma.auditLog.upsert({
       where: { id: auditLog.id.value },
@@ -42,32 +51,38 @@ export class PrismaAuditLogRepository implements AuditLogRepository {
     return auditLog
   }
 
-  async findAll(filter?: AuditLogFilter): Promise<AuditLog[]> {
+  async findAll(
+    filter: AuditLogFilter,
+    ctx: RequestContext
+  ): Promise<AuditLog[]> {
     const where: Prisma.AuditLogWhereInput = {}
 
-    if (filter?.userId) {
+    if (filter.userId) {
       where.userId = filter.userId
     }
-    if (filter?.tenantId) {
+    if (filter.tenantId) {
       where.tenantId = filter.tenantId
     }
-    if (filter?.entityName) {
+    if (filter.entityName) {
       where.entityName = filter.entityName
     }
-    if (filter?.entityId) {
+    if (filter.entityId) {
       where.entityId = filter.entityId
     }
-    if (filter?.action) {
+    if (filter.action) {
       where.action = filter.action
     }
-    if (filter?.createdAfter || filter?.createdBefore) {
+    if (filter.createdAfter || filter.createdBefore) {
       where.createdAt = {}
-      if (filter?.createdAfter) {
+      if (filter.createdAfter) {
         where.createdAt.gte = filter.createdAfter
       }
-      if (filter?.createdBefore) {
+      if (filter.createdBefore) {
         where.createdAt.lte = filter.createdBefore
       }
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.tenantId = ctx.tenantId
     }
 
     const prismaAuditLogs = await this.prisma.auditLog.findMany({

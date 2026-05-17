@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { PlatformMembership } from '@platform-memberships/platform-membership.entity'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/enums'
-import { PlatformRole } from '@users/user.types'
+import { PlatformRole, UserScope } from '@users/user.types'
 import { PlatformMembership as PrismaPlatformMembership, PlatformRole as PrismaPlatformRole, Prisma } from '@prisma/client'
+import { RequestContext } from '@authorization/authorization.types'
 
 export type PlatformMembershipFilter = {
   userId?: string
@@ -12,10 +13,10 @@ export type PlatformMembershipFilter = {
 }
 
 export abstract class PlatformMembershipRepository {
-  abstract findById(id: string): Promise<PlatformMembership | null>
-  abstract findAll(filter?: PlatformMembershipFilter): Promise<PlatformMembership[]>
-  abstract save(membership: PlatformMembership): Promise<PlatformMembership>
-  abstract delete(id: string): Promise<void>
+  abstract findById(id: string, ctx: RequestContext): Promise<PlatformMembership | null>
+  abstract findAll(filter: PlatformMembershipFilter, ctx: RequestContext): Promise<PlatformMembership[]>
+  abstract save(membership: PlatformMembership, ctx: RequestContext): Promise<PlatformMembership>
+  abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 @Injectable()
@@ -24,22 +25,27 @@ export class PrismaPlatformMembershipRepository
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<PlatformMembership | null> {
-    const pm = await this.prisma.platformMembership.findUnique({
-      where: { id }
-    })
+  async findById(id: string, ctx: RequestContext): Promise<PlatformMembership | null> {
+    const where: Prisma.PlatformMembershipWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.userId = ctx.userId
+    }
+    const pm = await this.prisma.platformMembership.findUnique({ where })
     if (!pm) return null
     return PrismaPlatformMembershipMapper.toDomain(pm)
   }
 
-  async findAll(filter?: PlatformMembershipFilter): Promise<PlatformMembership[]> {
+  async findAll(filter: PlatformMembershipFilter, ctx: RequestContext): Promise<PlatformMembership[]> {
     const where: Prisma.PlatformMembershipWhereInput = {}
 
-    if (filter?.userId) {
+    if (filter.userId) {
       where.userId = filter.userId
     }
-    if (filter?.roles && filter.roles.length > 0) {
+    if (filter.roles && filter.roles.length > 0) {
       where.roles = { hasSome: filter.roles as PrismaPlatformRole[] }
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.userId = ctx.userId
     }
 
     const prismaMemberships = await this.prisma.platformMembership.findMany({ where })
@@ -48,7 +54,10 @@ export class PrismaPlatformMembershipRepository
     )
   }
 
-  async save(membership: PlatformMembership): Promise<PlatformMembership> {
+  async save(membership: PlatformMembership, ctx: RequestContext): Promise<PlatformMembership> {
+    if (ctx.scope === UserScope.TENANT && membership.userId !== ctx.userId) {
+      throw new ForbiddenException('Cannot modify platform membership outside your own account')
+    }
     const data = PrismaPlatformMembershipMapper.toPersistence(membership)
     await this.prisma.platformMembership.upsert({
       where: { id: membership.id.value },
@@ -58,8 +67,12 @@ export class PrismaPlatformMembershipRepository
     return membership
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.platformMembership.delete({ where: { id } })
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const where: Prisma.PlatformMembershipWhereUniqueInput = { id }
+    if (ctx.scope === UserScope.TENANT) {
+      where.userId = ctx.userId
+    }
+    await this.prisma.platformMembership.delete({ where })
   }
 }
 

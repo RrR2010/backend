@@ -1,5 +1,11 @@
 import { randomUUID } from 'crypto'
 
+import {
+  InvalidUuidError,
+  EmailEmptyError,
+  EmailFormatError
+} from '@shared/errors/value-object.errors'
+
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -12,7 +18,7 @@ export class Id {
 
   static from(value: string): Id {
     if (!value || !UUID_REGEX.test(value)) {
-      throw new Error('Invalid UUID')
+      throw new InvalidUuidError()
     }
     return new Id(value)
   }
@@ -40,13 +46,13 @@ export class Email {
 
   static from(value: string): Email {
     if (!value) {
-      throw new Error('Email cannot be empty')
+      throw new EmailEmptyError()
     }
 
     const normalizedValue = value.trim().toLowerCase()
 
     if (!Email.isValid(normalizedValue)) {
-      throw new Error('Invalid email format')
+      throw new EmailFormatError()
     }
 
     return new Email(normalizedValue)

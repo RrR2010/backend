@@ -9,42 +9,42 @@ import { SystemState } from '@shared/behaviours/lockable'
 export class PlatformMembershipService {
   constructor(private readonly repository: PlatformMembershipRepository) {}
 
-  async create(props: CreatePlatformMembershipProps, context: RequestContext): Promise<PlatformMembership> {
+  async create(props: CreatePlatformMembershipProps, ctx: RequestContext): Promise<PlatformMembership> {
     const membership = PlatformMembership.create(props)
-    return this.repository.save(membership)
+    return this.repository.save(membership, ctx)
   }
 
-  async findAll(filter?: PlatformMembershipFilter, context?: RequestContext): Promise<PlatformMembership[]> {
-    return this.repository.findAll(filter)
+  async findAll(filter: PlatformMembershipFilter, ctx: RequestContext): Promise<PlatformMembership[]> {
+    return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, context: RequestContext): Promise<PlatformMembership> {
-    const membership = await this.repository.findById(id)
+  async findById(id: string, ctx: RequestContext): Promise<PlatformMembership> {
+    const membership = await this.repository.findById(id, ctx)
     if (!membership) {
       throw new PlatformMembershipNotFoundError(id)
     }
     return membership
   }
 
-  async save(membership: PlatformMembership, context: RequestContext): Promise<PlatformMembership> {
-    return this.repository.save(membership)
+  async save(membership: PlatformMembership, ctx: RequestContext): Promise<PlatformMembership> {
+    return this.repository.save(membership, ctx)
   }
 
-  async delete(id: string, context: RequestContext): Promise<void> {
-    const membership = await this.findById(id, context)
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    const membership = await this.findById(id, ctx)
     membership.delete()
-    await this.repository.save(membership)
+    await this.repository.save(membership, ctx)
   }
 
-  async activate(id: string, context: RequestContext): Promise<PlatformMembership> {
-    const membership = await this.findById(id, context)
+  async activate(id: string, ctx: RequestContext): Promise<PlatformMembership> {
+    const membership = await this.findById(id, ctx)
     membership.activate()
-    return this.repository.save(membership)
+    return this.repository.save(membership, ctx)
   }
 
-  async lock(id: string, context: RequestContext): Promise<PlatformMembership> {
-    const membership = await this.findById(id, context)
+  async lock(id: string, ctx: RequestContext): Promise<PlatformMembership> {
+    const membership = await this.findById(id, ctx)
     membership.lock()
-    return this.repository.save(membership)
+    return this.repository.save(membership, ctx)
   }
 }
