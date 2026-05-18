@@ -1,27 +1,60 @@
-export class RegistrationNotFoundError extends Error {
-  constructor(registrationId: string) {
-    super(`Tenant registration not found: ${registrationId}`)
-    this.name = 'RegistrationNotFoundError'
+import { HttpException, HttpStatus } from '@nestjs/common'
+
+export class DuplicateEmailError extends HttpException {
+  constructor(email: string) {
+    super(
+      {
+        message: `Email already registered: ${email}`,
+        code: 'DUPLICATE_EMAIL'
+      },
+      HttpStatus.CONFLICT
+    )
   }
 }
 
-export class RegistrationExpiredError extends Error {
-  constructor(registrationId: string) {
-    super(`Tenant registration has expired: ${registrationId}`)
-    this.name = 'RegistrationExpiredError'
+export class DuplicateTaxIdError extends HttpException {
+  constructor(taxId: string) {
+    super(
+      {
+        message: `Tax ID already registered: ${taxId}`,
+        code: 'DUPLICATE_TAX_ID'
+      },
+      HttpStatus.CONFLICT
+    )
   }
 }
 
-export class InvalidHandoffTokenError extends Error {
+export class RegistrationExpiredError extends HttpException {
   constructor() {
-    super('Invalid or expired handoff token')
-    this.name = 'InvalidHandoffTokenError'
+    super(
+      { message: 'Registration has expired', code: 'REGISTRATION_EXPIRED' },
+      HttpStatus.GONE
+    )
   }
 }
 
-export class RegistrationStateTransitionError extends Error {
-  constructor(from: string, to: string) {
-    super(`Invalid state transition from ${from} to ${to}`)
-    this.name = 'RegistrationStateTransitionError'
+export class InvalidHandoffTokenError extends HttpException {
+  constructor() {
+    super(
+      {
+        message: 'Invalid or expired handoff token',
+        code: 'INVALID_HANDOFF_TOKEN'
+      },
+      HttpStatus.UNAUTHORIZED
+    )
+  }
+}
+
+export class RegistrationNotFoundError extends HttpException {
+  constructor(id?: string) {
+    super(
+      {
+        message: id
+          ? `Registration not found: ${id}`
+          : 'Registration not found',
+        code: 'REGISTRATION_NOT_FOUND'
+      },
+      HttpStatus.NOT_FOUND
+    )
   }
 }

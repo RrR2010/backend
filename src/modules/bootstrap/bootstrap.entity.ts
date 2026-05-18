@@ -167,4 +167,41 @@ export class TenantRegistration extends Auditable(
   get expiredAt(): Date | null {
     return this._props.expiredAt
   }
+
+  // --------------- State Transitions ---------------
+
+  updatePreferenceId(preferenceId: string): void {
+    this._props.preferenceId = preferenceId
+    this.touch()
+  }
+
+  updatePaymentId(paymentId: string): void {
+    this._props.paymentId = paymentId
+    this.touch()
+  }
+
+  markProvisioned(ids: {
+    userId: string
+    tenantId: string
+    membershipId: string
+    profileId: string
+    identityId: string
+    tenantSiteId: string
+  }): void {
+    this._props.provisionedUserId = ids.userId
+    this._props.provisionedTenantId = ids.tenantId
+    this._props.provisionedMembershipId = ids.membershipId
+    this._props.provisionedProfileId = ids.profileId
+    this._props.provisionedIdentityId = ids.identityId
+    this._props.provisionedTenantSiteId = ids.tenantSiteId
+    this._props.state = RegistrationState.PROVISIONED
+    this._props.provisionedAt = new Date()
+    this.touch()
+  }
+
+  markRejected(): void {
+    this._props.state = RegistrationState.REJECTED
+    this._props.rejectedAt = new Date()
+    this.touch()
+  }
 }

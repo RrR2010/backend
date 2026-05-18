@@ -11,6 +11,7 @@ export interface TenantSiteFilter {
   tenantId?: string
   siteType?: TenantSiteType
   isHeadquarters?: boolean
+  taxId?: string
 }
 
 export abstract class TenantSiteRepository {
@@ -51,7 +52,8 @@ export class PrismaTenantSiteRepository implements TenantSiteRepository {
       ...(filter.siteType && { siteType: filter.siteType }),
       ...(filter.isHeadquarters !== undefined && {
         isHeadquarters: filter.isHeadquarters
-      })
+      }),
+      ...(filter.taxId && { taxId: filter.taxId })
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId

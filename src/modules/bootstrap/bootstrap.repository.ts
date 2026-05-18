@@ -43,6 +43,7 @@ export abstract class TenantRegistrationRepository {
 // tenant filtering because TenantRegistration is a pre-provisioning entity — no tenant
 // exists yet. Once provisioning creates the tenant, the registration record is immutable
 // and remains platform-scoped.
+/* eslint-disable @typescript-eslint/no-unused-vars */
 @Injectable()
 export class PrismaTenantRegistrationRepository implements TenantRegistrationRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -113,6 +114,9 @@ export class PrismaTenantRegistrationRepository implements TenantRegistrationRep
     if (filter.preferenceId) {
       where.preferenceId = filter.preferenceId
     }
+    if (filter.handoffTokenHash) {
+      where.handoffTokenHash = filter.handoffTokenHash
+    }
 
     const prismaRegistrations = await this.prisma.tenantRegistration.findMany({
       where
@@ -142,6 +146,7 @@ export class PrismaTenantRegistrationRepository implements TenantRegistrationRep
     })
   }
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 class PrismaTenantRegistrationMapper {
   static toDomain(
