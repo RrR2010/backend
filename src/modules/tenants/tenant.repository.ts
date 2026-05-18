@@ -10,6 +10,7 @@ import { UserScope } from '@users/user.types'
 
 export abstract class TenantRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Tenant | null>
+  abstract findBySlug(slug: string, ctx: RequestContext): Promise<Tenant | null>
   abstract findAll(filter: TenantFilter, ctx: RequestContext): Promise<Tenant[]>
   abstract save(tenant: Tenant, ctx: RequestContext): Promise<Tenant>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
@@ -30,6 +31,16 @@ export class PrismaTenantRepository implements TenantRepository {
       where.id = ctx.tenantId
     }
     const prismaTenant = await this.prisma.tenant.findUnique({ where })
+    if (!prismaTenant) return null
+    return PrismaTenantMapper.toDomain(prismaTenant)
+  }
+
+  async findBySlug(slug: string, ctx: RequestContext): Promise<Tenant | null> {
+    const where: Prisma.TenantWhereInput = { slug }
+    if (ctx.scope === UserScope.TENANT) {
+      where.id = ctx.tenantId
+    }
+    const prismaTenant = await this.prisma.tenant.findFirst({ where })
     if (!prismaTenant) return null
     return PrismaTenantMapper.toDomain(prismaTenant)
   }

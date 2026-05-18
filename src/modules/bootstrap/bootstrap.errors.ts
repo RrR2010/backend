@@ -65,3 +65,15 @@ export class ProvisioningError extends Error {
     this.name = 'ProvisioningError'
   }
 }
+
+export class InvalidRegistrationStateError extends HttpException {
+  constructor(currentState: string, expectedState: string) {
+    super(
+      {
+        message: `Registration is in state ${currentState}, expected ${expectedState}`,
+        code: 'INVALID_REGISTRATION_STATE'
+      },
+      HttpStatus.CONFLICT
+    )
+  }
+}

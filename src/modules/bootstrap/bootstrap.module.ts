@@ -12,6 +12,10 @@ import { AuthenticationModule } from '@authentication/authentication.module'
 import { TenantSiteModule } from '@tenant-sites/tenant-site.module'
 import { IdentityModule } from '@identities/identity.module'
 import { AuditLogModule } from '@audit-logs/audit-log.module'
+import { UsersModule } from '@users/users.module'
+import { TenantModule } from '@tenants/tenant.module'
+import { TenantMembershipModule } from '@tenant-memberships/tenant-membership.module'
+import { MemberProfileModule } from '@member-profiles/member-profile.module'
 
 @Module({
   imports: [
@@ -21,7 +25,11 @@ import { AuditLogModule } from '@audit-logs/audit-log.module'
     AuthenticationModule,
     TenantSiteModule,
     IdentityModule,
-    AuditLogModule
+    AuditLogModule,
+    UsersModule,
+    TenantModule,
+    TenantMembershipModule,
+    MemberProfileModule
   ],
 
   controllers: [BootstrapController],

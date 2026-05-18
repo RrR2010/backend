@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { UserScope, TenantRole } from '@users/user.types'
+import { Id } from '@shared/value-objects'
 import { TenantRegistrationRepository } from '@bootstrap/bootstrap.repository'
 import { BootstrapRegisterDto } from '@bootstrap/bootstrap.dto'
 import { TenantRegistration } from '@bootstrap/bootstrap.entity'
 import {
   DuplicateEmailError,
-  DuplicateTaxIdError
+  DuplicateTaxIdError,
+  RegistrationNotFoundError,
+  InvalidRegistrationStateError
 } from '@bootstrap/bootstrap.errors'
 import {
   BootstrapRegisterResult,
@@ -21,9 +24,17 @@ import { TokenService } from '@authentication/token.service'
 import { TenantSiteRepository } from '@tenant-sites/tenant-site.repository'
 import { IdentityRepository } from '@identities/identity.repository'
 import { AuthProviderType } from '@authentication/authentication.types'
-import { RegistrationState } from '@shared/enums'
+import {
+  RegistrationState,
+  TenantSiteType,
+  Gender,
+  SystemState
+} from '@shared/enums'
+import { Json } from '@shared/types'
 import { AuditLogService } from '@audit-logs/audit-log.service'
 import { PrismaService } from '@shared/prisma/prisma.service'
+import { TenantRepository } from '@tenants/tenant.repository'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class BootstrapService {
@@ -43,7 +54,8 @@ export class BootstrapService {
     private readonly tenantSiteRepo: TenantSiteRepository,
     private readonly identityRepository: IdentityRepository,
     private readonly configService: ConfigService,
-    private readonly auditLogService: AuditLogService
+    private readonly auditLogService: AuditLogService,
+    private readonly tenantRepository: TenantRepository
   ) {}
 
   async register(
@@ -460,10 +472,11 @@ export class BootstrapService {
       )
 
       try {
-        // Finding 8: Pass ctx to provisionRegistration
+        // Finding 8: Pass ctx and tx to provisionRegistration
         const provisioningResult = await this.provisionRegistration(
           registration,
-          ctx
+          ctx,
+          tx
         )
 
         // Mark as PROVISIONED
@@ -559,28 +572,343 @@ export class BootstrapService {
   }
 
   /**
-   * Stub implementation — Phase 5 will implement actual entity creation.
+   * Provisions all tenant entities atomically after payment approval.
+   * Creates User, Tenant, TenantMembership, MemberProfile, Identity, and TenantSite.
+   * Accepts an optional Prisma transaction client so all calls participate in the
+   * same transaction. When no tx is provided, falls back to the default Prisma client.
+   * The method is idempotent — it skips entities that were already provisioned.
    */
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   async provisionRegistration(
     registration: TenantRegistration,
-    ctx: RequestContext
+    ctx: RequestContext,
+    tx?: Prisma.TransactionClient
   ): Promise<ProvisioningResult> {
-    this.logger.warn(
-      'provisionRegistration called — stub implementation (Phase 5)',
-      { registrationId: registration.id.value }
-    )
-    // TODO: Phase 5 will implement actual entity creation using ctx for repository calls
-    return Promise.resolve({
-      userId: 'stub-user-id',
-      tenantId: 'stub-tenant-id',
-      membershipId: 'stub-membership-id',
-      profileId: 'stub-profile-id',
-      identityId: 'stub-identity-id',
-      tenantSiteId: 'stub-tenant-site-id'
+    const prisma = tx ?? this.prismaService
+    const now = new Date()
+
+    // Parse registration data
+    const tenantData = registration.tenantData as Record<string, unknown>
+    const tenantSiteData = registration.tenantSiteData as Record<
+      string,
+      unknown
+    >
+    const identityData = registration.identityData as Record<string, unknown>
+    const profileData = registration.profileData as Record<string, unknown>
+
+    // Generate slug from tenant name
+    const tenantName = tenantData.name as string
+    const baseSlug = tenantName
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+
+    // Finding 9: Slug collision check
+    let finalSlug = baseSlug
+    let suffix = 1
+    while (await this.tenantRepository.findBySlug(finalSlug, ctx)) {
+      finalSlug = `${baseSlug}-${suffix}`
+      suffix++
+    }
+
+    // Resolve existing provisioned IDs from the registration
+    const existingUserId = registration.provisionedUserId
+    const existingTenantId = registration.provisionedTenantId
+    const existingMembershipId = registration.provisionedMembershipId
+    const existingProfileId = registration.provisionedProfileId
+    const existingIdentityId = registration.provisionedIdentityId
+    const existingTenantSiteId = registration.provisionedTenantSiteId
+
+    // 1. Create User (TENANT scope) — idempotent
+    let userId: string
+    if (existingUserId) {
+      this.logger.debug('User already provisioned, skipping', {
+        userId: existingUserId
+      })
+      userId = existingUserId
+    } else {
+      userId = crypto.randomUUID()
+      await prisma.user.create({
+        data: {
+          id: userId,
+          scope: UserScope.TENANT,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedUserId: userId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    // 2. Create Tenant — idempotent
+    let tenantId: string
+    if (existingTenantId) {
+      this.logger.debug('Tenant already provisioned, skipping', {
+        tenantId: existingTenantId
+      })
+      tenantId = existingTenantId
+    } else {
+      tenantId = crypto.randomUUID()
+      await prisma.tenant.create({
+        data: {
+          id: tenantId,
+          name: tenantName,
+          slug: finalSlug,
+          website: null,
+          locale: (tenantData.locale as string) ?? 'pt-BR',
+          timezone: (tenantData.timezone as string) ?? 'America/Sao_Paulo',
+          language: (tenantData.language as string) ?? 'pt',
+          logoUrl: null,
+          settings: Prisma.JsonNull,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedTenantId: tenantId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    // 3. Create TenantMembership (owner, ADMIN role) — idempotent
+    let membershipId: string
+    if (existingMembershipId) {
+      this.logger.debug('Membership already provisioned, skipping', {
+        membershipId: existingMembershipId
+      })
+      membershipId = existingMembershipId
+    } else {
+      membershipId = crypto.randomUUID()
+      await prisma.tenantMembership.create({
+        data: {
+          id: membershipId,
+          userId,
+          tenantId,
+          isOwner: true,
+          roles: [TenantRole.ADMIN],
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedMembershipId: membershipId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    // 4. Create MemberProfile — idempotent
+    let profileId: string
+    if (existingProfileId) {
+      this.logger.debug('Profile already provisioned, skipping', {
+        profileId: existingProfileId
+      })
+      profileId = existingProfileId
+    } else {
+      profileId = crypto.randomUUID()
+      await prisma.memberProfile.create({
+        data: {
+          id: profileId,
+          fullName: profileData.fullName as string,
+          displayName: (profileData.displayName as string) ?? null,
+          dateOfBirth: profileData.dateOfBirth
+            ? new Date(profileData.dateOfBirth as string)
+            : null,
+          gender: (profileData.gender as Gender) ?? null,
+          photoUrl: (profileData.photoUrl as string) ?? null,
+          externalId: null,
+          locale: (tenantData.locale as string) ?? 'pt-BR',
+          timezone: (tenantData.timezone as string) ?? 'America/Sao_Paulo',
+          language: (tenantData.language as string) ?? 'pt',
+          platformMembershipId: null,
+          tenantMembershipId: membershipId,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedProfileId: profileId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    // 5. Create Identity (reuse stored password hash) — idempotent
+    let identityId: string
+    if (existingIdentityId) {
+      this.logger.debug('Identity already provisioned, skipping', {
+        identityId: existingIdentityId
+      })
+      identityId = existingIdentityId
+    } else {
+      identityId = crypto.randomUUID()
+      await prisma.identity.create({
+        data: {
+          id: identityId,
+          userId,
+          authProviderType: AuthProviderType.EMAIL,
+          identifier: identityData.identifier as string,
+          secretHash: identityData.secretHash as string,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedIdentityId: identityId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    // 6. Create TenantSite (headquarters) — idempotent
+    let tenantSiteId: string
+    if (existingTenantSiteId) {
+      this.logger.debug('TenantSite already provisioned, skipping', {
+        tenantSiteId: existingTenantSiteId
+      })
+      tenantSiteId = existingTenantSiteId
+    } else {
+      tenantSiteId = crypto.randomUUID()
+      await prisma.tenantSite.create({
+        data: {
+          id: tenantSiteId,
+          tenantId,
+          name: tenantSiteData.name as string,
+          legalName: tenantSiteData.legalName as string,
+          externalId: null,
+          taxId: tenantSiteData.taxId as string,
+          siteType:
+            (tenantSiteData.siteType as TenantSiteType) ??
+            TenantSiteType.FACTORY,
+          isHeadquarters: true,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedTenantSiteId: tenantSiteId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    return {
+      userId,
+      tenantId,
+      membershipId,
+      profileId,
+      identityId,
+      tenantSiteId
+    }
+  }
+
+  /**
+   * Retry provisioning for a registration that failed mid-flight.
+   * Operators can call this with the x-operator-secret header.
+   * Wrapped in a $transaction for atomicity.
+   */
+  async retryProvisioning(
+    registrationId: string
+  ): Promise<ProvisioningResult | { status: 'already-provisioned' }> {
+    const ctx = this.platformCtx
+
+    return this.prismaService.$transaction(async (tx) => {
+      // Finding 5: Search by findById first (matching the parameter name)
+      const registrationRecord = await tx.tenantRegistration.findUnique({
+        where: { id: registrationId }
+      })
+
+      if (!registrationRecord) {
+        throw new RegistrationNotFoundError(registrationId)
+      }
+
+      const state = registrationRecord.state as RegistrationState
+
+      if (state === RegistrationState.PROVISIONED) {
+        return { status: 'already-provisioned' }
+      }
+
+      if (state !== RegistrationState.PROVISIONING) {
+        throw new InvalidRegistrationStateError(
+          registrationRecord.state,
+          RegistrationState.PROVISIONING
+        )
+      }
+
+      // Rehydrate domain entity (explicit field mapping to satisfy type system)
+      const domainRegistration = TenantRegistration.rehydrate({
+        id: Id.from(registrationRecord.id),
+        externalRef: registrationRecord.externalRef,
+        state: registrationRecord.state as RegistrationState,
+        paymentId: registrationRecord.paymentId,
+        preferenceId: registrationRecord.preferenceId,
+        expiresAt: registrationRecord.expiresAt,
+        handoffTokenHash: registrationRecord.handoffTokenHash,
+        handoffTokenExpiresAt: registrationRecord.handoffTokenExpiresAt,
+        handoffTokenUsedAt: registrationRecord.handoffTokenUsedAt,
+        tenantData: registrationRecord.tenantData as Json,
+        tenantSiteData: registrationRecord.tenantSiteData as Json,
+        userData: registrationRecord.userData as Json,
+        identityData: registrationRecord.identityData as Json,
+        profileData: registrationRecord.profileData as Json,
+        provisionedUserId: registrationRecord.provisionedUserId,
+        provisionedTenantId: registrationRecord.provisionedTenantId,
+        provisionedMembershipId: registrationRecord.provisionedMembershipId,
+        provisionedProfileId: registrationRecord.provisionedProfileId,
+        provisionedIdentityId: registrationRecord.provisionedIdentityId,
+        provisionedTenantSiteId: registrationRecord.provisionedTenantSiteId,
+        paymentStatus: registrationRecord.paymentStatus,
+        paymentStatusDetail: registrationRecord.paymentStatusDetail,
+        webhookProcessedAt: registrationRecord.webhookProcessedAt,
+        approvedAt: registrationRecord.approvedAt,
+        provisionedAt: registrationRecord.provisionedAt,
+        rejectedAt: registrationRecord.rejectedAt,
+        expiredAt: registrationRecord.expiredAt,
+        createdAt: registrationRecord.createdAt,
+        updatedAt: registrationRecord.updatedAt
+      })
+
+      // Run provisioning with transaction client (idempotent)
+      const result = await this.provisionRegistration(
+        domainRegistration,
+        ctx,
+        tx
+      )
+
+      // Mark as PROVISIONED and persist entity IDs
+      await tx.tenantRegistration.update({
+        where: { id: registrationId },
+        data: {
+          state: RegistrationState.PROVISIONED,
+          provisionedUserId: result.userId,
+          provisionedTenantId: result.tenantId,
+          provisionedMembershipId: result.membershipId,
+          provisionedProfileId: result.profileId,
+          provisionedIdentityId: result.identityId,
+          provisionedTenantSiteId: result.tenantSiteId,
+          provisionedAt: new Date(),
+          updatedAt: new Date()
+        }
+      })
+
+      return result
     })
   }
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   private extractPaymentId(body: Record<string, unknown>): string | null {
     // MP v2 format: data.id
