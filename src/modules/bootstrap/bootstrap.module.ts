@@ -43,6 +43,6 @@ import { MemberProfileModule } from '@member-profiles/member-profile.module'
     }
   ],
 
-  exports: [TenantRegistrationRepository, BootstrapService]
+  exports: [TenantRegistrationRepository]
 })
 export class BootstrapModule {}

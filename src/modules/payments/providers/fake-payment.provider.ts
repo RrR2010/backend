@@ -54,7 +54,7 @@ export class FakePaymentProvider extends PaymentService {
 
   async getPayment(paymentId: string): Promise<PaymentNotification> {
     // Try to find by exact paymentId first
-    for (const [key, notification] of fakePaymentStore.entries()) {
+    for (const [, notification] of fakePaymentStore.entries()) {
       if (notification.paymentId === paymentId) {
         return notification
       }
@@ -85,7 +85,11 @@ export class FakePaymentProvider extends PaymentService {
     }
   }
 
-  validateWebhookSignature(_headers: WebhookHeaders, _body: unknown): boolean {
+  validateWebhookSignature(
+    _headers: WebhookHeaders,
+    _body: unknown,
+    _queryParams?: Record<string, unknown>
+  ): boolean {
     // Always return true in development
     return true
   }

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import * as crypto from 'crypto'
+import crypto from 'crypto'
 import { PaymentService } from '@payments/payment.service'
 import {
   PaymentPreference,
@@ -111,7 +111,11 @@ export class MercadoPagoProvider extends PaymentService {
     }
   }
 
-  validateWebhookSignature(headers: WebhookHeaders, body: unknown): boolean {
+  validateWebhookSignature(
+    headers: WebhookHeaders,
+    body: unknown,
+    queryParams?: Record<string, unknown>
+  ): boolean {
     const xSignature = headers['x-signature']
     const xRequestId = headers['x-request-id']
     if (!xSignature || !xRequestId) return false
@@ -125,15 +129,11 @@ export class MercadoPagoProvider extends PaymentService {
     const ts = tsPart.slice(3)
     const v1 = v1Part.slice(3)
 
-    // Extract dataId from body
-    const bodyObj = body as Record<string, unknown>
-    const rawDataId =
-      typeof bodyObj.data === 'object' && bodyObj.data !== null
-        ? (bodyObj.data as Record<string, unknown>).id
-        : bodyObj.id
+    // Extract dataId from query params (Mercado Pago v2 spec)
+    const rawId = queryParams?.['data.id']
+    const dataId = typeof rawId === 'string' ? rawId : null
 
-    if (!rawDataId || typeof rawDataId !== 'string') return false
-    const dataId = rawDataId
+    if (!dataId) return false
 
     // Build message template per MP v2 spec
     const message = `id:${dataId};request-id:${xRequestId};ts=${ts};`

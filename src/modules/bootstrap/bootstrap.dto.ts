@@ -104,7 +104,7 @@ export class BootstrapRegisterResponseDto {
 
 export class BootstrapStatusResponseDto {
   @ApiProperty({ enum: RegistrationState })
-  state!: string
+  state!: RegistrationState
 
   static from(state: RegistrationState): BootstrapStatusResponseDto {
     const dto = new BootstrapStatusResponseDto()

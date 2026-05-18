@@ -70,7 +70,7 @@ export class InvalidRegistrationStateError extends HttpException {
   constructor() {
     super(
       {
-        message: 'Registration is not in a claimable state',
+        message: 'Registration is not in a valid state for this operation',
         code: 'INVALID_REGISTRATION_STATE'
       },
       HttpStatus.CONFLICT

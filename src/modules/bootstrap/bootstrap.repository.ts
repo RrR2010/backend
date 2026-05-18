@@ -148,6 +148,8 @@ export class PrismaTenantRegistrationRepository implements TenantRegistrationRep
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
+export { PrismaTenantRegistrationMapper as TenantRegistrationMapper }
+
 class PrismaTenantRegistrationMapper {
   static toDomain(
     prismaRegistration: PrismaTenantRegistration

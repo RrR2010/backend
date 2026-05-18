@@ -2,8 +2,10 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope, TenantRole } from '@users/user.types'
-import { Id } from '@shared/value-objects'
-import { TenantRegistrationRepository } from '@bootstrap/bootstrap.repository'
+import {
+  TenantRegistrationRepository,
+  TenantRegistrationMapper
+} from '@bootstrap/bootstrap.repository'
 import crypto from 'crypto'
 import {
   BootstrapRegisterDto,
@@ -39,7 +41,6 @@ import {
   Gender,
   SystemState
 } from '@shared/enums'
-import { Json } from '@shared/types'
 import { AuditLogService } from '@audit-logs/audit-log.service'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { TenantRepository } from '@tenants/tenant.repository'
@@ -163,6 +164,11 @@ export class BootstrapService {
     const price = Number(
       this.configService.get<string>('BOOTSTRAP_PLAN_PRICE', '9900')
     )
+    if (isNaN(price) || price <= 0) {
+      throw new Error(
+        'Invalid BOOTSTRAP_PLAN_PRICE: must be a positive number (in cents)'
+      )
+    }
 
     let preference: Awaited<
       ReturnType<typeof this.paymentService.createPreference>
@@ -257,17 +263,14 @@ export class BootstrapService {
   }
 
   private async checkDuplicateEmail(email: string): Promise<void> {
-    // TODO: Race condition — two concurrent requests with the same email could both pass
-    // this check before either inserts. A unique DB constraint on
-    // Identity(authProviderType, identifier) would prevent this at the DB level.
     const existing = await this.identityRepository.findAll(
       { identifier: email, authProviderType: AuthProviderType.EMAIL },
       this.platformCtx
     )
-    const exactMatch = existing.find(
-      (i) => i.identifier.toLowerCase() === email.toLowerCase()
-    )
-    if (exactMatch) {
+    // TODO: Race condition — two concurrent requests with the same email could both pass
+    // this check before either inserts. A unique DB constraint on
+    // Identity(authProviderType, identifier) would prevent this at the DB level.
+    if (existing.length > 0) {
       throw new DuplicateEmailError(email)
     }
   }
@@ -286,12 +289,13 @@ export class BootstrapService {
 
   async handleWebhook(
     body: Record<string, unknown>,
-    headers: Record<string, string>
+    headers: Record<string, string>,
+    queryParams: Record<string, string>
   ): Promise<void> {
     const ctx = this.platformCtx
 
-    // 1. Extract payment ID from payload
-    const paymentId = this.extractPaymentId(body)
+    // 1. Extract payment ID from payload (prefer query params for MP v2)
+    const paymentId = this.extractPaymentId(body, queryParams)
     if (!paymentId) {
       this.logger.warn('Webhook received without payment ID', { body })
       return // Return 200 silently
@@ -305,7 +309,8 @@ export class BootstrapService {
 
     const isValid = this.paymentService.validateWebhookSignature(
       webhookHeaders,
-      body
+      body,
+      queryParams
     )
     if (!isValid) {
       this.logger.warn('Invalid webhook signature', { paymentId })
@@ -419,7 +424,7 @@ export class BootstrapService {
       registration.markWebhookProcessed()
       await this.registrationRepo.save(registration, ctx)
 
-      await this.handleApprovedPayment(registration, ctx)
+      await this.handleApprovedPayment(registration, ctx, stateBefore)
     } else if (
       payment.status === 'rejected' ||
       payment.status === 'cancelled'
@@ -430,7 +435,7 @@ export class BootstrapService {
       registration.markWebhookProcessed()
       await this.registrationRepo.save(registration, ctx)
 
-      await this.handleRejectedPayment(registration, payment, ctx)
+      await this.handleRejectedPayment(registration, payment, ctx, stateBefore)
     } else {
       // pending, in_process, etc. — just log, do NOT mutate registration
       this.logger.debug('Payment still pending', {
@@ -442,7 +447,8 @@ export class BootstrapService {
 
   private async handleApprovedPayment(
     registration: TenantRegistration,
-    ctx: RequestContext
+    ctx: RequestContext,
+    stateBefore: RegistrationState
   ): Promise<void> {
     // Finding 1: Wrap entire flow in a Prisma transaction with atomic state lock
     await this.prismaService.$transaction(async (tx) => {
@@ -478,7 +484,7 @@ export class BootstrapService {
           ipAddress: null,
           userAgent: null,
           action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_STARTED,
-          before: { state: RegistrationState.PENDING },
+          before: { state: stateBefore },
           after: { state: RegistrationState.PROVISIONING }
         },
         ctx
@@ -560,7 +566,8 @@ export class BootstrapService {
   private async handleRejectedPayment(
     registration: TenantRegistration,
     payment: PaymentNotification,
-    ctx: RequestContext
+    ctx: RequestContext,
+    stateBefore: RegistrationState
   ): Promise<void> {
     registration.markRejected()
     await this.registrationRepo.save(registration, ctx)
@@ -574,7 +581,7 @@ export class BootstrapService {
         ipAddress: null,
         userAgent: null,
         action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_REJECTED,
-        before: { state: registration.state },
+        before: { state: stateBefore },
         after: {
           state: RegistrationState.REJECTED,
           paymentStatus: payment.status
@@ -860,38 +867,9 @@ export class BootstrapService {
         throw new InvalidRegistrationStateError()
       }
 
-      // Rehydrate domain entity (explicit field mapping to satisfy type system)
-      const domainRegistration = TenantRegistration.rehydrate({
-        id: Id.from(registrationRecord.id),
-        externalRef: registrationRecord.externalRef,
-        state: registrationRecord.state as RegistrationState,
-        paymentId: registrationRecord.paymentId,
-        preferenceId: registrationRecord.preferenceId,
-        expiresAt: registrationRecord.expiresAt,
-        handoffTokenHash: registrationRecord.handoffTokenHash,
-        handoffTokenExpiresAt: registrationRecord.handoffTokenExpiresAt,
-        handoffTokenUsedAt: registrationRecord.handoffTokenUsedAt,
-        tenantData: registrationRecord.tenantData as Json,
-        tenantSiteData: registrationRecord.tenantSiteData as Json,
-        userData: registrationRecord.userData as Json,
-        identityData: registrationRecord.identityData as Json,
-        profileData: registrationRecord.profileData as Json,
-        provisionedUserId: registrationRecord.provisionedUserId,
-        provisionedTenantId: registrationRecord.provisionedTenantId,
-        provisionedMembershipId: registrationRecord.provisionedMembershipId,
-        provisionedProfileId: registrationRecord.provisionedProfileId,
-        provisionedIdentityId: registrationRecord.provisionedIdentityId,
-        provisionedTenantSiteId: registrationRecord.provisionedTenantSiteId,
-        paymentStatus: registrationRecord.paymentStatus,
-        paymentStatusDetail: registrationRecord.paymentStatusDetail,
-        webhookProcessedAt: registrationRecord.webhookProcessedAt,
-        approvedAt: registrationRecord.approvedAt,
-        provisionedAt: registrationRecord.provisionedAt,
-        rejectedAt: registrationRecord.rejectedAt,
-        expiredAt: registrationRecord.expiredAt,
-        createdAt: registrationRecord.createdAt,
-        updatedAt: registrationRecord.updatedAt
-      })
+      // Rehydrate domain entity using the shared mapper
+      const domainRegistration =
+        TenantRegistrationMapper.toDomain(registrationRecord)
 
       // Run provisioning with transaction client (idempotent)
       const result = await this.provisionRegistration(
@@ -927,8 +905,21 @@ export class BootstrapService {
    * DEV ONLY — triggers the same webhook flow as a real approved payment.
    */
   async fakeApproveRegistration(registrationId: string): Promise<void> {
+    const paymentProvider = this.configService.get<string>(
+      'PAYMENT_PROVIDER',
+      'fake'
+    )
+    if (paymentProvider !== 'fake') {
+      throw new Error(
+        'Fake approval is only available when PAYMENT_PROVIDER=fake'
+      )
+    }
+
     const ctx = this.platformCtx
-    const registration = await this.registrationRepo.findById(registrationId, ctx)
+    const registration = await this.registrationRepo.findById(
+      registrationId,
+      ctx
+    )
     if (!registration) {
       throw new RegistrationNotFoundError(registrationId)
     }
@@ -943,7 +934,8 @@ export class BootstrapService {
         data: { id: `fake-approved-${registration.externalRef}` },
         external_reference: registration.externalRef
       },
-      { 'x-signature': 'dev-signature', 'x-request-id': crypto.randomUUID() }
+      { 'x-signature': 'dev-signature', 'x-request-id': crypto.randomUUID() },
+      {}
     )
   }
 
@@ -952,7 +944,7 @@ export class BootstrapService {
   async getStatus(registrationId: string): Promise<BootstrapStatusResponseDto> {
     const ctx = this.platformCtx
 
-    // Try finding by ID first, then by externalRef
+    // Support both primary key ID and externalRef for flexibility
     let registration = await this.registrationRepo.findById(registrationId, ctx)
     if (!registration) {
       registration = await this.registrationRepo.findByExternalRef(
@@ -1000,7 +992,7 @@ export class BootstrapService {
     const platformCtx = this.platformCtx
 
     return this.prismaService.$transaction(async (tx) => {
-      // 1. Find registration
+      // Support both primary key ID and externalRef for flexibility
       let registration = await tx.tenantRegistration.findUnique({
         where: { id: dto.registrationId }
       })
@@ -1062,7 +1054,7 @@ export class BootstrapService {
       }
 
       // 5. Create session
-      const deviceInfo = req.headers['user-agent'] as string | undefined
+      const deviceInfo = req.headers['user-agent']
       const ipAddress = req.ip ?? null
 
       await this.sessionService.createSession(
@@ -1081,6 +1073,7 @@ export class BootstrapService {
       )
 
       // 6. Audit
+      // Note: registration is a raw Prisma record here, so registration.id is a string (not Id VO)
       await this.auditLogService.create(
         {
           userId: 'system',
@@ -1105,8 +1098,15 @@ export class BootstrapService {
     })
   }
 
-  private extractPaymentId(body: Record<string, unknown>): string | null {
-    // MP v2 format: data.id
+  private extractPaymentId(
+    body: Record<string, unknown>,
+    queryParams: Record<string, string>
+  ): string | null {
+    // MP v2: data.id from query params
+    if (queryParams?.['data.id']) {
+      return String(queryParams['data.id'])
+    }
+    // Fallback: body data.id
     if (typeof body.data === 'object' && body.data !== null) {
       const data = body.data as Record<string, unknown>
       if (typeof data.id === 'string') return data.id

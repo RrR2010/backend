@@ -9,6 +9,7 @@ import {
   Headers,
   Param,
   Get,
+  Query,
   UnauthorizedException,
   ForbiddenException
 } from '@nestjs/common'
@@ -82,9 +83,10 @@ export class BootstrapController {
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   async handleWebhook(
     @Body() body: Record<string, unknown>,
-    @Headers() headers: Record<string, string>
+    @Headers() headers: Record<string, string>,
+    @Query() queryParams: Record<string, string>
   ): Promise<void> {
-    await this.bootstrapService.handleWebhook(body, headers)
+    await this.bootstrapService.handleWebhook(body, headers, queryParams)
   }
 
   @Public()
@@ -183,17 +185,25 @@ export class BootstrapController {
     status: 200,
     description: 'Registration approved and provisioning triggered'
   })
-  @ApiResponse({ status: 403, description: 'Fake approval is disabled in production' })
+  @ApiResponse({
+    status: 403,
+    description: 'Fake approval is disabled in production'
+  })
   @ApiResponse({ status: 404, description: 'Registration not found' })
   @ApiResponse({ status: 409, description: 'Registration in invalid state' })
   async fakeApprove(
     @Param('registrationId') registrationId: string
   ): Promise<{ status: 'approved' }> {
     const nodeEnv = this.configService.get<string>('NODE_ENV', 'development')
-    const paymentProvider = this.configService.get<string>('PAYMENT_PROVIDER', 'fake')
+    const paymentProvider = this.configService.get<string>(
+      'PAYMENT_PROVIDER',
+      'fake'
+    )
 
     if (nodeEnv === 'production' || paymentProvider !== 'fake') {
-      throw new ForbiddenException('Fake approval is disabled in this environment')
+      throw new ForbiddenException(
+        'Fake approval is disabled in this environment'
+      )
     }
     await this.bootstrapService.fakeApproveRegistration(registrationId)
     return { status: 'approved' }

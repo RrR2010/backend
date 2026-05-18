@@ -12,6 +12,7 @@ export abstract class PaymentService {
   abstract getPayment(paymentId: string): Promise<PaymentNotification>
   abstract validateWebhookSignature(
     headers: WebhookHeaders,
-    body: unknown
+    body: unknown,
+    queryParams?: Record<string, unknown>
   ): boolean
 }
