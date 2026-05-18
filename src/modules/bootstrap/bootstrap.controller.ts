@@ -9,7 +9,8 @@ import {
   Headers,
   Param,
   Get,
-  UnauthorizedException
+  UnauthorizedException,
+  ForbiddenException
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
@@ -170,5 +171,31 @@ export class BootstrapController {
     @Res({ passthrough: true }) res: Response
   ): Promise<ClaimSessionResponseDto> {
     return this.bootstrapService.claimSession(dto, req, res)
+  }
+
+  @Public()
+  @Post('fake-approve/:registrationId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '[DEV ONLY] Simulate payment approval for a registration'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Registration approved and provisioning triggered'
+  })
+  @ApiResponse({ status: 403, description: 'Fake approval is disabled in production' })
+  @ApiResponse({ status: 404, description: 'Registration not found' })
+  @ApiResponse({ status: 409, description: 'Registration in invalid state' })
+  async fakeApprove(
+    @Param('registrationId') registrationId: string
+  ): Promise<{ status: 'approved' }> {
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development')
+    const paymentProvider = this.configService.get<string>('PAYMENT_PROVIDER', 'fake')
+
+    if (nodeEnv === 'production' || paymentProvider !== 'fake') {
+      throw new ForbiddenException('Fake approval is disabled in this environment')
+    }
+    await this.bootstrapService.fakeApproveRegistration(registrationId)
+    return { status: 'approved' }
   }
 }

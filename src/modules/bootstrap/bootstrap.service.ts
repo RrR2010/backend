@@ -920,6 +920,33 @@ export class BootstrapService {
     })
   }
 
+  // --------------- Dev-Only Fake Approval ---------------
+
+  /**
+   * Simulates payment approval for a pending registration.
+   * DEV ONLY — triggers the same webhook flow as a real approved payment.
+   */
+  async fakeApproveRegistration(registrationId: string): Promise<void> {
+    const ctx = this.platformCtx
+    const registration = await this.registrationRepo.findById(registrationId, ctx)
+    if (!registration) {
+      throw new RegistrationNotFoundError(registrationId)
+    }
+    if (registration.state !== RegistrationState.PENDING) {
+      throw new InvalidRegistrationStateError()
+    }
+
+    // Simulate webhook flow for approved payment
+    await this.handleWebhook(
+      {
+        action: 'payment.created',
+        data: { id: `fake-approved-${registration.externalRef}` },
+        external_reference: registration.externalRef
+      },
+      { 'x-signature': 'dev-signature', 'x-request-id': crypto.randomUUID() }
+    )
+  }
+
   // --------------- Session Handoff ---------------
 
   async getStatus(registrationId: string): Promise<BootstrapStatusResponseDto> {
