@@ -67,13 +67,25 @@ export class ProvisioningError extends Error {
 }
 
 export class InvalidRegistrationStateError extends HttpException {
-  constructor(currentState: string, expectedState: string) {
+  constructor() {
     super(
       {
-        message: `Registration is in state ${currentState}, expected ${expectedState}`,
+        message: 'Registration is not in a claimable state',
         code: 'INVALID_REGISTRATION_STATE'
       },
       HttpStatus.CONFLICT
+    )
+  }
+}
+
+export class ProvisionedEntityNotFoundError extends HttpException {
+  constructor(entityType: string) {
+    super(
+      {
+        message: `Provisioned ${entityType} not found`,
+        code: 'PROVISIONED_ENTITY_NOT_FOUND'
+      },
+      HttpStatus.INTERNAL_SERVER_ERROR
     )
   }
 }

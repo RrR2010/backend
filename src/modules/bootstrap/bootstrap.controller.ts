@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Headers,
   Param,
+  Get,
   UnauthorizedException
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -17,7 +18,10 @@ import { Public } from '@shared/decorators/public.decorator'
 import { BootstrapService } from '@bootstrap/bootstrap.service'
 import {
   BootstrapRegisterDto,
-  BootstrapRegisterResponseDto
+  BootstrapRegisterResponseDto,
+  BootstrapStatusResponseDto,
+  ClaimSessionDto,
+  ClaimSessionResponseDto
 } from '@bootstrap/bootstrap.dto'
 import crypto from 'crypto'
 
@@ -128,5 +132,43 @@ export class BootstrapController {
     }
 
     return { status: 'provisioned', registrationId }
+  }
+
+  @Public()
+  @Get('status/:registrationId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Check registration status (state only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Registration status',
+    type: BootstrapStatusResponseDto
+  })
+  @ApiResponse({ status: 404, description: 'Registration not found' })
+  async getStatus(
+    @Param('registrationId') registrationId: string
+  ): Promise<BootstrapStatusResponseDto> {
+    return this.bootstrapService.getStatus(registrationId)
+  }
+
+  @Public()
+  @Post('claim-session')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Claim session using registration ID and handoff token'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session created, cookies set',
+    type: ClaimSessionResponseDto
+  })
+  @ApiResponse({ status: 404, description: 'Registration not found' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired handoff token' })
+  @ApiResponse({ status: 409, description: 'Registration in invalid state' })
+  async claimSession(
+    @Body() dto: ClaimSessionDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<ClaimSessionResponseDto> {
+    return this.bootstrapService.claimSession(dto, req, res)
   }
 }

@@ -7,7 +7,11 @@ import {
   IsDateString,
   MinLength
 } from 'class-validator'
-import { TenantSiteType, Gender } from '@shared/enums'
+import { TenantSiteType, Gender, RegistrationState } from '@shared/enums'
+import { UserResponseDto } from '@users/user.dto'
+import { TenantResponseDto } from '@tenants/tenant.dto'
+import { User } from '@users/user.entity'
+import { Tenant } from '@tenants/tenant.entity'
 
 export class BootstrapRegisterDto {
   @ApiProperty({ example: 'Sorveteria Gelada' })
@@ -94,6 +98,46 @@ export class BootstrapRegisterResponseDto {
     dto.registrationId = registrationId
     dto.paymentUrl = paymentUrl
     dto.expiresAt = expiresAt
+    return dto
+  }
+}
+
+export class BootstrapStatusResponseDto {
+  @ApiProperty({ enum: RegistrationState })
+  state!: string
+
+  static from(state: RegistrationState): BootstrapStatusResponseDto {
+    const dto = new BootstrapStatusResponseDto()
+    dto.state = state
+    return dto
+  }
+}
+
+export class ClaimSessionDto {
+  @ApiProperty()
+  @IsString()
+  registrationId!: string
+
+  @ApiProperty()
+  @IsString()
+  handoffToken!: string
+}
+
+export class ClaimSessionResponseDto {
+  @ApiProperty({ type: UserResponseDto })
+  user!: UserResponseDto
+
+  @ApiProperty({ type: TenantResponseDto })
+  tenant!: TenantResponseDto
+
+  @ApiProperty({ enum: ['direct-login'] })
+  nextStepHint!: 'direct-login'
+
+  static from(user: User, tenant: Tenant): ClaimSessionResponseDto {
+    const dto = new ClaimSessionResponseDto()
+    dto.user = UserResponseDto.fromDomain(user)
+    dto.tenant = TenantResponseDto.fromDomain(tenant)
+    dto.nextStepHint = 'direct-login'
     return dto
   }
 }

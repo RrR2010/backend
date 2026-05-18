@@ -50,6 +50,6 @@ import { TenantModule } from '@tenants/tenant.module'
       inject: [EmailAuthenticationProvider, CpfAuthenticationProvider]
     }
   ],
-  exports: [AUTH_PROVIDERS, PasswordHasher, TokenService]
+  exports: [AUTH_PROVIDERS, PasswordHasher, TokenService, SessionService]
 })
 export class AuthenticationModule {}

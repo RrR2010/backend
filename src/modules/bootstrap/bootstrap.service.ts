@@ -4,13 +4,21 @@ import { RequestContext } from '@authorization/authorization.types'
 import { UserScope, TenantRole } from '@users/user.types'
 import { Id } from '@shared/value-objects'
 import { TenantRegistrationRepository } from '@bootstrap/bootstrap.repository'
-import { BootstrapRegisterDto } from '@bootstrap/bootstrap.dto'
+import crypto from 'crypto'
+import {
+  BootstrapRegisterDto,
+  ClaimSessionDto,
+  ClaimSessionResponseDto,
+  BootstrapStatusResponseDto
+} from '@bootstrap/bootstrap.dto'
 import { TenantRegistration } from '@bootstrap/bootstrap.entity'
 import {
   DuplicateEmailError,
   DuplicateTaxIdError,
   RegistrationNotFoundError,
-  InvalidRegistrationStateError
+  InvalidRegistrationStateError,
+  InvalidHandoffTokenError,
+  ProvisionedEntityNotFoundError
 } from '@bootstrap/bootstrap.errors'
 import {
   BootstrapRegisterResult,
@@ -21,6 +29,7 @@ import { PaymentService } from '@payments/payment.service'
 import { PaymentNotification, WebhookHeaders } from '@payments/payment.types'
 import { PasswordHasher } from '@authentication/password.hasher.service'
 import { TokenService } from '@authentication/token.service'
+import { SessionService } from '@authentication/session.service'
 import { TenantSiteRepository } from '@tenant-sites/tenant-site.repository'
 import { IdentityRepository } from '@identities/identity.repository'
 import { AuthProviderType } from '@authentication/authentication.types'
@@ -34,7 +43,9 @@ import { Json } from '@shared/types'
 import { AuditLogService } from '@audit-logs/audit-log.service'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { TenantRepository } from '@tenants/tenant.repository'
+import { UserRepository } from '@users/user.repository'
 import { Prisma } from '@prisma/client'
+import type { Request, Response } from 'express'
 
 @Injectable()
 export class BootstrapService {
@@ -55,7 +66,9 @@ export class BootstrapService {
     private readonly identityRepository: IdentityRepository,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
-    private readonly tenantRepository: TenantRepository
+    private readonly tenantRepository: TenantRepository,
+    private readonly userRepository: UserRepository,
+    private readonly sessionService: SessionService
   ) {}
 
   async register(
@@ -844,10 +857,7 @@ export class BootstrapService {
       }
 
       if (state !== RegistrationState.PROVISIONING) {
-        throw new InvalidRegistrationStateError(
-          registrationRecord.state,
-          RegistrationState.PROVISIONING
-        )
+        throw new InvalidRegistrationStateError()
       }
 
       // Rehydrate domain entity (explicit field mapping to satisfy type system)
@@ -907,6 +917,164 @@ export class BootstrapService {
       })
 
       return result
+    })
+  }
+
+  // --------------- Session Handoff ---------------
+
+  async getStatus(registrationId: string): Promise<BootstrapStatusResponseDto> {
+    const ctx = this.platformCtx
+
+    // Try finding by ID first, then by externalRef
+    let registration = await this.registrationRepo.findById(registrationId, ctx)
+    if (!registration) {
+      registration = await this.registrationRepo.findByExternalRef(
+        registrationId,
+        ctx
+      )
+    }
+
+    if (!registration) {
+      throw new RegistrationNotFoundError(registrationId)
+    }
+
+    // Check expiry
+    if (
+      registration.state === RegistrationState.PENDING &&
+      registration.expiresAt < new Date()
+    ) {
+      registration.markExpired()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id.value,
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_EXPIRED,
+          before: { state: RegistrationState.PENDING },
+          after: { state: RegistrationState.EXPIRED }
+        },
+        ctx
+      )
+    }
+
+    return BootstrapStatusResponseDto.from(registration.state)
+  }
+
+  async claimSession(
+    dto: ClaimSessionDto,
+    req: Request,
+    res: Response
+  ): Promise<ClaimSessionResponseDto> {
+    const platformCtx = this.platformCtx
+
+    return this.prismaService.$transaction(async (tx) => {
+      // 1. Find registration
+      let registration = await tx.tenantRegistration.findUnique({
+        where: { id: dto.registrationId }
+      })
+      if (!registration) {
+        registration = await tx.tenantRegistration.findUnique({
+          where: { externalRef: dto.registrationId }
+        })
+      }
+      if (!registration) {
+        throw new RegistrationNotFoundError(dto.registrationId)
+      }
+
+      // 2. Validate state
+      if (registration.state !== RegistrationState.PROVISIONED) {
+        throw new InvalidRegistrationStateError()
+      }
+
+      // 3. Atomic token validation + invalidation
+      const now = new Date()
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(dto.handoffToken)
+        .digest('hex')
+
+      const updated = await tx.tenantRegistration.updateMany({
+        where: {
+          id: registration.id,
+          state: RegistrationState.PROVISIONED,
+          handoffTokenHash: tokenHash,
+          handoffTokenExpiresAt: { gt: now },
+          handoffTokenUsedAt: null
+        },
+        data: {
+          handoffTokenUsedAt: now,
+          handoffTokenHash: null,
+          updatedAt: now
+        }
+      })
+
+      if (updated.count === 0) {
+        throw new InvalidHandoffTokenError()
+      }
+
+      // 4. Get user and tenant
+      const user = await this.userRepository.findById(
+        registration.provisionedUserId!,
+        platformCtx
+      )
+      if (!user) {
+        throw new ProvisionedEntityNotFoundError('User')
+      }
+
+      const tenant = await this.tenantRepository.findById(
+        registration.provisionedTenantId!,
+        platformCtx
+      )
+      if (!tenant) {
+        throw new ProvisionedEntityNotFoundError('Tenant')
+      }
+
+      // 5. Create session
+      const deviceInfo = req.headers['user-agent'] as string | undefined
+      const ipAddress = req.ip ?? null
+
+      await this.sessionService.createSession(
+        res,
+        user.id.value,
+        {
+          type: 'auth',
+          userId: user.id.value,
+          scope: UserScope.TENANT,
+          tenantId: tenant.id.value,
+          roles: [TenantRole.ADMIN]
+        },
+        deviceInfo ?? null,
+        ipAddress,
+        tenant.id.value
+      )
+
+      // 6. Audit
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id,
+          ipAddress: ipAddress,
+          userAgent: deviceInfo ?? null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.SESSION_CLAIMED,
+          before: { state: RegistrationState.PROVISIONED },
+          after: {
+            state: RegistrationState.PROVISIONED,
+            userId: user.id.value,
+            tenantId: tenant.id.value
+          }
+        },
+        platformCtx
+      )
+
+      // 7. Return
+      return ClaimSessionResponseDto.from(user, tenant)
     })
   }
 

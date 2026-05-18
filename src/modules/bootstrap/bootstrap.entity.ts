@@ -237,4 +237,10 @@ export class TenantRegistration extends Auditable(
     this._props.webhookProcessedAt = new Date()
     this.touch()
   }
+
+  markHandoffTokenUsed(): void {
+    this._props.handoffTokenUsedAt = new Date()
+    this._props.handoffTokenHash = null
+    this.touch()
+  }
 }

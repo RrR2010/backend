@@ -35,7 +35,10 @@ export abstract class TokenService {
    */
   static verifyToken(raw: string, hash: string): boolean {
     const computedHash = crypto.createHash('sha256').update(raw).digest('hex')
-    return computedHash === hash
+    const computedBuffer = Buffer.from(computedHash)
+    const hashBuffer = Buffer.from(hash)
+    if (computedBuffer.length !== hashBuffer.length) return false
+    return crypto.timingSafeEqual(computedBuffer, hashBuffer)
   }
 }
 
