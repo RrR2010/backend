@@ -41,7 +41,8 @@
       "@ingredients/*": ["src/modules/ingredients/*"],
       "@phones/*": ["src/modules/phones/*"],
       "@addresses/*": ["src/modules/addresses/*"],
-      "@bootstrap/*": ["src/modules/bootstrap/*"]
+      "@bootstrap/*": ["src/modules/bootstrap/*"],
+      "@payments/*": ["src/modules/payments/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/@types"]
   }
