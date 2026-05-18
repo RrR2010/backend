@@ -341,6 +341,7 @@ model TenantRegistration {
   paymentStatus         String?
   paymentStatusDetail   String?
   webhookProcessedAt    DateTime?
+  approvedAt            DateTime?
   provisionedAt         DateTime?
   rejectedAt            DateTime?
   expiredAt             DateTime?

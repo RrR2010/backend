@@ -28,6 +28,7 @@ export type TenantRegistrationProps = AuditableProps & {
   paymentStatus: string | null
   paymentStatusDetail: string | null
   webhookProcessedAt: Date | null
+  approvedAt: Date | null
   provisionedAt: Date | null
   rejectedAt: Date | null
   expiredAt: Date | null
@@ -156,6 +157,10 @@ export class TenantRegistration extends Auditable(
     return this._props.webhookProcessedAt
   }
 
+  get approvedAt(): Date | null {
+    return this._props.approvedAt
+  }
+
   get provisionedAt(): Date | null {
     return this._props.provisionedAt
   }
@@ -202,6 +207,34 @@ export class TenantRegistration extends Auditable(
   markRejected(): void {
     this._props.state = RegistrationState.REJECTED
     this._props.rejectedAt = new Date()
+    this.touch()
+  }
+
+  markApproved(): void {
+    this._props.state = RegistrationState.APPROVED
+    this._props.approvedAt = new Date()
+    this.touch()
+  }
+
+  markProvisioning(): void {
+    this._props.state = RegistrationState.PROVISIONING
+    this.touch()
+  }
+
+  markExpired(): void {
+    this._props.state = RegistrationState.EXPIRED
+    this._props.expiredAt = new Date()
+    this.touch()
+  }
+
+  updatePaymentStatus(status: string, statusDetail: string): void {
+    this._props.paymentStatus = status
+    this._props.paymentStatusDetail = statusDetail
+    this.touch()
+  }
+
+  markWebhookProcessed(): void {
+    this._props.webhookProcessedAt = new Date()
     this.touch()
   }
 }

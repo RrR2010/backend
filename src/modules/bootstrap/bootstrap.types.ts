@@ -7,6 +7,15 @@ export interface BootstrapRegisterResult {
   handoffToken: string
 }
 
+export interface ProvisioningResult {
+  userId: string
+  tenantId: string
+  membershipId: string
+  profileId: string
+  identityId: string
+  tenantSiteId: string
+}
+
 export type TenantRegistrationFilter = {
   state?: RegistrationState
   externalRef?: string

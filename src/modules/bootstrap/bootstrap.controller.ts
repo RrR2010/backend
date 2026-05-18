@@ -5,7 +5,8 @@ import {
   Req,
   Res,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  Headers
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import type { Request, Response } from 'express'
@@ -29,11 +30,13 @@ export class BootstrapController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Registration created. Handoff token delivered in X-Handoff-Token header.',
+    description:
+      'Registration created. Handoff token delivered in X-Handoff-Token header.',
     type: BootstrapRegisterResponseDto,
     headers: {
       'X-Handoff-Token': {
-        description: 'One-time handoff token for session claim. Store securely in frontend state.',
+        description:
+          'One-time handoff token for session claim. Store securely in frontend state.',
         schema: { type: 'string' }
       }
     }
@@ -58,5 +61,17 @@ export class BootstrapController {
       result.paymentUrl,
       result.expiresAt
     )
+  }
+
+  @Public()
+  @Post('webhook/payment')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Handle payment provider webhook notifications' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  async handleWebhook(
+    @Body() body: Record<string, unknown>,
+    @Headers() headers: Record<string, string>
+  ): Promise<void> {
+    await this.bootstrapService.handleWebhook(body, headers)
   }
 }

@@ -58,3 +58,10 @@ export class RegistrationNotFoundError extends HttpException {
     )
   }
 }
+
+export class ProvisioningError extends Error {
+  constructor(message: string, cause?: unknown) {
+    super(`Provisioning failed: ${message}`, { cause })
+    this.name = 'ProvisioningError'
+  }
+}

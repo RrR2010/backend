@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
@@ -9,9 +9,13 @@ import {
   DuplicateEmailError,
   DuplicateTaxIdError
 } from '@bootstrap/bootstrap.errors'
-import { BootstrapRegisterResult } from '@bootstrap/bootstrap.types'
+import {
+  BootstrapRegisterResult,
+  ProvisioningResult
+} from '@bootstrap/bootstrap.types'
 import { BOOTSTRAP_AUDIT_ACTIONS } from '@bootstrap/bootstrap.constants'
 import { PaymentService } from '@payments/payment.service'
+import { PaymentNotification, WebhookHeaders } from '@payments/payment.types'
 import { PasswordHasher } from '@authentication/password.hasher.service'
 import { TokenService } from '@authentication/token.service'
 import { TenantSiteRepository } from '@tenant-sites/tenant-site.repository'
@@ -19,9 +23,12 @@ import { IdentityRepository } from '@identities/identity.repository'
 import { AuthProviderType } from '@authentication/authentication.types'
 import { RegistrationState } from '@shared/enums'
 import { AuditLogService } from '@audit-logs/audit-log.service'
+import { PrismaService } from '@shared/prisma/prisma.service'
 
 @Injectable()
 export class BootstrapService {
+  private readonly logger = new Logger(BootstrapService.name)
+
   private readonly platformCtx: RequestContext = {
     userId: 'system',
     scope: UserScope.PLATFORM,
@@ -30,6 +37,7 @@ export class BootstrapService {
 
   constructor(
     private readonly registrationRepo: TenantRegistrationRepository,
+    private readonly prismaService: PrismaService,
     private readonly paymentService: PaymentService,
     private readonly passwordHasher: PasswordHasher,
     private readonly tenantSiteRepo: TenantSiteRepository,
@@ -109,6 +117,7 @@ export class BootstrapService {
       paymentStatus: null,
       paymentStatusDetail: null,
       webhookProcessedAt: null,
+      approvedAt: null,
       provisionedAt: null,
       rejectedAt: null,
       expiredAt: null
@@ -130,7 +139,9 @@ export class BootstrapService {
       this.configService.get<string>('BOOTSTRAP_PLAN_PRICE', '9900')
     )
 
-    let preference: Awaited<ReturnType<typeof this.paymentService.createPreference>>
+    let preference: Awaited<
+      ReturnType<typeof this.paymentService.createPreference>
+    >
     try {
       preference = await this.paymentService.createPreference({
         items: [
@@ -244,5 +255,343 @@ export class BootstrapService {
     if (existing.length > 0) {
       throw new DuplicateTaxIdError(taxId)
     }
+  }
+
+  // --------------- Webhook Handling ---------------
+
+  async handleWebhook(
+    body: Record<string, unknown>,
+    headers: Record<string, string>
+  ): Promise<void> {
+    const ctx = this.platformCtx
+
+    // 1. Extract payment ID from payload
+    const paymentId = this.extractPaymentId(body)
+    if (!paymentId) {
+      this.logger.warn('Webhook received without payment ID', { body })
+      return // Return 200 silently
+    }
+
+    // 2. Validate webhook signature
+    const webhookHeaders: WebhookHeaders = {
+      'x-signature': headers['x-signature'] ?? '',
+      'x-request-id': headers['x-request-id'] ?? ''
+    }
+
+    const isValid = this.paymentService.validateWebhookSignature(
+      webhookHeaders,
+      body
+    )
+    if (!isValid) {
+      this.logger.warn('Invalid webhook signature', { paymentId })
+      // Finding 9: Use placeholder for entityId — paymentId is unvalidated
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: 'signature-invalid',
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.WEBHOOK_SIGNATURE_INVALID,
+          before: null,
+          after: { paymentId: paymentId ?? 'unknown', headers: webhookHeaders }
+        },
+        ctx
+      )
+      return // Return 200 silently (don't expose validation failure)
+    }
+
+    // 3. Fetch authoritative payment data from provider
+    const payment = await this.paymentService.getPayment(paymentId)
+
+    // 4. Find registration by external reference
+    const registration = await this.registrationRepo.findByExternalRef(
+      payment.externalReference,
+      ctx
+    )
+
+    if (!registration) {
+      this.logger.warn('Webhook received for unknown registration', {
+        externalReference: payment.externalReference
+      })
+      return // Return 200 silently
+    }
+
+    // 5. Handle already processed registrations (idempotency)
+    if (registration.state === RegistrationState.PROVISIONED) {
+      this.logger.debug('Registration already provisioned', {
+        registrationId: registration.id.value
+      })
+      return
+    }
+
+    // Finding 2: Add PROVISIONING state check
+    if (registration.state === RegistrationState.PROVISIONING) {
+      this.logger.debug('Provisioning already in progress', {
+        registrationId: registration.id.value
+      })
+      return
+    }
+
+    // Finding 4: Check if registration has expired
+    if (
+      registration.state === RegistrationState.PENDING &&
+      registration.expiresAt < new Date()
+    ) {
+      registration.markExpired()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id.value,
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_EXPIRED,
+          before: { state: RegistrationState.PENDING },
+          after: { state: RegistrationState.EXPIRED }
+        },
+        ctx
+      )
+
+      return
+    }
+
+    if (registration.state === RegistrationState.EXPIRED) {
+      this.logger.warn('Webhook received for expired registration', {
+        registrationId: registration.id.value
+      })
+      return
+    }
+
+    // Finding 11: Capture stateBefore and write audit BEFORE any mutations
+    const stateBefore = registration.state
+
+    await this.auditLogService.create(
+      {
+        userId: 'system',
+        tenantId: null,
+        entityName: 'TenantRegistration',
+        entityId: registration.id.value,
+        ipAddress: null,
+        userAgent: null,
+        action: BOOTSTRAP_AUDIT_ACTIONS.WEBHOOK_RECEIVED,
+        before: { state: stateBefore },
+        after: { paymentId, paymentStatus: payment.status }
+      },
+      ctx
+    )
+
+    // 8. Handle based on payment status
+    // Finding 6: Move payment detail persistence INTO the branches
+    if (payment.status === 'approved') {
+      // Persist payment details only when acting on the status
+      registration.updatePaymentId(paymentId)
+      registration.updatePaymentStatus(payment.status, payment.statusDetail)
+      registration.markWebhookProcessed()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.handleApprovedPayment(registration, ctx)
+    } else if (
+      payment.status === 'rejected' ||
+      payment.status === 'cancelled'
+    ) {
+      // Persist payment details only when acting on the status
+      registration.updatePaymentId(paymentId)
+      registration.updatePaymentStatus(payment.status, payment.statusDetail)
+      registration.markWebhookProcessed()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.handleRejectedPayment(registration, payment, ctx)
+    } else {
+      // pending, in_process, etc. — just log, do NOT mutate registration
+      this.logger.debug('Payment still pending', {
+        registrationId: registration.id.value,
+        status: payment.status
+      })
+    }
+  }
+
+  private async handleApprovedPayment(
+    registration: TenantRegistration,
+    ctx: RequestContext
+  ): Promise<void> {
+    // Finding 1: Wrap entire flow in a Prisma transaction with atomic state lock
+    await this.prismaService.$transaction(async (tx) => {
+      // Atomic conditional update: PENDING/APPROVED → PROVISIONING
+      const updated = await tx.tenantRegistration.updateMany({
+        where: {
+          id: registration.id.value,
+          state: {
+            in: [RegistrationState.PENDING, RegistrationState.APPROVED]
+          }
+        },
+        data: {
+          state: RegistrationState.PROVISIONING,
+          updatedAt: new Date()
+        }
+      })
+
+      if (updated.count === 0) {
+        // Another request already claimed it — return silently
+        this.logger.debug('Registration already claimed by another request', {
+          registrationId: registration.id.value
+        })
+        return
+      }
+
+      // Audit: provisioning started (inside transaction context)
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id.value,
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_STARTED,
+          before: { state: RegistrationState.PENDING },
+          after: { state: RegistrationState.PROVISIONING }
+        },
+        ctx
+      )
+
+      try {
+        // Finding 8: Pass ctx to provisionRegistration
+        const provisioningResult = await this.provisionRegistration(
+          registration,
+          ctx
+        )
+
+        // Mark as PROVISIONED
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: {
+            state: RegistrationState.PROVISIONED,
+            provisionedUserId: provisioningResult.userId,
+            provisionedTenantId: provisioningResult.tenantId,
+            provisionedMembershipId: provisioningResult.membershipId,
+            provisionedProfileId: provisioningResult.profileId,
+            provisionedIdentityId: provisioningResult.identityId,
+            provisionedTenantSiteId: provisioningResult.tenantSiteId,
+            provisionedAt: new Date(),
+            updatedAt: new Date()
+          }
+        })
+
+        // Audit: provisioning completed
+        await this.auditLogService.create(
+          {
+            userId: 'system',
+            tenantId: null,
+            entityName: 'TenantRegistration',
+            entityId: registration.id.value,
+            ipAddress: null,
+            userAgent: null,
+            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_COMPLETED,
+            before: { state: RegistrationState.PROVISIONING },
+            after: {
+              state: RegistrationState.PROVISIONED,
+              ...provisioningResult
+            }
+          },
+          ctx
+        )
+      } catch (error) {
+        // Finding 3: Do NOT throw — keep registration in PROVISIONING for operator recovery
+        this.logger.error('Provisioning failed', {
+          registrationId: registration.id.value,
+          error: (error as Error).message
+        })
+
+        await this.auditLogService.create(
+          {
+            userId: 'system',
+            tenantId: null,
+            entityName: 'TenantRegistration',
+            entityId: registration.id.value,
+            ipAddress: null,
+            userAgent: null,
+            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_FAILED,
+            before: { state: RegistrationState.PROVISIONING },
+            after: {
+              state: RegistrationState.PROVISIONING,
+              error: (error as Error).message
+            }
+          },
+          ctx
+        )
+
+        // Do NOT throw — the webhook endpoint always returns 200
+        // Registration stays in PROVISIONING for operator recovery
+      }
+    })
+  }
+
+  private async handleRejectedPayment(
+    registration: TenantRegistration,
+    payment: PaymentNotification,
+    ctx: RequestContext
+  ): Promise<void> {
+    registration.markRejected()
+    await this.registrationRepo.save(registration, ctx)
+
+    await this.auditLogService.create(
+      {
+        userId: 'system',
+        tenantId: null,
+        entityName: 'TenantRegistration',
+        entityId: registration.id.value,
+        ipAddress: null,
+        userAgent: null,
+        action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_REJECTED,
+        before: { state: registration.state },
+        after: {
+          state: RegistrationState.REJECTED,
+          paymentStatus: payment.status
+        }
+      },
+      ctx
+    )
+  }
+
+  /**
+   * Stub implementation — Phase 5 will implement actual entity creation.
+   */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  async provisionRegistration(
+    registration: TenantRegistration,
+    ctx: RequestContext
+  ): Promise<ProvisioningResult> {
+    this.logger.warn(
+      'provisionRegistration called — stub implementation (Phase 5)',
+      { registrationId: registration.id.value }
+    )
+    // TODO: Phase 5 will implement actual entity creation using ctx for repository calls
+    return Promise.resolve({
+      userId: 'stub-user-id',
+      tenantId: 'stub-tenant-id',
+      membershipId: 'stub-membership-id',
+      profileId: 'stub-profile-id',
+      identityId: 'stub-identity-id',
+      tenantSiteId: 'stub-tenant-site-id'
+    })
+  }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+
+  private extractPaymentId(body: Record<string, unknown>): string | null {
+    // MP v2 format: data.id
+    if (typeof body.data === 'object' && body.data !== null) {
+      const data = body.data as Record<string, unknown>
+      if (typeof data.id === 'string') return data.id
+      if (typeof data.id === 'number') return String(data.id)
+    }
+    // Fallback: top-level id
+    if (typeof body.id === 'string') return body.id
+    if (typeof body.id === 'number') return String(body.id)
+    return null
   }
 }
