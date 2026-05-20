@@ -8,14 +8,6 @@ import {
   WebhookHeaders
 } from '@payments/payment.types'
 
-/**
- * In-memory store for fake payment statuses.
- * Keyed by externalReference so that the fake approval endpoint (Phase 7)
- * can update the status and getPayment() can read it.
- */
-// TODO: This in-memory store is dev-only. It will not work in multi-worker
-// deployments (PM2 cluster, Kubernetes pods) where each process has its own memory.
-// For production, use a shared store (Redis, database, etc.).
 const fakePaymentStore = new Map<string, PaymentNotification>()
 
 @Injectable()
@@ -35,7 +27,6 @@ export class FakePaymentProvider extends PaymentService {
   ): Promise<PaymentPreferenceResult> {
     const { externalReference } = preference
 
-    // Store a default pending payment in the in-memory map
     fakePaymentStore.set(externalReference, {
       paymentId: `fake-${externalReference}`,
       externalReference,
@@ -53,20 +44,17 @@ export class FakePaymentProvider extends PaymentService {
   }
 
   async getPayment(paymentId: string): Promise<PaymentNotification> {
-    // Try to find by exact paymentId first
     for (const [, notification] of fakePaymentStore.entries()) {
       if (notification.paymentId === paymentId) {
         return notification
       }
     }
 
-    // Try to find by externalReference (paymentId might be the externalReference)
     const stored = fakePaymentStore.get(paymentId)
     if (stored) {
       return stored
     }
 
-    // If paymentId starts with the fake-approved prefix, return approved status
     if (paymentId.startsWith('fake-approved-')) {
       return {
         paymentId,
@@ -76,7 +64,6 @@ export class FakePaymentProvider extends PaymentService {
       }
     }
 
-    // Default: return pending
     return {
       paymentId,
       externalReference: paymentId,
@@ -90,14 +77,13 @@ export class FakePaymentProvider extends PaymentService {
     _body: unknown,
     _queryParams?: Record<string, unknown>
   ): boolean {
-    // Always return true in development
     return true
   }
 
-  /**
-   * Helper method for the fake approval endpoint (Phase 7).
-   * Updates the payment status for a given externalReference.
-   */
+  async refundPayment(paymentId: string): Promise<{ refundId: string; status: string }> {
+    return { refundId: `fake-refund-${paymentId}`, status: 'approved' }
+  }
+
   approvePayment(externalReference: string): PaymentNotification | undefined {
     const existing = fakePaymentStore.get(externalReference)
     if (!existing) {

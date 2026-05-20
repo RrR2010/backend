@@ -15,7 +15,7 @@ import {
 } from '@payments/payment.errors'
 
 // Requires `npm install mercadopago` in the backend directory.
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
+import { MercadoPagoConfig, Preference, Payment, MerchantOrder, PaymentRefund } from 'mercadopago'
 
 @Injectable()
 export class MercadoPagoProvider extends PaymentService {
@@ -24,6 +24,8 @@ export class MercadoPagoProvider extends PaymentService {
   private client: MercadoPagoConfig | null = null
   private preference: Preference | null = null
   private payment: Payment | null = null
+  private merchantOrder: MerchantOrder | null = null
+  private paymentRefund: PaymentRefund | null = null
 
   constructor(private readonly config: ConfigService) {
     super()
@@ -46,6 +48,8 @@ export class MercadoPagoProvider extends PaymentService {
       this.client = new MercadoPagoConfig({ accessToken })
       this.preference = new Preference(this.client)
       this.payment = new Payment(this.client)
+      this.merchantOrder = new MerchantOrder(this.client)
+      this.paymentRefund = new PaymentRefund(this.client)
     }
     return this.client
   }
@@ -53,6 +57,7 @@ export class MercadoPagoProvider extends PaymentService {
   async createPreference(
     preference: PaymentPreference
   ): Promise<PaymentPreferenceResult> {
+    this.getClient()
     const pref = this.preference!
     try {
       const result = await pref.create({
@@ -94,6 +99,7 @@ export class MercadoPagoProvider extends PaymentService {
   }
 
   async getPayment(paymentId: string): Promise<PaymentNotification> {
+    this.getClient()
     const pay = this.payment!
     try {
       const result = await pay.get({ id: paymentId })
@@ -108,6 +114,65 @@ export class MercadoPagoProvider extends PaymentService {
       }
     } catch (error) {
       throw new PaymentNotFoundError(paymentId)
+    }
+  }
+
+  async getMerchantOrder(
+    orderId: string
+  ): Promise<{ externalReference: string; payments: Array<{ status: string }> }> {
+    this.getClient()
+    const order = this.merchantOrder!
+    try {
+      const result = await order.get({ merchantOrderId: orderId })
+      return {
+        externalReference: result.external_reference ?? '',
+        payments:
+          result.payments?.map((p) => ({ status: p.status ?? '' })) ?? []
+      }
+    } catch (error) {
+      throw new PaymentNotFoundError(orderId)
+    }
+  }
+
+  async searchPaymentsByExternalRef(
+    externalReference: string
+  ): Promise<Array<{ paymentId: string; status: string }>> {
+    this.getClient()
+    const pay = this.payment!
+    try {
+      const result = await pay.search({
+        options: {
+          'external_reference': externalReference
+        }
+      })
+      return (result.results ?? []).map((p) => ({
+        paymentId: p.id?.toString() ?? '',
+        status: p.status ?? ''
+      }))
+    } catch (error) {
+      this.logger.error('Failed to search payments', {
+        externalReference,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      return []
+    }
+  }
+
+  async refundPayment(paymentId: string): Promise<{ refundId: string; status: string }> {
+    this.getClient()
+    const refund = this.paymentRefund!
+    try {
+      const result = await refund.total({ payment_id: paymentId })
+      return {
+        refundId: result.id?.toString() ?? '',
+        status: result.status ?? 'unknown'
+      }
+    } catch (error) {
+      this.logger.error('Failed to refund payment', {
+        paymentId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      throw error
     }
   }
 
@@ -151,15 +216,6 @@ export class MercadoPagoProvider extends PaymentService {
 
   /**
    * Maps Mercado Pago status strings to our internal status enum.
-   *
-   * Rationale:
-   * - 'approved' maps directly — payment succeeded.
-   * - 'pending', 'in_process', 'in_mediation' all map to 'pending' — payment
-   *   is awaiting a decision or action from the payer or the provider.
-   * - 'rejected' maps directly — payment was explicitly declined.
-   * - 'cancelled', 'refunded', 'charged_back' all map to 'cancelled' — the
-   *   payment lifecycle has ended without a successful charge, but the
-   *   reason is distinct from an outright rejection.
    */
   private mapStatus(
     mpStatus: string | undefined

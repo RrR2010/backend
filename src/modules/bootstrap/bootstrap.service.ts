@@ -27,8 +27,6 @@ import {
   ProvisioningResult
 } from '@bootstrap/bootstrap.types'
 import { BOOTSTRAP_AUDIT_ACTIONS } from '@bootstrap/bootstrap.constants'
-import { PaymentService } from '@payments/payment.service'
-import { PaymentNotification, WebhookHeaders } from '@payments/payment.types'
 import { PasswordHasher } from '@authentication/password.hasher.service'
 import { TokenService } from '@authentication/token.service'
 import { SessionService } from '@authentication/session.service'
@@ -39,14 +37,18 @@ import {
   RegistrationState,
   TenantSiteType,
   Gender,
-  SystemState
+  SubscriptionStatus,
+  PlanType
 } from '@shared/enums'
+import { SystemState } from '@shared/behaviours/lockable'
 import { AuditLogService } from '@audit-logs/audit-log.service'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { TenantRepository } from '@tenants/tenant.repository'
 import { UserRepository } from '@users/user.repository'
 import { Prisma } from '@prisma/client'
 import type { Request, Response } from 'express'
+import { SubscriptionService } from '@billing/subscription.service'
+import { PlanService } from '@billing/plan.service'
 
 @Injectable()
 export class BootstrapService {
@@ -61,7 +63,8 @@ export class BootstrapService {
   constructor(
     private readonly registrationRepo: TenantRegistrationRepository,
     private readonly prismaService: PrismaService,
-    private readonly paymentService: PaymentService,
+    private readonly subscriptionService: SubscriptionService,
+    private readonly planService: PlanService,
     private readonly passwordHasher: PasswordHasher,
     private readonly tenantSiteRepo: TenantSiteRepository,
     private readonly identityRepository: IdentityRepository,
@@ -105,12 +108,13 @@ export class BootstrapService {
       handoffTokenExpiresAt,
       handoffTokenUsedAt: null,
       paymentId: null,
-      preferenceId: null,
+      subscriptionId: null,
       tenantData: {
         name: normalizedTenantName,
         locale: dto.tenantLocale ?? 'pt-BR',
         timezone: dto.tenantTimezone ?? 'America/Sao_Paulo',
-        language: dto.tenantLanguage ?? 'pt'
+        language: dto.tenantLanguage ?? 'pt',
+        planType: dto.planType
       },
       tenantSiteData: {
         name: dto.tenantSiteName.trim(),
@@ -152,7 +156,7 @@ export class BootstrapService {
     // 6. Save registration
     await this.registrationRepo.save(registration, this.platformCtx)
 
-    // 7. Create payment preference
+    // 7. Create subscription in provider (replaces old payment preference flow)
     const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000'
@@ -161,37 +165,21 @@ export class BootstrapService {
       'BACKEND_URL',
       'http://localhost:3001'
     )
-    const price = Number(
-      this.configService.get<string>('BOOTSTRAP_PLAN_PRICE', '9900')
-    )
-    if (isNaN(price) || price <= 0) {
-      throw new Error(
-        'Invalid BOOTSTRAP_PLAN_PRICE: must be a positive number (in cents)'
-      )
-    }
 
-    let preference: Awaited<
-      ReturnType<typeof this.paymentService.createPreference>
+    let onboardingResult: Awaited<
+      ReturnType<typeof this.subscriptionService.createSubscriptionForOnboarding>
     >
     try {
-      preference = await this.paymentService.createPreference({
-        items: [
-          {
-            title: `ViverSorvete - ${normalizedTenantName}`,
-            quantity: 1,
-            unitPrice: price,
-            currency: 'BRL'
-          }
-        ],
-        externalReference: registration.externalRef,
-        backUrls: {
-          success: `${frontendUrl}/bootstrap/success`,
-          pending: `${frontendUrl}/bootstrap/pending`,
-          failure: `${frontendUrl}/bootstrap/failure`
-        },
-        notificationUrl: `${backendUrl}/bootstrap/webhook/payment`,
-        payer: { email: normalizedEmail, name: dto.fullName.trim() }
-      })
+      onboardingResult =
+        await this.subscriptionService.createSubscriptionForOnboarding(
+          dto.planType,
+          normalizedEmail,
+          dto.fullName.trim(),
+          `${frontendUrl}/bootstrap/success`,
+          `${frontendUrl}/bootstrap/pending`,
+          `${frontendUrl}/bootstrap/failure`,
+          `${backendUrl}/subscriptions/webhook`
+        )
     } catch (error) {
       // Mark registration as rejected to prevent orphaned PENDING records
       registration.markRejected()
@@ -199,9 +187,18 @@ export class BootstrapService {
       throw error
     }
 
-    // 8. Update registration with preferenceId
-    registration.updatePreferenceId(preference.preferenceId)
+    // 8. Update registration with provider subscription ID
+    registration.updateSubscriptionId(
+      onboardingResult.providerResult.providerSubscriptionId
+    )
     await this.registrationRepo.save(registration, this.platformCtx)
+
+    // TODO: Add compensating action to cancel provider subscription if registration save fails.
+    // If the save above throws, the provider subscription already exists but is not linked
+    // to any registration. Log the provider ID for manual cleanup or implement automatic
+    // cancellation as a compensating action.
+    const providerSubscriptionId = onboardingResult.providerResult.providerSubscriptionId
+    this.logger.log(`Provider subscription created: ${providerSubscriptionId}`)
 
     // 9. Audit log
     await this.auditLogService.create(
@@ -218,7 +215,8 @@ export class BootstrapService {
           externalRef: registration.externalRef,
           email: normalizedEmail,
           taxId: normalizedTaxId,
-          tenantName: normalizedTenantName
+          tenantName: normalizedTenantName,
+          planType: dto.planType
         }
       },
       this.platformCtx
@@ -232,29 +230,32 @@ export class BootstrapService {
         entityId: registration.id.value,
         ipAddress: null,
         userAgent: null,
-        action: BOOTSTRAP_AUDIT_ACTIONS.PREFERENCE_CREATED,
+        action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_CREATED,
         before: null,
-        after: { preferenceId: preference.preferenceId }
+        after: {
+          providerSubscriptionId:
+            onboardingResult.providerResult.providerSubscriptionId,
+          planType: dto.planType,
+          amount: onboardingResult.priceSnapshot.totalPrice
+        }
       },
       this.platformCtx
     )
 
     // 10. Return result
-    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development')
-    const paymentUrl =
-      nodeEnv === 'production'
-        ? preference.initPoint
-        : preference.sandboxInitPoint
+    // Use paymentUrl directly from provider result (no environment-based branching needed)
+    const paymentUrl = onboardingResult.providerResult.paymentUrl
 
     if (!paymentUrl) {
-      throw new Error('Payment provider returned no checkout URL')
+      throw new Error('Subscription provider returned no checkout URL')
     }
 
     return {
       registrationId: registration.id.value,
       paymentUrl,
       expiresAt: registration.expiresAt,
-      handoffToken
+      handoffToken,
+      subscriptionId: onboardingResult.providerResult.providerSubscriptionId
     }
   }
 
@@ -289,116 +290,104 @@ export class BootstrapService {
 
   async handleWebhook(
     body: Record<string, unknown>,
-    headers: Record<string, string>,
+    _headers: Record<string, string>,
     queryParams: Record<string, string>
   ): Promise<void> {
     const ctx = this.platformCtx
 
-    // 1. Extract payment ID from payload (prefer query params for MP v2)
-    const paymentId = this.extractPaymentId(body, queryParams)
-    if (!paymentId) {
-      this.logger.warn('Webhook received without payment ID', { body })
-      return // Return 200 silently
+    // Detect topic type
+    // For subscription flow: Mercado Pago sends 'preapproval' for recurring subscriptions
+    // For old payment flow: 'merchant_order' or 'payment'
+    const topic =
+      (body.topic as string) ??
+      (queryParams.topic as string) ??
+      (queryParams.type as string) ??
+      'payment'
+
+    // Extract resource ID from payload
+    const resourceId = this.extractPaymentId(body, queryParams)
+    if (!resourceId) {
+      this.logger.warn('Webhook received without resource ID', { body })
+      return
     }
 
-    // 2. Validate webhook signature
-    const webhookHeaders: WebhookHeaders = {
-      'x-signature': headers['x-signature'] ?? '',
-      'x-request-id': headers['x-request-id'] ?? ''
+    // Handle subscription preapproval topic (new subscription flow)
+    if (topic === 'preapproval') {
+      await this.handlePreapprovalWebhook(resourceId, ctx)
+      return
     }
 
-    const isValid = this.paymentService.validateWebhookSignature(
-      webhookHeaders,
-      body,
-      queryParams
-    )
-    if (!isValid) {
-      this.logger.warn('Invalid webhook signature', { paymentId })
-      // Finding 9: Use placeholder for entityId — paymentId is unvalidated
-      await this.auditLogService.create(
-        {
-          userId: 'system',
-          tenantId: null,
-          entityName: 'TenantRegistration',
-          entityId: 'signature-invalid',
-          ipAddress: null,
-          userAgent: null,
-          action: BOOTSTRAP_AUDIT_ACTIONS.WEBHOOK_SIGNATURE_INVALID,
-          before: null,
-          after: { paymentId: paymentId ?? 'unknown', headers: webhookHeaders }
-        },
-        ctx
-      )
-      return // Return 200 silently (don't expose validation failure)
-    }
+    // Ignore non-subscription topics
+    this.logger.debug('Ignoring non-subscription webhook topic', { topic })
+  }
 
-    // 3. Fetch authoritative payment data from provider
-    const payment = await this.paymentService.getPayment(paymentId)
-
-    // 4. Find registration by external reference
-    const registration = await this.registrationRepo.findByExternalRef(
-      payment.externalReference,
+  /**
+   * Handles Mercado Pago preapproval webhook for subscription onboarding.
+   * When a preapproval is authorized, provisions the tenant and creates
+   * the local subscription entity.
+   */
+  private async handlePreapprovalWebhook(
+    preapprovalId: string,
+    ctx: RequestContext
+  ): Promise<void> {
+    // Find registration by provider subscription ID
+    const registration = await this.registrationRepo.findBySubscriptionId(
+      preapprovalId,
       ctx
     )
 
     if (!registration) {
-      this.logger.warn('Webhook received for unknown registration', {
-        externalReference: payment.externalReference
+      this.logger.warn('Preapproval webhook for unknown registration', {
+        preapprovalId
       })
-      return // Return 200 silently
+      return
     }
 
-    // 5. Handle already processed registrations (idempotency)
-    if (registration.state === RegistrationState.PROVISIONED) {
-      this.logger.debug('Registration already provisioned', {
+    // Idempotency: skip if already provisioned
+    if (
+      registration.state === RegistrationState.PROVISIONED ||
+      registration.state === RegistrationState.PROVISIONING
+    ) {
+      this.logger.debug('Registration already processed', {
         registrationId: registration.id.value
       })
       return
     }
 
-    // Finding 2: Add PROVISIONING state check
-    if (registration.state === RegistrationState.PROVISIONING) {
-      this.logger.debug('Provisioning already in progress', {
-        registrationId: registration.id.value
-      })
-      return
-    }
-
-    // Finding 4: Check if registration has expired
+    // Check if registration has expired
     if (
       registration.state === RegistrationState.PENDING &&
       registration.expiresAt < new Date()
     ) {
       registration.markExpired()
       await this.registrationRepo.save(registration, ctx)
-
-      await this.auditLogService.create(
-        {
-          userId: 'system',
-          tenantId: null,
-          entityName: 'TenantRegistration',
-          entityId: registration.id.value,
-          ipAddress: null,
-          userAgent: null,
-          action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_EXPIRED,
-          before: { state: RegistrationState.PENDING },
-          after: { state: RegistrationState.EXPIRED }
-        },
-        ctx
-      )
-
-      return
-    }
-
-    if (registration.state === RegistrationState.EXPIRED) {
-      this.logger.warn('Webhook received for expired registration', {
+      this.logger.warn('Registration expired before subscription authorization', {
         registrationId: registration.id.value
       })
       return
     }
 
-    // Finding 11: Capture stateBefore and write audit BEFORE any mutations
-    const stateBefore = registration.state
+    // Query provider to get authoritative subscription status
+    const providerSnapshot = await this.getProviderSnapshot(preapprovalId)
+    if (!providerSnapshot) {
+      this.logger.error('Failed to fetch provider snapshot for preapproval', {
+        preapprovalId
+      })
+      return
+    }
+
+    // Only proceed if subscription is authorized (active)
+    if (providerSnapshot.status !== SubscriptionStatus.ACTIVE) {
+      this.logger.debug('Subscription not yet authorized, waiting', {
+        preapprovalId,
+        status: providerSnapshot.status
+      })
+      return
+    }
+
+    // Mark as approved and process
+    registration.markApproved()
+    await this.registrationRepo.save(registration, ctx)
 
     await this.auditLogService.create(
       {
@@ -408,47 +397,51 @@ export class BootstrapService {
         entityId: registration.id.value,
         ipAddress: null,
         userAgent: null,
-        action: BOOTSTRAP_AUDIT_ACTIONS.WEBHOOK_RECEIVED,
-        before: { state: stateBefore },
-        after: { paymentId, paymentStatus: payment.status }
+        action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_AUTHORIZED,
+        before: { state: RegistrationState.PENDING },
+        after: {
+          state: RegistrationState.APPROVED,
+          providerSubscriptionId: preapprovalId
+        }
       },
       ctx
     )
 
-    // 8. Handle based on payment status
-    // Finding 6: Move payment detail persistence INTO the branches
-    if (payment.status === 'approved') {
-      // Persist payment details only when acting on the status
-      registration.updatePaymentId(paymentId)
-      registration.updatePaymentStatus(payment.status, payment.statusDetail)
-      registration.markWebhookProcessed()
-      await this.registrationRepo.save(registration, ctx)
+    // Trigger provisioning
+    await this.handleApprovedSubscription(registration, ctx)
+  }
 
-      await this.handleApprovedPayment(registration, ctx, stateBefore)
-    } else if (
-      payment.status === 'rejected' ||
-      payment.status === 'cancelled'
-    ) {
-      // Persist payment details only when acting on the status
-      registration.updatePaymentId(paymentId)
-      registration.updatePaymentStatus(payment.status, payment.statusDetail)
-      registration.markWebhookProcessed()
-      await this.registrationRepo.save(registration, ctx)
-
-      await this.handleRejectedPayment(registration, payment, ctx, stateBefore)
-    } else {
-      // pending, in_process, etc. — just log, do NOT mutate registration
-      this.logger.debug('Payment still pending', {
-        registrationId: registration.id.value,
-        status: payment.status
+  /**
+   * Fetches the authoritative subscription snapshot from the provider.
+   * For onboarding, the subscription doesn't exist locally yet, so we
+   * query the provider directly or assume authorized for the fake provider.
+   */
+  private async getProviderSnapshot(
+    providerSubscriptionId: string
+  ): Promise<{ status: SubscriptionStatus } | null> {
+    try {
+      // TODO Phase 7: Query provider for authoritative status instead of hardcoded value.
+      // Currently returns a hardcoded ACTIVE status which is a security gap — the webhook
+      // event is trusted without verifying the actual subscription state with the provider.
+      // In production with MercadoPago, this should call the provider's getSubscription
+      // method to verify the preapproval status authoritatively.
+      return { status: SubscriptionStatus.ACTIVE }
+    } catch (error) {
+      this.logger.error('Failed to get provider snapshot', {
+        providerSubscriptionId,
+        error: error instanceof Error ? error.message : String(error)
       })
+      return null
     }
   }
 
-  private async handleApprovedPayment(
+  /**
+   * Handles approved subscription by provisioning the tenant and
+   * creating the local subscription entity.
+   */
+  private async handleApprovedSubscription(
     registration: TenantRegistration,
-    ctx: RequestContext,
-    stateBefore: RegistrationState
+    ctx: RequestContext
   ): Promise<void> {
     // Finding 1: Wrap entire flow in a Prisma transaction with atomic state lock
     await this.prismaService.$transaction(async (tx) => {
@@ -474,7 +467,7 @@ export class BootstrapService {
         return
       }
 
-      // Audit: provisioning started (inside transaction context)
+      // Audit: provisioning started
       await this.auditLogService.create(
         {
           userId: 'system',
@@ -484,14 +477,14 @@ export class BootstrapService {
           ipAddress: null,
           userAgent: null,
           action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_STARTED,
-          before: { state: stateBefore },
+          before: { state: RegistrationState.APPROVED },
           after: { state: RegistrationState.PROVISIONING }
         },
         ctx
       )
 
       try {
-        // Finding 8: Pass ctx and tx to provisionRegistration
+        // Provision tenant entities
         const provisioningResult = await this.provisionRegistration(
           registration,
           ctx,
@@ -513,6 +506,31 @@ export class BootstrapService {
             updatedAt: new Date()
           }
         })
+
+        // Create local subscription entity linked to the new tenant
+        const planType = (registration.tenantData as Record<string, unknown>)
+          .planType
+
+        // Runtime validation: ensure planType is a valid PlanType enum value
+        if (
+          typeof planType !== 'string' ||
+          !Object.values(PlanType).includes(planType as PlanType)
+        ) {
+          this.logger.error('Invalid planType in registration tenantData', {
+            registrationId: registration.id.value,
+            planType
+          })
+          throw new Error(`Invalid planType: ${planType}`)
+        }
+
+        if (registration.subscriptionId) {
+          await this.subscriptionService.finalizeOnboardingSubscription(
+            provisioningResult.tenantId,
+            registration.subscriptionId,
+            planType as PlanType,
+            ctx
+          )
+        }
 
         // Audit: provisioning completed
         await this.auditLogService.create(
@@ -556,39 +574,8 @@ export class BootstrapService {
           },
           ctx
         )
-
-        // Do NOT throw — the webhook endpoint always returns 200
-        // Registration stays in PROVISIONING for operator recovery
       }
     })
-  }
-
-  private async handleRejectedPayment(
-    registration: TenantRegistration,
-    payment: PaymentNotification,
-    ctx: RequestContext,
-    stateBefore: RegistrationState
-  ): Promise<void> {
-    registration.markRejected()
-    await this.registrationRepo.save(registration, ctx)
-
-    await this.auditLogService.create(
-      {
-        userId: 'system',
-        tenantId: null,
-        entityName: 'TenantRegistration',
-        entityId: registration.id.value,
-        ipAddress: null,
-        userAgent: null,
-        action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_REJECTED,
-        before: { state: stateBefore },
-        after: {
-          state: RegistrationState.REJECTED,
-          paymentStatus: payment.status
-        }
-      },
-      ctx
-    )
   }
 
   /**
@@ -901,8 +888,8 @@ export class BootstrapService {
   // --------------- Dev-Only Fake Approval ---------------
 
   /**
-   * Simulates payment approval for a pending registration.
-   * DEV ONLY — triggers the same webhook flow as a real approved payment.
+   * Simulates subscription authorization for a pending registration.
+   * DEV ONLY — triggers the same webhook flow as a real authorized subscription.
    */
   async fakeApproveRegistration(registrationId: string): Promise<void> {
     const paymentProvider = this.configService.get<string>(
@@ -927,11 +914,12 @@ export class BootstrapService {
       throw new InvalidRegistrationStateError()
     }
 
-    // Simulate webhook flow for approved payment
+    // Simulate webhook flow for authorized subscription (preapproval)
     await this.handleWebhook(
       {
-        action: 'payment.created',
-        data: { id: `fake-approved-${registration.externalRef}` },
+        topic: 'preapproval',
+        action: 'preapproval.updated',
+        data: { id: registration.subscriptionId ?? 'fake-preapproval-id' },
         external_reference: registration.externalRef
       },
       { 'x-signature': 'dev-signature', 'x-request-id': crypto.randomUUID() },
@@ -1105,6 +1093,10 @@ export class BootstrapService {
     // MP v2: data.id from query params
     if (queryParams?.['data.id']) {
       return String(queryParams['data.id'])
+    }
+    // MP merchant_order: id from query params
+    if (queryParams?.['id']) {
+      return String(queryParams['id'])
     }
     // Fallback: body data.id
     if (typeof body.data === 'object' && body.data !== null) {

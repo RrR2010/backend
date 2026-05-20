@@ -39,7 +39,7 @@ export class BootstrapController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Initiate tenant registration and create payment preference'
+    summary: 'Initiate tenant registration and create subscription for onboarding'
   })
   @ApiResponse({
     status: 201,
@@ -72,7 +72,8 @@ export class BootstrapController {
     return BootstrapRegisterResponseDto.from(
       result.registrationId,
       result.paymentUrl,
-      result.expiresAt
+      result.expiresAt,
+      result.subscriptionId
     )
   }
 

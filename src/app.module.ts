@@ -24,6 +24,7 @@ import { MemberProfileDocumentModule } from '@member-profile-documents/member-pr
 import { AuditLogModule } from '@audit-logs/audit-log.module'
 import { BootstrapModule } from '@bootstrap/bootstrap.module'
 import { PaymentModule } from '@payments/payment.module'
+import { BillingModule } from '@billing/billing.module'
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { PaymentModule } from '@payments/payment.module'
     AuditLogModule,
     AuthorizationModule,
     BootstrapModule,
-    PaymentModule
+    PaymentModule,
+    BillingModule
     // CaslModule.forRoot({
     //   superuserRole: PlatformRole.ADMIN,
     //   getUserFromRequest: (request) => request.user

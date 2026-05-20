@@ -5,7 +5,8 @@ import {
   MemberProfileDocument as PrismaMemberProfileDocument,
   Prisma
 } from '@prisma/client'
-import { DocumentType, SystemState } from '@shared/enums'
+import { DocumentType } from '@shared/enums'
+import { SystemState } from '@shared/behaviours/lockable'
 import { DocumentType as PrismaDocumentType } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { RequestContext } from '@authorization/authorization.types'

@@ -114,11 +114,12 @@ class AuditLogMapper {
   }
 
   static toPersistence(auditLog: AuditLog): Prisma.AuditLogUncheckedCreateInput {
+    const userId = auditLog.userId === 'system' ? null : auditLog.userId
     return {
       id: auditLog.id.value,
       createdAt: auditLog.createdAt,
       updatedAt: auditLog.updatedAt,
-      userId: auditLog.userId,
+      userId,
       tenantId: auditLog.tenantId,
       entityName: auditLog.entityName,
       entityId: auditLog.entityId,

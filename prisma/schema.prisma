@@ -90,6 +90,23 @@ enum RegistrationState {
   EXPIRED
 }
 
+enum PlanType {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  GRACE
+  PAUSED
+  CANCELED
+  EXPIRED
+}
+
 // ============== TENANT ==============
 
 model Tenant {
@@ -110,6 +127,7 @@ model Tenant {
   sessions    Session[]
   sites       TenantSite[]
   auditLogs   AuditLog[]
+  subscription Subscription?
 }
 
 // ============== USER ==============
@@ -322,7 +340,7 @@ model TenantRegistration {
   // Valid values defined in RegistrationState enum (backend/src/shared/enums.ts)
   state RegistrationState @default(PENDING)
   paymentId             String?  @unique
-  preferenceId          String?  @unique
+  subscriptionId        String?  @unique
   expiresAt             DateTime
   handoffTokenHash      String?  @unique
   handoffTokenExpiresAt DateTime?
@@ -351,6 +369,7 @@ model TenantRegistration {
   @@index([state])
   @@index([expiresAt])
   @@index([handoffTokenExpiresAt])
+  @@index([subscriptionId])
 }
 
 // ============== TENANT SITE ==============
@@ -370,4 +389,94 @@ model TenantSite {
   isHeadquarters Boolean        @default(false)
 
   @@unique([tenantId, taxId])
+}
+
+// ============== BILLING ==============
+
+model Plan {
+  id                  String   @id @default(uuid())
+  type                String   @unique
+  name                String
+  description         String?
+  basePrice           Int
+  currency            String   @default("BRL")
+  includedUsers       Int
+  additionalUserPrice Int?
+  maxProducts         Int?
+  maxRevisions        Int?
+  trialDays           Int?
+  features            Json
+  isPublic            Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  // Phase 5: Added for validation logic (allowsAdditionalUsers check in subscription service).
+  // This field deviates from EPIC_007 schema which did not originally include it.
+  allowsAdditionalUsers Boolean @default(false)
+
+  createdAt           DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([type])
+  @@index([isPublic])
+  @@index([isActive])
+}
+
+model Subscription {
+  id                     String   @id @default(uuid())
+  tenantId               String   @unique
+  tenant                 Tenant   @relation(fields: [tenantId], references: [id])
+
+  planType               String
+  status                 String
+  currency               String   @default("BRL")
+
+  provider               String   @default("mercadopago")
+  providerSubscriptionId String   @unique
+  providerPreapprovalId  String?  @unique
+  providerCustomerId     String?
+
+  basePriceSnapshot      Int
+  additionalUserPriceSnapshot Int?
+  includedUsersSnapshot   Int
+
+  additionalUsers        Int      @default(0)
+  currentAmount          Int
+  nextBillingAmount      Int?
+
+  trialEndsAt            DateTime?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  graceEndsAt            DateTime?
+  cancelAtPeriodEnd      Boolean  @default(false)
+
+  failedPaymentCount     Int      @default(0)
+  lastPaymentAt          DateTime?
+  lastWebhookAt          DateTime?
+
+  createdAt              DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime @updatedAt @db.Timestamptz(3)
+
+  events                 SubscriptionEvent[]
+
+  @@index([status])
+  @@index([planType])
+  @@index([currentPeriodEnd])
+  @@index([graceEndsAt])
+}
+
+model SubscriptionEvent {
+  id                   String   @id @default(uuid())
+  subscriptionId       String
+  subscription         Subscription @relation(fields: [subscriptionId], references: [id])
+
+  providerEventId      String?  @unique
+  providerEventType    String
+  statusBefore         String?
+  statusAfter          String?
+  payload              Json
+
+  createdAt            DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([subscriptionId])
+  @@index([providerEventType])
+  @@index([createdAt])
 }

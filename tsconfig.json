@@ -42,7 +42,8 @@
       "@phones/*": ["src/modules/phones/*"],
       "@addresses/*": ["src/modules/addresses/*"],
       "@bootstrap/*": ["src/modules/bootstrap/*"],
-      "@payments/*": ["src/modules/payments/*"]
+      "@payments/*": ["src/modules/payments/*"],
+      "@billing/*": ["src/modules/billing/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/@types"]
   }

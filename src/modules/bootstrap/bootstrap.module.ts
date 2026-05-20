@@ -7,7 +7,6 @@ import {
   PrismaTenantRegistrationRepository
 } from '@bootstrap/bootstrap.repository'
 import { PrismaModule } from '@shared/prisma/prisma.module'
-import { PaymentModule } from '@payments/payment.module'
 import { AuthenticationModule } from '@authentication/authentication.module'
 import { TenantSiteModule } from '@tenant-sites/tenant-site.module'
 import { IdentityModule } from '@identities/identity.module'
@@ -16,12 +15,12 @@ import { UsersModule } from '@users/users.module'
 import { TenantModule } from '@tenants/tenant.module'
 import { TenantMembershipModule } from '@tenant-memberships/tenant-membership.module'
 import { MemberProfileModule } from '@member-profiles/member-profile.module'
+import { BillingModule } from '@billing/billing.module'
 
 @Module({
   imports: [
     ConfigModule,
     PrismaModule,
-    PaymentModule,
     AuthenticationModule,
     TenantSiteModule,
     IdentityModule,
@@ -29,7 +28,8 @@ import { MemberProfileModule } from '@member-profiles/member-profile.module'
     UsersModule,
     TenantModule,
     TenantMembershipModule,
-    MemberProfileModule
+    MemberProfileModule,
+    BillingModule
   ],
 
   controllers: [BootstrapController],

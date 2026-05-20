@@ -9,7 +9,7 @@ export type TenantRegistrationProps = AuditableProps & {
   externalRef: string
   state: RegistrationState
   paymentId: string | null
-  preferenceId: string | null
+  subscriptionId: string | null
   expiresAt: Date
   handoffTokenHash: string | null
   handoffTokenExpiresAt: Date | null
@@ -81,8 +81,8 @@ export class TenantRegistration extends Auditable(
     return this._props.paymentId
   }
 
-  get preferenceId(): string | null {
-    return this._props.preferenceId
+  get subscriptionId(): string | null {
+    return this._props.subscriptionId
   }
 
   get expiresAt(): Date {
@@ -175,8 +175,8 @@ export class TenantRegistration extends Auditable(
 
   // --------------- State Transitions ---------------
 
-  updatePreferenceId(preferenceId: string): void {
-    this._props.preferenceId = preferenceId
+  updateSubscriptionId(subscriptionId: string): void {
+    this._props.subscriptionId = subscriptionId
     this.touch()
   }
 

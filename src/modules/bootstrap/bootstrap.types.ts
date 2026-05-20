@@ -5,6 +5,7 @@ export interface BootstrapRegisterResult {
   paymentUrl: string
   expiresAt: Date
   handoffToken: string
+  subscriptionId: string | null
 }
 
 export interface ProvisioningResult {
@@ -20,6 +21,6 @@ export type TenantRegistrationFilter = {
   state?: RegistrationState
   externalRef?: string
   paymentId?: string
-  preferenceId?: string
   handoffTokenHash?: string
+  subscriptionId?: string
 }

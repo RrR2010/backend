@@ -48,14 +48,6 @@ export enum Provider {
   CPF = 'CPF'
 }
 
-// ============== SYSTEM ENUMS ==============
-
-export enum SystemState {
-  ACTIVE = 'ACTIVE',
-  LOCKED = 'LOCKED',
-  HIDDEN = 'HIDDEN'
-}
-
 // ============== BOOTSTRAP ENUMS ==============
 
 export enum RegistrationState {
@@ -64,5 +56,24 @@ export enum RegistrationState {
   PROVISIONING = 'PROVISIONING',
   PROVISIONED = 'PROVISIONED',
   REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED'
+}
+
+// ============== SUBSCRIPTION ENUMS ==============
+
+export enum PlanType {
+  FREE = 'FREE',
+  BASIC = 'BASIC',
+  PREMIUM = 'PREMIUM',
+  ENTERPRISE = 'ENTERPRISE'
+}
+
+export enum SubscriptionStatus {
+  TRIALING = 'TRIALING',
+  ACTIVE = 'ACTIVE',
+  PAST_DUE = 'PAST_DUE',
+  GRACE = 'GRACE',
+  PAUSED = 'PAUSED',
+  CANCELED = 'CANCELED',
   EXPIRED = 'EXPIRED'
 }

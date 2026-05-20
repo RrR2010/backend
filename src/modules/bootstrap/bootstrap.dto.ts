@@ -7,7 +7,7 @@ import {
   IsDateString,
   MinLength
 } from 'class-validator'
-import { TenantSiteType, Gender, RegistrationState } from '@shared/enums'
+import { TenantSiteType, Gender, RegistrationState, PlanType } from '@shared/enums'
 import { UserResponseDto } from '@users/user.dto'
 import { TenantResponseDto } from '@tenants/tenant.dto'
 import { User } from '@users/user.entity'
@@ -77,6 +77,10 @@ export class BootstrapRegisterDto {
   @IsString()
   @MinLength(8)
   password!: string
+
+  @ApiProperty({ enum: PlanType, example: 'BASIC' })
+  @IsEnum(PlanType)
+  planType!: PlanType
 }
 
 export class BootstrapRegisterResponseDto {
@@ -89,15 +93,20 @@ export class BootstrapRegisterResponseDto {
   @ApiProperty()
   expiresAt!: Date
 
+  @ApiProperty({ required: false, nullable: true })
+  subscriptionId!: string | null
+
   static from(
     registrationId: string,
     paymentUrl: string,
-    expiresAt: Date
+    expiresAt: Date,
+    subscriptionId: string | null = null
   ): BootstrapRegisterResponseDto {
     const dto = new BootstrapRegisterResponseDto()
     dto.registrationId = registrationId
     dto.paymentUrl = paymentUrl
     dto.expiresAt = expiresAt
+    dto.subscriptionId = subscriptionId
     return dto
   }
 }

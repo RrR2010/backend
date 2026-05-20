@@ -24,8 +24,8 @@ export abstract class TenantRegistrationRepository {
     paymentId: string,
     ctx: RequestContext
   ): Promise<TenantRegistration | null>
-  abstract findByPreferenceId(
-    preferenceId: string,
+  abstract findBySubscriptionId(
+    subscriptionId: string,
     ctx: RequestContext
   ): Promise<TenantRegistration | null>
   abstract findAll(
@@ -84,11 +84,11 @@ export class PrismaTenantRegistrationRepository implements TenantRegistrationRep
     return PrismaTenantRegistrationMapper.toDomain(prismaRegistration)
   }
 
-  async findByPreferenceId(
-    preferenceId: string,
+  async findBySubscriptionId(
+    subscriptionId: string,
     ctx: RequestContext
   ): Promise<TenantRegistration | null> {
-    const where: Prisma.TenantRegistrationWhereUniqueInput = { preferenceId }
+    const where: Prisma.TenantRegistrationWhereUniqueInput = { subscriptionId }
     const prismaRegistration = await this.prisma.tenantRegistration.findUnique({
       where
     })
@@ -110,9 +110,6 @@ export class PrismaTenantRegistrationRepository implements TenantRegistrationRep
     }
     if (filter.paymentId) {
       where.paymentId = filter.paymentId
-    }
-    if (filter.preferenceId) {
-      where.preferenceId = filter.preferenceId
     }
     if (filter.handoffTokenHash) {
       where.handoffTokenHash = filter.handoffTokenHash
@@ -159,7 +156,7 @@ class PrismaTenantRegistrationMapper {
       externalRef: prismaRegistration.externalRef,
       state: prismaRegistration.state as RegistrationState,
       paymentId: prismaRegistration.paymentId,
-      preferenceId: prismaRegistration.preferenceId,
+      subscriptionId: prismaRegistration.subscriptionId,
       expiresAt: prismaRegistration.expiresAt,
       handoffTokenHash: prismaRegistration.handoffTokenHash,
       handoffTokenExpiresAt: prismaRegistration.handoffTokenExpiresAt,
@@ -195,7 +192,7 @@ class PrismaTenantRegistrationMapper {
       externalRef: registration.externalRef,
       state: registration.state,
       paymentId: registration.paymentId,
-      preferenceId: registration.preferenceId,
+      subscriptionId: registration.subscriptionId,
       expiresAt: registration.expiresAt,
       handoffTokenHash: registration.handoffTokenHash,
       handoffTokenExpiresAt: registration.handoffTokenExpiresAt,
