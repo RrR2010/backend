@@ -18,6 +18,32 @@ export interface ChangePlanInput {
   newPlanType: PlanType
 }
 
+// TODO (2026-05-20 decisions): Update ChangePlanInput for end-of-cycle changes.
+// The current interface is minimal. Consider expanding to support:
+//
+// export interface ChangePlanInput {
+//   tenantId: string
+//   newPlanType: PlanType
+//   // Optional: user can confirm they understand the new amount
+//   confirmNewAmount?: boolean
+//   // Optional: for FREE → Paid, include payer info for provider subscription
+//   payerEmail?: string
+//   payerName?: string
+// }
+//
+// Also consider adding a response type for the pending change confirmation:
+//
+// export interface ChangePlanResponse {
+//   subscriptionId: string
+//   oldPlanType: PlanType
+//   newPlanType: PlanType
+//   effectiveFrom: Date
+//   currentAmount: number
+//   newAmount: number
+//   isFreeToPaid: boolean  // true if transitioning from FREE to paid
+//   paymentUrl?: string    // only present if FREE → Paid (redirect to provider)
+// }
+
 // TODO: zod validate input
 export interface AddUserInput {
   tenantId: string

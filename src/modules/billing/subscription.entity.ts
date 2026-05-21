@@ -27,6 +27,21 @@ export interface SubscriptionProps {
   lastWebhookAt: Date | null
   createdAt: Date
   updatedAt: Date
+
+  // TODO (2026-05-20 decisions): Add pending plan change fields for end-of-cycle changes.
+  // These fields store a requested plan change that will be applied at the next billing cycle.
+  // Pattern: user requests change → stored as pending → applied by webhook/cron at cycle end.
+  //
+  // pendingPlanType: The plan type the user wants to change to (e.g., 'PREMIUM')
+  // pendingEffectiveFrom: The date when the change should take effect (currentPeriodEnd)
+  // pendingNewAmount: The new monthly amount for the target plan
+  //
+  // Future consideration: Move these to a separate PendingPlanChange entity for better
+  // auditability and history tracking. For now, keeping them on Subscription is simpler.
+  //
+  // pendingPlanType: PlanType | null
+  // pendingEffectiveFrom: Date | null
+  // pendingNewAmount: number | null
 }
 
 export class Subscription {

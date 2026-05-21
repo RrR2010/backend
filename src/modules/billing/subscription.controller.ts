@@ -68,6 +68,27 @@ export class SubscriptionController {
     private readonly configService: ConfigService
   ) {}
 
+  // ⛔ DEAD CODE (2026-05-20 decision): This entire endpoint is marked for deletion.
+  // POST /subscriptions/checkout is a dead code leftover from the migration from
+  // single-payment to recurring subscription mode. It creates subscriptions with
+  // tenantId='checkout-pending' (orphaned), is @Public() (security risk), and has
+  // no webhook handler to link the subscription back to a tenant.
+  //
+  // All subscription creation now goes through POST /bootstrap/register which:
+  //   - Accepts planType (FREE/BASIC/PREMIUM)
+  //   - For FREE: provisions immediately without payment
+  //   - For paid: creates subscription in provider, provisions after webhook
+  //
+  // Actions needed:
+  //   1. Delete this checkout() method
+  //   2. Delete SubscriptionCheckoutDto class
+  //   3. Delete SubscriptionCheckoutResponseDto class
+  //   4. Remove the @Post('checkout') route
+  //
+  // Note: SubscriptionService.createSubscription() is also only called by this
+  // dead endpoint and should be reviewed for deletion or repurposing.
+  //
+  // See docs/USER-STORIES.md §2C for the confirmed decision.
   @Public()
   @Post('checkout')
   @HttpCode(HttpStatus.CREATED)
@@ -200,7 +221,39 @@ export class SubscriptionController {
   // Phase 8: Lifecycle management endpoints
   // ─────────────────────────────────────────────
 
+  // TODO (2026-05-20 decisions): Add plan change endpoint.
+  // This endpoint is documented in EPIC_007 but not yet implemented.
+  //
+  // PATCH /subscriptions/me/change-plan
+  // Guard: @Authorize(Action.Update, Subscription) — tenant-scoped
+  // Request: { newPlanType: PlanType }
+  // Response: {
+  //   subscriptionId: string,
+  //   oldPlanType: PlanType,
+  //   newPlanType: PlanType,
+  //   effectiveFrom: Date,        // currentPeriodEnd
+  //   currentAmount: number,
+  //   newAmount: number,
+  //   pendingChange: boolean      // true = stored, will apply at cycle end
+  // }
+  //
+  // Flow:
+  //   1. Validate subscription is modifiable (not EXPIRED/CANCELED)
+  //   2. Validate not during grace period
+  //   3. Validate target plan is active + public
+  //   4. If downgrade: validate user/product/revision counts ≤ new plan limits
+  //   5. If FREE → Paid: branch to create provider subscription (onboarding flow)
+  //   6. Store pending change on subscription entity
+  //   7. Return confirmation with effective date
+  //
+  // See docs/USER-STORIES.md §4C for the confirmed flow diagram.
+
   // TODO: Add rate limiting or API-key protection for cron endpoints.
+  // These lifecycle endpoints should be called by scheduled jobs (cron),
+  // not by user requests. Consider adding:
+  //   - API key validation via custom guard
+  //   - IP whitelist for cron job servers
+  //   - Rate limiting to prevent abuse
   // This will be addressed when the throttler module is configured for the app.
   @Post('lifecycle/sync')
   @Authorize(Action.Manage, 'all')

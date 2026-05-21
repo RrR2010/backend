@@ -78,6 +78,9 @@ export class BootstrapRegisterDto {
   @MinLength(8)
   password!: string
 
+  // NOTE (2026-05-20): planType is already part of the registration DTO.
+  // FREE plan users will skip payment and provision immediately.
+  // Paid plan users (BASIC/PREMIUM) go through Mercado Pago.
   @ApiProperty({ enum: PlanType, example: 'BASIC' })
   @IsEnum(PlanType)
   planType!: PlanType

@@ -36,7 +36,7 @@ import { SubscriptionStatus, PlanType } from '@shared/enums'
 import type { Json } from '@shared/types'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
-import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.module'
+import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
 
 @Injectable()
 export class SubscriptionService {
@@ -65,6 +65,19 @@ export class SubscriptionService {
    *
    * Returns the subscription and the provider checkout URL (paymentUrl).
    */
+  // ⛔ DEAD CODE PATH (2026-05-20 decision): This method is only called by the
+  // dead POST /subscriptions/checkout endpoint which is marked for deletion.
+  // After the checkout endpoint is removed, this method should be reviewed:
+  //   - If no other caller exists, delete it
+  //   - If needed for existing tenant upgrades, protect with auth and validate
+  //     tenant ownership (derive tenantId from ctx, not from input)
+  //
+  // Current issues:
+  //   - Creates subscriptions with tenantId='checkout-pending' when called from
+  //     the dead checkout endpoint (orphaned subscriptions)
+  //   - Includes trialEndsAt logic which is being removed (see TODO below)
+  //
+  // See docs/USER-STORIES.md §2C for the confirmed decision.
   async createSubscription(
     input: CreateSubscriptionInput,
     ctx: RequestContext
@@ -129,13 +142,16 @@ export class SubscriptionService {
       additionalUsers: 0,
       currentAmount: priceSnapshot.totalPrice,
       nextBillingAmount: priceSnapshot.totalPrice,
-      // Trial end calculation: adds plan.trialDays to current date.
-      // Uses manual milliseconds (days * 24 * 60 * 60 * 1000) to avoid
-      // external date library dependency. Equivalent to date-fns addDays().
-      trialEndsAt:
-        plan.trialDays !== null && plan.trialDays > 0
-          ? new Date(now.getTime() + plan.trialDays * 24 * 60 * 60 * 1000)
-          : null,
+      // TODO (2026-05-20 decision): Trial feature is being REMOVED.
+      // Basic plan serves as the entry-level paid tier — no trial period needed.
+      // Delete this trialEndsAt logic and remove trialDays from Plan entity/seed.
+      // Set to null permanently, then remove the field from Subscription entity.
+      trialEndsAt: null,
+      // OLD TRIAL LOGIC (to be deleted):
+      // trialEndsAt:
+      //   plan.trialDays !== null && plan.trialDays > 0
+      //     ? new Date(now.getTime() + plan.trialDays * 24 * 60 * 60 * 1000)
+      //     : null,
       currentPeriodStart: now,
       // Fix 10: Set currentPeriodEnd based on default billing cycle
       // when provider does not return a specific period end date
@@ -249,7 +265,10 @@ export class SubscriptionService {
       backUrlPending,
       backUrlFailure,
       webhookUrl,
-      trialDays: plan.trialDays
+      // TODO (2026-05-20 decision): Trial feature is being REMOVED.
+      // Set to 0 or null, then remove from ProviderCreateInput interface.
+      trialDays: 0
+      // OLD: trialDays: plan.trialDays
     }
 
     // Create subscription in provider
@@ -311,10 +330,14 @@ export class SubscriptionService {
       additionalUsers: 0,
       currentAmount: priceSnapshot.totalPrice,
       nextBillingAmount: priceSnapshot.totalPrice,
-      trialEndsAt:
-        plan.trialDays !== null && plan.trialDays > 0
-          ? new Date(now.getTime() + plan.trialDays * 24 * 60 * 60 * 1000)
-          : null,
+      // TODO (2026-05-20 decision): Trial feature is being REMOVED.
+      // Set to null permanently, then remove the field from Subscription entity.
+      trialEndsAt: null,
+      // OLD TRIAL LOGIC (to be deleted):
+      // trialEndsAt:
+      //   plan.trialDays !== null && plan.trialDays > 0
+      //     ? new Date(now.getTime() + plan.trialDays * 24 * 60 * 60 * 1000)
+      //     : null,
       currentPeriodStart: now,
       currentPeriodEnd: new Date(
         now.getTime() + DEFAULT_BILLING_CYCLE_DAYS * 24 * 60 * 60 * 1000
@@ -540,7 +563,41 @@ export class SubscriptionService {
 
   /**
    * Changes the subscription plan.
-   * Validates the new plan, calculates new price, updates provider and local state.
+   *
+   * TODO (2026-05-20 decisions): This method needs significant refactoring:
+   *
+   * 1. END-OF-CYCLE CHANGES (not immediate):
+   *    - Instead of applying the change immediately, store it as pending:
+   *      subscription.pendingPlanType = newPlanType
+   *      subscription.pendingEffectiveFrom = currentPeriodEnd
+   *      subscription.pendingNewAmount = newAmount
+   *    - Return the pending change details to the user for confirmation
+   *
+   * 2. NO PRORATION:
+   *    - Remove any proration logic (currently none exists, which is correct)
+   *    - The change takes effect at the next billing cycle with full new price
+   *
+   * 3. FREE → PAID BRANCH:
+   *    - If subscription.planType === FREE, the tenant has no provider subscription
+   *    - Branch: call createSubscriptionForOnboarding() → redirect to payment
+   *    - Webhook will finalize the subscription after payment authorization
+   *
+   * 4. VALIDATION ADDITIONS:
+   *    - Add grace period check: throw if subscription.isInGracePeriod()
+   *    - Add downgrade limit checks:
+   *      * User count ≤ new plan's includedUsers
+   *      * Product count ≤ new plan's maxProducts
+   *      * Revision count ≤ new plan's maxRevisions
+   *    - Remove FREE → ENTERPRISE block (user can jump tiers if limits met)
+   *
+   * 5. APPLY PENDING CHANGES:
+   *    - Add applyPendingPlanChange() method called by:
+   *      a) Webhook handler (primary) — when payment succeeds at cycle end
+   *      b) Cron job (fallback) — /lifecycle/apply-pending-changes
+   *    - This method: updates provider via PUT /preapproval/{id},
+   *      syncs local state, clears pending fields, creates event
+   *
+   * See docs/USER-STORIES.md §4C for the confirmed flow diagram.
    */
   async changePlan(
     input: ChangePlanInput,

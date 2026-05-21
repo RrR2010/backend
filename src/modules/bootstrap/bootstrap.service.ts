@@ -80,6 +80,18 @@ export class BootstrapService {
     _reqIp: string | null,
     _reqUserAgent: string | null
   ): Promise<BootstrapRegisterResult> {
+    // TODO (2026-05-20 decision): Branch for FREE plan — skip payment provider entirely.
+    // If dto.planType === PlanType.FREE, provision immediately without calling
+    // createSubscriptionForOnboarding(). Flow should be:
+    //   1. Validate + hash password
+    //   2. Check duplicates
+    //   3. Create TenantRegistration in PENDING state
+    //   4. Call provisionRegistration() directly
+    //   5. Mark registration PROVISIONED
+    //   6. Generate handoff token
+    //   7. Return result with paymentUrl = null (or a frontend "success" URL)
+    // This avoids creating a $0 subscription in Mercado Pago for free-tier users.
+    // See docs/USER-STORIES.md §2A for the confirmed flow diagram.
     // 1. Normalize inputs
     const normalizedEmail = dto.email.toLowerCase().trim()
     const normalizedTaxId = this.normalizeTaxId(dto.tenantSiteTaxId)
@@ -156,7 +168,27 @@ export class BootstrapService {
     // 6. Save registration
     await this.registrationRepo.save(registration, this.platformCtx)
 
+    // TODO (2026-05-20 decision): Add FREE plan branch BEFORE this point.
+    // If dto.planType === PlanType.FREE:
+    //   - Skip steps 7-10 (no payment provider call)
+    //   - Call provisionRegistration() directly
+    //   - Mark registration PROVISIONED
+    //   - Return result with paymentUrl = null
+    //   - Frontend can go straight to claim-session
+    //
+    // Example structure:
+    //   if (dto.planType === PlanType.FREE) {
+    //     return this.registerFreePlan(registration, dto, _reqIp, _reqUserAgent);
+    //   }
+    //
+    // The registerFreePlan() method would:
+    //   1. Call provisionRegistration()
+    //   2. Mark registration PROVISIONED
+    //   3. Generate handoff token (if not already generated)
+    //   4. Return BootstrapRegisterResult with paymentUrl = null
+
     // 7. Create subscription in provider (replaces old payment preference flow)
+    // NOTE: This path is only for PAID plans (BASIC, PREMIUM).
     const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000'
@@ -288,6 +320,22 @@ export class BootstrapService {
 
   // --------------- Webhook Handling ---------------
 
+  // ⛔ DEAD CODE (2026-05-20 decision): This entire method is marked for deletion.
+  // The bootstrap webhook endpoint (POST /bootstrap/webhook/payment) is dead code.
+  // All webhook handling has been consolidated into POST /subscriptions/webhook
+  // in the billing module. This method only handles 'preapproval' topic and ignores
+  // everything else. The handlePreapprovalWebhook() and getProviderSnapshot() methods
+  // below are also dead code.
+  //
+  // Actions needed:
+  //   1. Delete BootstrapController.handleWebhook() endpoint
+  //   2. Delete this handleWebhook() method
+  //   3. Delete handlePreapprovalWebhook() method
+  //   4. Delete getProviderSnapshot() method
+  //   5. Ensure /subscriptions/webhook handles onboarding preapproval events
+  //      (it may need a branch to detect onboarding vs existing tenant subscriptions)
+  //
+  // See docs/USER-STORIES.md §2C for the confirmed decision.
   async handleWebhook(
     body: Record<string, unknown>,
     _headers: Record<string, string>,
@@ -322,9 +370,15 @@ export class BootstrapService {
   }
 
   /**
-   * Handles Mercado Pago preapproval webhook for subscription onboarding.
-   * When a preapproval is authorized, provisions the tenant and creates
-   * the local subscription entity.
+   * ⛔ DEAD CODE — Marked for deletion (2026-05-20 decision).
+   * This method is part of the dead bootstrap webhook flow.
+   * Additionally, getProviderSnapshot() below returns a hardcoded ACTIVE status
+   * (line ~428) which is a security gap — the webhook event is trusted without
+   * verifying the actual subscription state with the provider.
+   *
+   * The onboarding preapproval handling should be moved to the subscription
+   * webhook handler, which already has proper provider verification,
+   * deduplication, and event logging.
    */
   private async handlePreapprovalWebhook(
     preapprovalId: string,
@@ -412,9 +466,12 @@ export class BootstrapService {
   }
 
   /**
-   * Fetches the authoritative subscription snapshot from the provider.
-   * For onboarding, the subscription doesn't exist locally yet, so we
-   * query the provider directly or assume authorized for the fake provider.
+   * ⛔ DEAD CODE — Marked for deletion (2026-05-20 decision).
+   * CRITICAL: This method returns a hardcoded ACTIVE status (line below),
+   * which means the webhook trusts the event without verifying with the provider.
+   * This is a security gap that will be eliminated when this method is deleted
+   * and the subscription webhook handler (with proper provider verification)
+   * takes over onboarding preapproval handling.
    */
   private async getProviderSnapshot(
     providerSubscriptionId: string
@@ -890,6 +947,13 @@ export class BootstrapService {
   /**
    * Simulates subscription authorization for a pending registration.
    * DEV ONLY — triggers the same webhook flow as a real authorized subscription.
+   *
+   * TODO (2026-05-20 decision): This method simulates the preapproval webhook flow
+   * which is dead code. After the webhook consolidation, this should be updated to:
+   *   - For paid plans: trigger the subscription webhook handler directly
+   *   - For FREE plans: this endpoint is not needed (FREE skips payment entirely)
+   * Consider renaming to reflect its new purpose or removing if the subscription
+   * webhook handler can be called directly in tests.
    */
   async fakeApproveRegistration(registrationId: string): Promise<void> {
     const paymentProvider = this.configService.get<string>(

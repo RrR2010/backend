@@ -77,6 +77,14 @@ export class BootstrapController {
     )
   }
 
+  // ⛔ DEAD CODE (2026-05-20 decision): This endpoint is marked for deletion.
+  // The bootstrap webhook (POST /bootstrap/webhook/payment) is dead code.
+  // All webhook handling has been consolidated into POST /subscriptions/webhook
+  // in the billing module. This endpoint only delegates to BootstrapService.handleWebhook()
+  // which itself is dead code.
+  //
+  // Action: Delete this method and remove the route.
+  // See docs/USER-STORIES.md §2C for the confirmed decision.
   @Public()
   @Post('webhook/payment')
   @HttpCode(HttpStatus.OK)
@@ -176,6 +184,10 @@ export class BootstrapController {
     return this.bootstrapService.claimSession(dto, req, res)
   }
 
+  // TODO (2026-05-20 decision): After webhook consolidation, this endpoint
+  // should be updated. For paid plans it should trigger the subscription webhook
+  // handler directly. For FREE plans this endpoint is not needed (FREE skips
+  // payment entirely). Consider renaming or removing based on the new flow.
   @Public()
   @Post('fake-approve/:registrationId')
   @HttpCode(HttpStatus.OK)

@@ -88,6 +88,21 @@ export class PlanService {
     }
 
     // TODO: zod validate input
+    // TODO (2026-05-20 decision): Trial feature is being REMOVED.
+    // Basic plan ($99.90/mo) serves as the entry-level paid tier.
+    // All trialDays values below should be set to null, then the field
+    // should be removed from:
+    //   - PlanDefinition interface
+    //   - Plan entity and Prisma schema
+    //   - Subscription entity (trialEndsAt field)
+    //   - All trial-related logic in subscription service
+    //
+    // After removal, the plan definitions below should have:
+    //   FREE: trialDays: null (already null)
+    //   BASIC: trialDays: null (was 7)
+    //   PREMIUM: trialDays: null (was 7)
+    //
+    // See docs/USER-STORIES.md §4 for the confirmed decision.
     const planDefinitions: PlanDefinition[] = [
       {
         type: PlanType.FREE,
