@@ -10,7 +10,7 @@ import { SubscriptionStatus } from '@shared/enums'
 import { SystemState } from '@shared/behaviours/lockable'
 import type { Json } from '@shared/types'
 import { RequestContext } from '@authorization/authorization.types'
-import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.module'
+import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
 import type { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import type { Subscription } from '@billing/subscription.entity'
 

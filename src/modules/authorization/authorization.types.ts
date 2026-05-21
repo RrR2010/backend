@@ -1,6 +1,14 @@
 import { MongoQuery, MongoAbility, InferSubjects } from '@casl/ability'
 import { Identity } from '@identities/identity.entity'
 import { Ingredient } from '@ingredients/ingredient.entity'
+import { Allergen } from '@ingredients/allergen.entity'
+import { Nutrient } from '@ingredients/nutrient.entity'
+import { FunctionalGroup } from '@ingredients/functional-group.entity'
+import { Company } from '@ingredients/company.entity'
+import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
+import { IngredientRegulatoryProfile } from '@ingredients/ingredient-regulatory-profile.entity'
+import { IngredientLabelingProfile } from '@ingredients/ingredient-labeling-profile.entity'
+import { IngredientTechnicalProfile } from '@ingredients/ingredient-technical-profile.entity'
 import { Tenant } from '@tenants/tenant.entity'
 import { User } from '@users/user.entity'
 import { TenantMembership } from '@tenant-memberships/tenant-membership.entity'
@@ -30,6 +38,14 @@ export type Subjects =
       | typeof User
       | typeof Tenant
       | typeof Ingredient
+      | typeof Allergen
+      | typeof Nutrient
+      | typeof FunctionalGroup
+      | typeof Company
+      | typeof TechnicalInfoSource
+      | typeof IngredientRegulatoryProfile
+      | typeof IngredientLabelingProfile
+      | typeof IngredientTechnicalProfile
       | typeof Identity
       | typeof TenantMembership
       | typeof PlatformMembership

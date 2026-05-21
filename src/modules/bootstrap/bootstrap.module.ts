@@ -16,6 +16,7 @@ import { TenantModule } from '@tenants/tenant.module'
 import { TenantMembershipModule } from '@tenant-memberships/tenant-membership.module'
 import { MemberProfileModule } from '@member-profiles/member-profile.module'
 import { BillingModule } from '@billing/billing.module'
+import { IngredientModule } from '@ingredients/ingredient.module'
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { BillingModule } from '@billing/billing.module'
     TenantModule,
     TenantMembershipModule,
     MemberProfileModule,
-    BillingModule
+    BillingModule,
+    IngredientModule
   ],
 
   controllers: [BootstrapController],

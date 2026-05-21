@@ -49,6 +49,10 @@ import { Prisma } from '@prisma/client'
 import type { Request, Response } from 'express'
 import { SubscriptionService } from '@billing/subscription.service'
 import { PlanService } from '@billing/plan.service'
+import { BaseAllergenRepository } from '@ingredients/base-allergen.repository'
+import { BaseNutrientRepository } from '@ingredients/base-nutrient.repository'
+import { AllergenRepository } from '@ingredients/allergen.repository'
+import { NutrientRepository } from '@ingredients/nutrient.repository'
 
 @Injectable()
 export class BootstrapService {
@@ -72,7 +76,11 @@ export class BootstrapService {
     private readonly auditLogService: AuditLogService,
     private readonly tenantRepository: TenantRepository,
     private readonly userRepository: UserRepository,
-    private readonly sessionService: SessionService
+    private readonly sessionService: SessionService,
+    private readonly baseAllergenRepo: BaseAllergenRepository,
+    private readonly baseNutrientRepo: BaseNutrientRepository,
+    private readonly allergenRepo: AllergenRepository,
+    private readonly nutrientRepo: NutrientRepository
   ) {}
 
   async register(
@@ -871,6 +879,9 @@ export class BootstrapService {
       }
     }
 
+    // 7. Provision ingredient catalogs (base → tenant-scoped)
+    await this.provisionIngredientCatalogs(tenantId, tx)
+
     return {
       userId,
       tenantId,
@@ -879,6 +890,57 @@ export class BootstrapService {
       identityId,
       tenantSiteId
     }
+  }
+
+  /**
+   * Provisions ingredient catalogs for a new tenant by copying all active
+   * entries from BaseAllergen → Allergen and BaseNutrient → Nutrient.
+   * Called as part of the tenant provisioning flow.
+   */
+  async provisionIngredientCatalogs(tenantId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const prisma = tx ?? this.prismaService
+    const now = new Date()
+
+    // Copy BaseAllergen → Allergen
+    const baseAllergens = await this.baseAllergenRepo.findAll({}, this.platformCtx)
+    for (const base of baseAllergens) {
+      await prisma.allergen.create({
+        data: {
+          id: crypto.randomUUID(),
+          tenantId,
+          name: base.name,
+          category: base.category,
+          regulatoryRef: base.regulatoryRef,
+          sortOrder: base.sortOrder,
+          isActive: true,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+    }
+
+    // Copy BaseNutrient → Nutrient
+    const baseNutrients = await this.baseNutrientRepo.findAll({}, this.platformCtx)
+    for (const base of baseNutrients) {
+      await prisma.nutrient.create({
+        data: {
+          id: crypto.randomUUID(),
+          tenantId,
+          name: base.name,
+          unit: base.unit,
+          category: base.category,
+          subcategory: base.subcategory,
+          sortOrder: base.sortOrder,
+          isActive: true,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+    }
+
+    this.logger.log(`Ingredient catalogs provisioned for tenant ${tenantId}: ${baseAllergens.length} allergens, ${baseNutrients.length} nutrients`)
   }
 
   /**

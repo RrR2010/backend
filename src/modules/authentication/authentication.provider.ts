@@ -33,10 +33,13 @@ export class EmailAuthenticationProvider extends AuthenticationProvider<AuthProv
       scope: UserScope.PLATFORM,
       roles: []
     }
-    const identities = await this.identityRepository.findAll({
-      authProviderType: AuthProviderType.EMAIL,
-      identifier: input.email
-    }, ctx)
+    const identities = await this.identityRepository.findAll(
+      {
+        authProviderType: AuthProviderType.EMAIL,
+        identifier: input.email
+      },
+      ctx
+    )
 
     if (identities.length === 0 || identities[0] === undefined) {
       return null
@@ -81,10 +84,13 @@ export class CpfAuthenticationProvider extends AuthenticationProvider<AuthProvid
       scope: UserScope.PLATFORM,
       roles: []
     }
-    const identities = await this.identityRepository.findAll({
-      authProviderType: AuthProviderType.CPF,
-      identifier: normalizedCpf
-    }, ctx)
+    const identities = await this.identityRepository.findAll(
+      {
+        authProviderType: AuthProviderType.CPF,
+        identifier: normalizedCpf
+      },
+      ctx
+    )
 
     if (identities.length === 0 || identities[0] === undefined) {
       return null

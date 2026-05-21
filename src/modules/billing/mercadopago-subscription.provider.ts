@@ -55,6 +55,8 @@ export class MercadopagoSubscriptionProvider implements SubscriptionProvider {
     // TODO: zod validate input
     const { preApproval } = this.getPreApproval()
 
+    this.logger.log(`createSubscription called with payerEmail: ${input.payerEmail}, planType: ${input.planType}`)
+
     try {
       const body: Record<string, unknown> = {
         reason: `ViverSorvete - ${input.planType} plan subscription`,
@@ -69,6 +71,8 @@ export class MercadopagoSubscriptionProvider implements SubscriptionProvider {
         payer_email: input.payerEmail
       }
 
+      this.logger.log(`MP body: ${JSON.stringify(body, null, 2)}`)
+
       if (input.trialDays !== null && input.trialDays > 0) {
         body.trial_days = input.trialDays
       }
@@ -78,17 +82,29 @@ export class MercadopagoSubscriptionProvider implements SubscriptionProvider {
       const providerSubscriptionId = result.id ?? ''
       const status = mapMercadoPagoStatus(result.status)
 
+      const paymentUrl = result.init_point
+
+      if (!paymentUrl) {
+        throw new Error(
+          'Mercado Pago checkout URL (init_point) is missing in response'
+        )
+      }
+
       return {
         providerSubscriptionId,
         providerPreapprovalId: providerSubscriptionId,
         providerCustomerId: result.payer_id?.toString() ?? null,
-        paymentUrl: result.init_point ?? null,
+        paymentUrl,
         status
       }
     } catch (error) {
+      const errObj = error as Record<string, unknown>
       this.logger.error('Failed to create Mercado Pago subscription', {
         tenantId: input.tenantId,
-        error: error instanceof Error ? error.message : String(error)
+        message: errObj?.['message'] ?? 'unknown',
+        status: errObj?.['status'] ?? 'unknown',
+        cause: errObj?.['cause'] ?? 'none',
+        fullError: JSON.stringify(errObj, Object.getOwnPropertyNames(errObj), 2)
       })
       throw error
     }

@@ -18,10 +18,9 @@ import { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import { FakeSubscriptionProvider } from '@billing/fake-subscription.provider'
 import { MercadopagoSubscriptionProvider } from '@billing/mercadopago-subscription.provider'
 import { SubscriptionController } from '@billing/subscription.controller'
+import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
 import { TenantModule } from '@tenants/tenant.module'
 import { AuditLogModule } from '@audit-logs/audit-log.module'
-
-export const SUBSCRIPTION_PROVIDER_TOKEN = 'SubscriptionProvider'
 
 @Module({
   imports: [PrismaModule, ConfigModule, TenantModule, AuditLogModule],
@@ -52,9 +51,17 @@ export const SUBSCRIPTION_PROVIDER_TOKEN = 'SubscriptionProvider'
         fake: FakeSubscriptionProvider,
         mp: MercadopagoSubscriptionProvider
       ): SubscriptionProvider => {
-        const provider = config.get<string>('SUBSCRIPTION_PROVIDER', 'fake')
+        const provider = config.get<string>('SUBSCRIPTION_PROVIDER')
+        if (!provider) {
+          throw new Error(
+            'SUBSCRIPTION_PROVIDER is not configured. Set to "mercadopago" or "fake" in .env.dev'
+          )
+        }
         if (provider === 'mercadopago') return mp
-        return fake
+        if (provider === 'fake') return fake
+        throw new Error(
+          `Invalid SUBSCRIPTION_PROVIDER: "${provider}". Must be "mercadopago" or "fake"`
+        )
       },
       inject: [
         ConfigService,
