@@ -20,8 +20,8 @@ import {
 import { BaseAllergenService } from '@ingredients/base-allergen.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
+import { BaseAllergen } from '@ingredients/base-allergen.entity'
 
-// TODO: Register BaseAllergen in CASL Subjects and replace 'all' with BaseAllergen class
 @ApiTags('Base Allergens')
 @ApiBearerAuth('accessToken')
 @Controller('base-allergens')
@@ -29,7 +29,7 @@ export class BaseAllergenController {
   constructor(private readonly service: BaseAllergenService) {}
 
   @Post()
-  @Authorize(Action.Manage, 'all')
+  @Authorize(Action.Manage, BaseAllergen)
   @ApiConsumes('application/json')
   async create(
     @Body() dto: CreateBaseAllergenDto,
@@ -48,14 +48,14 @@ export class BaseAllergenController {
   }
 
   @Get()
-  @Authorize(Action.Manage, 'all')
+  @Authorize(Action.Manage, BaseAllergen)
   async findAll(@Req() request: Request): Promise<BaseAllergenResponseDto[]> {
     const allergens = await this.service.findAll(request.context)
     return allergens.map(BaseAllergenResponseDto.fromDomain)
   }
 
   @Get(':id')
-  @Authorize(Action.Manage, 'all')
+  @Authorize(Action.Manage, BaseAllergen)
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
@@ -65,7 +65,7 @@ export class BaseAllergenController {
   }
 
   @Patch(':id')
-  @Authorize(Action.Manage, 'all')
+  @Authorize(Action.Manage, BaseAllergen)
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -84,7 +84,7 @@ export class BaseAllergenController {
   }
 
   @Delete(':id')
-  @Authorize(Action.Manage, 'all')
+  @Authorize(Action.Manage, BaseAllergen)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request

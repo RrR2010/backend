@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
+import { PrismaService } from '@shared/prisma/prisma.service'
 import { IngredientLabelingProfileRepository, IngredientLabelingProfileFilter } from '@ingredients/ingredient-labeling-profile.repository'
 import { IngredientLabelingProfile, CreateIngredientLabelingProfileProps } from '@ingredients/ingredient-labeling-profile.entity'
 import { IngredientLabelingProfileNotFoundError, IngredientLabelingProfileAlreadyExistsError } from '@ingredients/ingredient-labeling-profile.errors'
@@ -8,7 +9,10 @@ import { UserScope } from '@users/user.types'
 
 @Injectable()
 export class IngredientLabelingProfileService {
-  constructor(private readonly repository: IngredientLabelingProfileRepository) {}
+  constructor(
+    private readonly repository: IngredientLabelingProfileRepository,
+    private readonly prisma: PrismaService
+  ) {}
 
   async create(props: CreateIngredientLabelingProfileProps, ctx: RequestContext): Promise<IngredientLabelingProfile> {
     // TODO: zod validate input
@@ -40,9 +44,31 @@ export class IngredientLabelingProfileService {
   }
 
   async findByIngredientId(ingredientId: string, ctx: RequestContext): Promise<IngredientLabelingProfile> {
-    const profile = await this.repository.findByIngredientId(ingredientId, ctx)
+    let profile = await this.repository.findByIngredientId(ingredientId, ctx)
     if (!profile) {
-      throw new IngredientLabelingProfileNotFoundError(`for ingredient ${ingredientId}`)
+      // Auto-create empty profile on first read
+      let tenantId: string
+      if (ctx.scope === UserScope.TENANT) {
+        tenantId = ctx.tenantId
+      } else {
+        const ingredient = await this.prisma.ingredient.findUnique({ where: { id: ingredientId } })
+        if (!ingredient) throw new NotFoundException('Ingredient not found')
+        tenantId = ingredient.tenantId
+      }
+
+      profile = IngredientLabelingProfile.create({
+        ingredientId,
+        tenantId,
+        containsAddedSugars: false,
+        containsIngredientWithAddedSugars: false,
+        containsNaturallyOccurringSugarSubstitutes: false,
+        usesProcessingThatIncreasesSugars: false,
+        containsAddedFatsOrOils: false,
+        containsButterOrMargarine: false,
+        containsDairyCream: false,
+        containsIngredientsWithFatsOrCream: false,
+      })
+      profile = await this.repository.save(profile, ctx)
     }
     return profile
   }

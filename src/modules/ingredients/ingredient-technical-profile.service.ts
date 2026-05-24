@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
+import { PrismaService } from '@shared/prisma/prisma.service'
 import { IngredientTechnicalProfileRepository, IngredientTechnicalProfileFilter } from '@ingredients/ingredient-technical-profile.repository'
 import { IngredientTechnicalProfile, CreateIngredientTechnicalProfileProps } from '@ingredients/ingredient-technical-profile.entity'
 import { IngredientTechnicalProfileNotFoundError, IngredientTechnicalProfileAlreadyExistsError } from '@ingredients/ingredient-technical-profile.errors'
@@ -8,7 +9,10 @@ import { UserScope } from '@users/user.types'
 
 @Injectable()
 export class IngredientTechnicalProfileService {
-  constructor(private readonly repository: IngredientTechnicalProfileRepository) {}
+  constructor(
+    private readonly repository: IngredientTechnicalProfileRepository,
+    private readonly prisma: PrismaService
+  ) {}
 
   async create(props: CreateIngredientTechnicalProfileProps, ctx: RequestContext): Promise<IngredientTechnicalProfile> {
     // TODO: zod validate input
@@ -40,9 +44,27 @@ export class IngredientTechnicalProfileService {
   }
 
   async findByIngredientId(ingredientId: string, ctx: RequestContext): Promise<IngredientTechnicalProfile> {
-    const profile = await this.repository.findByIngredientId(ingredientId, ctx)
+    let profile = await this.repository.findByIngredientId(ingredientId, ctx)
     if (!profile) {
-      throw new IngredientTechnicalProfileNotFoundError(`for ingredient ${ingredientId}`)
+      // Auto-create empty profile on first read
+      let tenantId: string
+      if (ctx.scope === UserScope.TENANT) {
+        tenantId = ctx.tenantId
+      } else {
+        const ingredient = await this.prisma.ingredient.findUnique({ where: { id: ingredientId } })
+        if (!ingredient) throw new NotFoundException('Ingredient not found')
+        tenantId = ingredient.tenantId
+      }
+
+      profile = IngredientTechnicalProfile.create({
+        ingredientId,
+        tenantId,
+        pac: null,
+        pod: null,
+        totalSolids: null,
+        ashContent: null,
+      })
+      profile = await this.repository.save(profile, ctx)
     }
     return profile
   }

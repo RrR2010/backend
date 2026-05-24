@@ -15,7 +15,8 @@ import {
   CreateIngredientDto,
   CreateIngredientResponseDto,
   IngredientResponseDto,
-  UpdateIngredientDto
+  UpdateIngredientDto,
+  SaveAllIngredientDto
 } from '@ingredients/ingredient.dto'
 import { IngredientService } from '@ingredients/ingredient.service'
 import { Authorize } from '@authorization/authorization.decorators'
@@ -126,6 +127,18 @@ export class IngredientsController {
     @Req() request: Request
   ): Promise<IngredientResponseDto> {
     const ingredient = await this.service.lock(id, request.context)
+    return IngredientResponseDto.fromDomain(ingredient)
+  }
+
+  @Post(':id/save')
+  @Authorize(Action.Update, Ingredient)
+  @ApiConsumes('application/json')
+  async saveAll(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SaveAllIngredientDto,
+    @Req() request: Request
+  ): Promise<IngredientResponseDto> {
+    const ingredient = await this.service.saveAll(id, dto, request.context)
     return IngredientResponseDto.fromDomain(ingredient)
   }
 }

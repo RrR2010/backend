@@ -62,7 +62,7 @@ export class SessionService {
         refreshTokenHash: 'temp', // Placeholder - will be replaced
         deviceInfo: deviceInfo ?? null,
         ipAddress: ipAddress ?? null,
-        expiresAt: new Date(Date.now() + this.AUTH_TOKEN_EXP),
+        expiresAt: new Date(Date.now() + this.REFRESH_TOKEN_EXP),
         revokedAt: null
       })
 

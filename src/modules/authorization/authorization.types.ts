@@ -9,6 +9,8 @@ import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
 import { IngredientRegulatoryProfile } from '@ingredients/ingredient-regulatory-profile.entity'
 import { IngredientLabelingProfile } from '@ingredients/ingredient-labeling-profile.entity'
 import { IngredientTechnicalProfile } from '@ingredients/ingredient-technical-profile.entity'
+import { BaseAllergen } from '@ingredients/base-allergen.entity'
+import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Tenant } from '@tenants/tenant.entity'
 import { User } from '@users/user.entity'
 import { TenantMembership } from '@tenant-memberships/tenant-membership.entity'
@@ -46,6 +48,8 @@ export type Subjects =
       | typeof IngredientRegulatoryProfile
       | typeof IngredientLabelingProfile
       | typeof IngredientTechnicalProfile
+      | typeof BaseAllergen
+      | typeof BaseNutrient
       | typeof Identity
       | typeof TenantMembership
       | typeof PlatformMembership

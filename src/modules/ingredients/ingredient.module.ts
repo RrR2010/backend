@@ -37,12 +37,14 @@ import { IngredientRepository, PrismaIngredientRepository } from '@ingredients/i
 import { IngredientService } from '@ingredients/ingredient.service'
 import { IngredientsController } from '@ingredients/ingredient.controller'
 
-// Junction tables (no controllers — managed through Ingredient aggregate)
+// Junction tables
 import { IngredientAllergenRepository, PrismaIngredientAllergenRepository } from '@ingredients/ingredient-allergen.repository'
 import { IngredientAllergenService } from '@ingredients/ingredient-allergen.service'
+import { IngredientAllergensController } from '@ingredients/ingredient-allergen.controller'
 
 import { IngredientNutrientRepository, PrismaIngredientNutrientRepository } from '@ingredients/ingredient-nutrient.repository'
 import { IngredientNutrientService } from '@ingredients/ingredient-nutrient.service'
+import { IngredientNutrientsController } from '@ingredients/ingredient-nutrient.controller'
 
 // Profile entities
 import { IngredientRegulatoryProfileRepository, PrismaIngredientRegulatoryProfileRepository } from '@ingredients/ingredient-regulatory-profile.repository'
@@ -68,6 +70,8 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     CompaniesController,
     TechnicalInfoSourcesController,
     IngredientsController,
+    IngredientAllergensController,
+    IngredientNutrientsController,
     IngredientRegulatoryProfilesController,
     IngredientLabelingProfilesController,
     IngredientTechnicalProfilesController

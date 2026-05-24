@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
+import { PrismaService } from '@shared/prisma/prisma.service'
 import { IngredientRegulatoryProfileRepository, IngredientRegulatoryProfileFilter } from '@ingredients/ingredient-regulatory-profile.repository'
 import { IngredientRegulatoryProfile, CreateIngredientRegulatoryProfileProps } from '@ingredients/ingredient-regulatory-profile.entity'
 import { IngredientRegulatoryProfileNotFoundError, IngredientRegulatoryProfileAlreadyExistsError } from '@ingredients/ingredient-regulatory-profile.errors'
@@ -8,7 +9,10 @@ import { UserScope } from '@users/user.types'
 
 @Injectable()
 export class IngredientRegulatoryProfileService {
-  constructor(private readonly repository: IngredientRegulatoryProfileRepository) {}
+  constructor(
+    private readonly repository: IngredientRegulatoryProfileRepository,
+    private readonly prisma: PrismaService
+  ) {}
 
   async create(props: CreateIngredientRegulatoryProfileProps, ctx: RequestContext): Promise<IngredientRegulatoryProfile> {
     // TODO: zod validate input
@@ -40,9 +44,35 @@ export class IngredientRegulatoryProfileService {
   }
 
   async findByIngredientId(ingredientId: string, ctx: RequestContext): Promise<IngredientRegulatoryProfile> {
-    const profile = await this.repository.findByIngredientId(ingredientId, ctx)
+    let profile = await this.repository.findByIngredientId(ingredientId, ctx)
     if (!profile) {
-      throw new IngredientRegulatoryProfileNotFoundError(`for ingredient ${ingredientId}`)
+      // Auto-create empty profile on first read
+      let tenantId: string
+      if (ctx.scope === UserScope.TENANT) {
+        tenantId = ctx.tenantId
+      } else {
+        const ingredient = await this.prisma.ingredient.findUnique({ where: { id: ingredientId } })
+        if (!ingredient) throw new NotFoundException('Ingredient not found')
+        tenantId = ingredient.tenantId
+      }
+
+      profile = IngredientRegulatoryProfile.create({
+        ingredientId,
+        tenantId,
+        hasRtiq: false,
+        isGmo: false,
+        gmoIngredient: null,
+        gmoDonorSpecies: null,
+        gmoPercentage: null,
+        isIrradiated: false,
+        irradiatedIngredient: null,
+        containsLactose: false,
+        containsGluten: false,
+        containsAspartame: false,
+        flavorOriginType: null,
+        colorantOriginType: null,
+      })
+      profile = await this.repository.save(profile, ctx)
     }
     return profile
   }

@@ -60,6 +60,17 @@ export class IngredientLabelingProfilesController {
     return profiles.map(IngredientLabelingProfileResponseDto.fromDomain)
   }
 
+  @Get('by-ingredient/:ingredientId')
+  @Authorize(Action.Read, IngredientLabelingProfile)
+  async findByIngredientId(
+    @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
+    @Req() request: Request
+  ): Promise<IngredientLabelingProfileResponseDto | null> {
+    const profile = await this.service.findByIngredientId(ingredientId, request.context)
+    if (!profile) return null
+    return IngredientLabelingProfileResponseDto.fromDomain(profile)
+  }
+
   @Get(':id')
   @Authorize(Action.Read, IngredientLabelingProfile)
   async findById(
