@@ -9,9 +9,9 @@ import { UserScope } from '@users/user.types'
 
 export type IngredientFilter = {
   code?: string
-  functionalName?: string
+  internalName?: string
   commercialName?: string
-  saleName?: string
+  saleDenomination?: string
   functionalGroupId?: string
   ingredientFunction?: IngredientFunctionType
   manufacturerId?: string
@@ -47,9 +47,9 @@ export class PrismaIngredientRepository implements IngredientRepository {
   async findAll(filter: IngredientFilter, ctx: RequestContext): Promise<Ingredient[]> {
     const where: Prisma.IngredientWhereInput = {
       ...(filter.code && { code: { contains: filter.code, mode: 'insensitive' } }),
-      ...(filter.functionalName && { functionalName: { contains: filter.functionalName, mode: 'insensitive' } }),
+      ...(filter.internalName && { internalName: { contains: filter.internalName, mode: 'insensitive' } }),
       ...(filter.commercialName && { commercialName: { contains: filter.commercialName, mode: 'insensitive' } }),
-      ...(filter.saleName && { saleName: { contains: filter.saleName, mode: 'insensitive' } }),
+      ...(filter.saleDenomination && { saleDenomination: { contains: filter.saleDenomination, mode: 'insensitive' } }),
       ...(filter.functionalGroupId && { functionalGroupId: filter.functionalGroupId }),
       ...(filter.ingredientFunction && { ingredientFunction: filter.ingredientFunction }),
       ...(filter.manufacturerId && { manufacturerId: filter.manufacturerId }),
@@ -65,7 +65,7 @@ export class PrismaIngredientRepository implements IngredientRepository {
     }
     const prismaIngredients = await this.prisma.ingredient.findMany({
       where,
-      orderBy: { functionalName: 'asc' }
+      orderBy: { internalName: 'asc' }
     })
     return prismaIngredients.map((ingredient) => PrismaIngredientMapper.toDomain(ingredient))
   }
@@ -110,9 +110,9 @@ class PrismaIngredientMapper {
       systemState,
       tenantId: prismaIngredient.tenantId,
       code: prismaIngredient.code,
-      functionalName: prismaIngredient.functionalName,
+      internalName: prismaIngredient.internalName,
       commercialName: prismaIngredient.commercialName,
-      saleName: prismaIngredient.saleName,
+      saleDenomination: prismaIngredient.saleDenomination,
       functionalGroupId: prismaIngredient.functionalGroupId,
       ingredientFunction,
       notes: prismaIngredient.notes,
@@ -132,9 +132,9 @@ class PrismaIngredientMapper {
       systemState: ingredient.systemState,
       tenantId: ingredient.tenantId,
       code: ingredient.code,
-      functionalName: ingredient.functionalName,
+      internalName: ingredient.internalName,
       commercialName: ingredient.commercialName,
-      saleName: ingredient.saleName,
+      saleDenomination: ingredient.saleDenomination,
       functionalGroupId: ingredient.functionalGroupId,
       ingredientFunction: ingredient.ingredientFunction,
       notes: ingredient.notes,

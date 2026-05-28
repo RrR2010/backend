@@ -9,9 +9,9 @@ export type IngredientProps = AuditableProps & LockableProps & {
   id: Id
   tenantId: string
   code: string
-  functionalName: string
+  internalName: string
   commercialName: string | null
-  saleName: string | null
+  saleDenomination: string | null
   functionalGroupId: string | null
   ingredientFunction: IngredientFunctionType
   notes: string | null
@@ -62,16 +62,16 @@ export class Ingredient extends Lockable(Auditable(Base<IngredientProps>)) {
     return this._props.code
   }
 
-  get functionalName(): string {
-    return this._props.functionalName
+  get internalName(): string {
+    return this._props.internalName
   }
 
   get commercialName(): string | null {
     return this._props.commercialName
   }
 
-  get saleName(): string | null {
-    return this._props.saleName
+  get saleDenomination(): string | null {
+    return this._props.saleDenomination
   }
 
   get functionalGroupId(): string | null {
@@ -114,9 +114,9 @@ export class Ingredient extends Lockable(Auditable(Base<IngredientProps>)) {
     this.touch()
   }
 
-  changeFunctionalName(functionalName: string): void {
+  changeInternalName(internalName: string): void {
     this.ensureActivated('Ingredient')
-    this._props.functionalName = functionalName
+    this._props.internalName = internalName
     this.touch()
   }
 
@@ -126,9 +126,9 @@ export class Ingredient extends Lockable(Auditable(Base<IngredientProps>)) {
     this.touch()
   }
 
-  changeSaleName(saleName: string | null): void {
+  changeSaleDenomination(saleDenomination: string | null): void {
     this.ensureActivated('Ingredient')
-    this._props.saleName = saleName
+    this._props.saleDenomination = saleDenomination
     this.touch()
   }
 

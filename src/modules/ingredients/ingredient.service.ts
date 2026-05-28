@@ -396,9 +396,9 @@ export class IngredientService {
       ingredient: ingredient
         ? {
             code: ingredient.code,
-            functionalName: ingredient.functionalName,
+            internalName: ingredient.internalName,
             commercialName: ingredient.commercialName,
-            saleName: ingredient.saleName,
+            saleDenomination: ingredient.saleDenomination,
             functionalGroupId: ingredient.functionalGroupId,
             ingredientFunction: ingredient.ingredientFunction,
             notes: ingredient.notes,

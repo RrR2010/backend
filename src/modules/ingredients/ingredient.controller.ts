@@ -40,9 +40,9 @@ export class IngredientsController {
       {
         tenantId: dto.tenantId,
         code: dto.code,
-        functionalName: dto.functionalName,
+        internalName: dto.internalName,
         commercialName: dto.commercialName ?? null,
-        saleName: dto.saleName ?? null,
+        saleDenomination: dto.saleDenomination ?? null,
         functionalGroupId: dto.functionalGroupId ?? null,
         ingredientFunction: dto.ingredientFunction,
         notes: dto.notes ?? null,
@@ -85,9 +85,9 @@ export class IngredientsController {
     const ingredient = await this.service.findById(id, request.context)
 
     if (dto.code !== undefined) ingredient.changeCode(dto.code)
-    if (dto.functionalName !== undefined) ingredient.changeFunctionalName(dto.functionalName)
+    if (dto.internalName !== undefined) ingredient.changeInternalName(dto.internalName)
     if (dto.commercialName !== undefined) ingredient.changeCommercialName(dto.commercialName)
-    if (dto.saleName !== undefined) ingredient.changeSaleName(dto.saleName)
+    if (dto.saleDenomination !== undefined) ingredient.changeSaleDenomination(dto.saleDenomination)
     if (dto.functionalGroupId !== undefined) ingredient.changeFunctionalGroup(dto.functionalGroupId)
     if (dto.ingredientFunction) ingredient.changeIngredientFunction(dto.ingredientFunction)
     if (dto.notes !== undefined) ingredient.changeNotes(dto.notes)

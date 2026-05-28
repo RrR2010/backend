@@ -17,13 +17,13 @@ export class CreateIngredientDto {
   code!: string
 
   @ApiProperty({ type: String })
-  functionalName!: string
+  internalName!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
   commercialName?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
-  saleName?: string | null
+  saleDenomination?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
   functionalGroupId?: string | null
@@ -61,13 +61,13 @@ export class CreateIngredientResponseDto {
   code!: string
 
   @ApiProperty()
-  functionalName!: string
+  internalName!: string
 
   @ApiProperty({ required: false, nullable: true })
   commercialName!: string | null
 
   @ApiProperty({ required: false, nullable: true })
-  saleName!: string | null
+  saleDenomination!: string | null
 
   @ApiProperty({ required: false, nullable: true })
   functionalGroupId!: string | null
@@ -107,9 +107,9 @@ export class CreateIngredientResponseDto {
       id: ingredient.id.value,
       tenantId: ingredient.tenantId,
       code: ingredient.code,
-      functionalName: ingredient.functionalName,
+      internalName: ingredient.internalName,
       commercialName: ingredient.commercialName,
-      saleName: ingredient.saleName,
+      saleDenomination: ingredient.saleDenomination,
       functionalGroupId: ingredient.functionalGroupId,
       ingredientFunction: ingredient.ingredientFunction,
       notes: ingredient.notes,
@@ -132,13 +132,13 @@ export class UpdateIngredientDto {
   code?: string
 
   @ApiProperty({ type: String, required: false })
-  functionalName?: string
+  internalName?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
   commercialName?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
-  saleName?: string | null
+  saleDenomination?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
   functionalGroupId?: string | null
