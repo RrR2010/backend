@@ -936,7 +936,6 @@ export class BootstrapService {
           name: base.name,
           unit: base.unit,
           category: base.category,
-          subcategory: base.subcategory,
           sortOrder: base.sortOrder,
           isActive: true,
           systemState: SystemState.ACTIVE,

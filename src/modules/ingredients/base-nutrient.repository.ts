@@ -112,7 +112,6 @@ class PrismaBaseNutrientMapper {
       name: prismaBaseNutrient.name,
       unit: prismaBaseNutrient.unit,
       category: prismaBaseNutrient.category,
-      subcategory: prismaBaseNutrient.subcategory,
       sortOrder: prismaBaseNutrient.sortOrder
     })
   }
@@ -128,7 +127,6 @@ class PrismaBaseNutrientMapper {
       name: baseNutrient.name,
       unit: baseNutrient.unit,
       category: baseNutrient.category,
-      subcategory: baseNutrient.subcategory,
       sortOrder: baseNutrient.sortOrder
     }
   }

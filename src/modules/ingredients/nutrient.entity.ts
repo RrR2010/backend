@@ -11,7 +11,6 @@ export type NutrientProps = AuditableProps & LockableProps & {
   name: string
   unit: NutrientUnit
   category: NutrientCategory
-  subcategory: string | null
   sortOrder: number
   isActive: boolean
 }
@@ -64,10 +63,6 @@ export class Nutrient extends Lockable(Auditable(Base<NutrientProps>)) {
     return this._props.category
   }
 
-  get subcategory(): string | null {
-    return this._props.subcategory
-  }
-
   get sortOrder(): number {
     return this._props.sortOrder
   }
@@ -93,12 +88,6 @@ export class Nutrient extends Lockable(Auditable(Base<NutrientProps>)) {
   changeCategory(category: NutrientCategory): void {
     this.ensureActivated('Nutrient')
     this._props.category = category
-    this.touch()
-  }
-
-  changeSubcategory(subcategory: string | null): void {
-    this.ensureActivated('Nutrient')
-    this._props.subcategory = subcategory
     this.touch()
   }
 

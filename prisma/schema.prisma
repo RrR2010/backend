@@ -127,15 +127,12 @@ enum NutrientUnit {
 }
 
 enum NutrientCategory {
-  MACRONUTRIENT
-  SUGAR
-  FATTY_ACID
-  VITAMIN
-  MINERAL
-  AMINO_ACID
-  POLYOL
+  MANDATORY_DECLARATION
+  SPECIFIC_CARBS
+  FATTY_ACIDS
+  MINERALS
   FIBER
-  BIOACTIVE
+  VITAMINS
   OTHER
 }
 
@@ -570,7 +567,6 @@ model BaseNutrient {
   name          String          @unique
   unit          NutrientUnit
   category      NutrientCategory
-  subcategory   String?
   sortOrder     Int             @default(0)
 }
 
@@ -605,7 +601,6 @@ model Nutrient {
   name          String
   unit          NutrientUnit
   category      NutrientCategory
-  subcategory   String?
   sortOrder     Int             @default(0)
   isActive      Boolean         @default(true)
 
@@ -677,9 +672,9 @@ model Ingredient {
   tenantId          String
   tenant            Tenant                   @relation(fields: [tenantId], references: [id])
   code              String
-  functionalName    String
+  internalName      String
   commercialName    String?
-  saleName          String?
+  saleDenomination   String?
   functionalGroupId String?
   functionalGroup   FunctionalGroup?         @relation(fields: [functionalGroupId], references: [id])
   ingredientFunction IngredientFunctionType

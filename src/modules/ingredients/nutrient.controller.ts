@@ -41,7 +41,6 @@ export class NutrientsController {
         name: dto.name,
         unit: dto.unit,
         category: dto.category,
-        subcategory: dto.subcategory ?? null,
         sortOrder: dto.sortOrder ?? 0,
         isActive: dto.isActive ?? true
       },
@@ -80,7 +79,6 @@ export class NutrientsController {
     if (dto.name) nutrient.changeName(dto.name)
     if (dto.unit) nutrient.changeUnit(dto.unit)
     if (dto.category !== undefined) nutrient.changeCategory(dto.category)
-    if (dto.subcategory !== undefined) nutrient.changeSubcategory(dto.subcategory)
     if (dto.sortOrder !== undefined) nutrient.changeSortOrder(dto.sortOrder)
     if (dto.isActive !== undefined) {
       dto.isActive ? nutrient.setActive() : nutrient.setInactive()

@@ -17,9 +17,6 @@ export class CreateNutrientDto {
   @ApiProperty({ enum: NutrientCategory })
   category!: NutrientCategory
 
-  @ApiProperty({ type: String, required: false, nullable: true })
-  subcategory?: string | null
-
   @ApiProperty({ type: Number, required: false })
   sortOrder?: number
 
@@ -43,9 +40,6 @@ export class CreateNutrientResponseDto {
   @ApiProperty({ enum: NutrientCategory })
   category!: NutrientCategory
 
-  @ApiProperty({ required: false, nullable: true })
-  subcategory!: string | null
-
   @ApiProperty()
   sortOrder!: number
 
@@ -68,7 +62,6 @@ export class CreateNutrientResponseDto {
       name: nutrient.name,
       unit: nutrient.unit,
       category: nutrient.category,
-      subcategory: nutrient.subcategory,
       sortOrder: nutrient.sortOrder,
       isActive: nutrient.isActive,
       systemState: nutrient.systemState,
@@ -89,9 +82,6 @@ export class UpdateNutrientDto {
 
   @ApiProperty({ enum: NutrientCategory, required: false })
   category?: NutrientCategory
-
-  @ApiProperty({ type: String, required: false, nullable: true })
-  subcategory?: string | null
 
   @ApiProperty({ type: Number, required: false })
   sortOrder?: number

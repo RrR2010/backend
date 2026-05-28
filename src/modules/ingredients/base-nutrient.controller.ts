@@ -40,7 +40,6 @@ export class BaseNutrientController {
         name: dto.name,
         unit: dto.unit,
         category: dto.category,
-        subcategory: dto.subcategory ?? null,
         sortOrder: dto.sortOrder ?? 0
       },
       request.context
@@ -78,8 +77,6 @@ export class BaseNutrientController {
     if (dto.name) nutrient.changeName(dto.name)
     if (dto.unit) nutrient.changeUnit(dto.unit)
     if (dto.category) nutrient.changeCategory(dto.category)
-    if (dto.subcategory !== undefined)
-      nutrient.changeSubcategory(dto.subcategory)
     if (dto.sortOrder !== undefined) nutrient.changeSortOrder(dto.sortOrder)
 
     const saved = await this.service.save(nutrient, request.context)
