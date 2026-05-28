@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { BaseAllergenRepository } from '@ingredients/base-allergen.repository'
-import { BaseAllergen, CreateBaseAllergenProps } from '@ingredients/base-allergen.entity'
+import {
+  BaseAllergen,
+  CreateBaseAllergenProps
+} from '@ingredients/base-allergen.entity'
 import { BaseAllergenNotFoundError } from '@ingredients/base-allergen.errors'
 import { RequestContext } from '@authorization/authorization.types'
 
@@ -8,8 +11,10 @@ import { RequestContext } from '@authorization/authorization.types'
 export class BaseAllergenService {
   constructor(private readonly repository: BaseAllergenRepository) {}
 
-  async create(props: CreateBaseAllergenProps, _ctx: RequestContext): Promise<BaseAllergen> {
-    // TODO: zod validate input
+  async create(
+    props: CreateBaseAllergenProps,
+    _ctx: RequestContext
+  ): Promise<BaseAllergen> {
     const allergen = BaseAllergen.create(props)
     return this.repository.save(allergen, _ctx)
   }
@@ -26,12 +31,34 @@ export class BaseAllergenService {
     return allergen
   }
 
-  async save(allergen: BaseAllergen, _ctx: RequestContext): Promise<BaseAllergen> {
+  async save(
+    allergen: BaseAllergen,
+    _ctx: RequestContext
+  ): Promise<BaseAllergen> {
     return this.repository.save(allergen, _ctx)
   }
 
   async delete(id: string, _ctx: RequestContext): Promise<void> {
-    await this.findById(id, _ctx)
-    await this.repository.delete(id, _ctx)
+    const allergen = await this.findById(id, _ctx)
+    allergen.delete()
+    await this.repository.save(allergen, _ctx)
+  }
+
+  async activate(id: string, _ctx: RequestContext): Promise<BaseAllergen> {
+    const allergen = await this.findById(id, _ctx)
+    allergen.activate()
+    return this.repository.save(allergen, _ctx)
+  }
+
+  async lock(id: string, _ctx: RequestContext): Promise<BaseAllergen> {
+    const allergen = await this.findById(id, _ctx)
+    allergen.lock()
+    return this.repository.save(allergen, _ctx)
+  }
+
+  async unlock(id: string, _ctx: RequestContext): Promise<BaseAllergen> {
+    const allergen = await this.findById(id, _ctx)
+    allergen.unlock()
+    return this.repository.save(allergen, _ctx)
   }
 }

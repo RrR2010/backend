@@ -1,9 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  Injectable,
+  NotFoundException
+} from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { PrismaService } from '@shared/prisma/prisma.service'
-import { IngredientLabelingProfileRepository, IngredientLabelingProfileFilter } from '@ingredients/ingredient-labeling-profile.repository'
-import { IngredientLabelingProfile, CreateIngredientLabelingProfileProps } from '@ingredients/ingredient-labeling-profile.entity'
-import { IngredientLabelingProfileNotFoundError, IngredientLabelingProfileAlreadyExistsError } from '@ingredients/ingredient-labeling-profile.errors'
+import {
+  IngredientLabelingProfileRepository,
+  IngredientLabelingProfileFilter
+} from '@ingredients/ingredient-labeling-profile.repository'
+import {
+  IngredientLabelingProfile,
+  CreateIngredientLabelingProfileProps
+} from '@ingredients/ingredient-labeling-profile.entity'
+import {
+  IngredientLabelingProfileNotFoundError,
+  IngredientLabelingProfileAlreadyExistsError
+} from '@ingredients/ingredient-labeling-profile.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
@@ -14,9 +26,13 @@ export class IngredientLabelingProfileService {
     private readonly prisma: PrismaService
   ) {}
 
-  async create(props: CreateIngredientLabelingProfileProps, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async create(
+    props: CreateIngredientLabelingProfileProps,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     // TODO: zod validate input
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+    const tenantId =
+      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
     const profile = IngredientLabelingProfile.create({ ...props, tenantId })
     try {
       return await this.repository.save(profile, ctx)
@@ -25,17 +41,26 @@ export class IngredientLabelingProfileService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new IngredientLabelingProfileAlreadyExistsError(props.ingredientId, tenantId)
+        throw new IngredientLabelingProfileAlreadyExistsError(
+          props.ingredientId,
+          tenantId
+        )
       }
       throw error
     }
   }
 
-  async findAll(filter: IngredientLabelingProfileFilter, ctx: RequestContext): Promise<IngredientLabelingProfile[]> {
+  async findAll(
+    filter: IngredientLabelingProfileFilter,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile[]> {
     return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     const profile = await this.repository.findById(id, ctx)
     if (!profile) {
       throw new IngredientLabelingProfileNotFoundError(id)
@@ -43,7 +68,10 @@ export class IngredientLabelingProfileService {
     return profile
   }
 
-  async findByIngredientId(ingredientId: string, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async findByIngredientId(
+    ingredientId: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     let profile = await this.repository.findByIngredientId(ingredientId, ctx)
     if (!profile) {
       // Auto-create empty profile on first read
@@ -51,7 +79,9 @@ export class IngredientLabelingProfileService {
       if (ctx.scope === UserScope.TENANT) {
         tenantId = ctx.tenantId
       } else {
-        const ingredient = await this.prisma.ingredient.findUnique({ where: { id: ingredientId } })
+        const ingredient = await this.prisma.ingredient.findUnique({
+          where: { id: ingredientId }
+        })
         if (!ingredient) throw new NotFoundException('Ingredient not found')
         tenantId = ingredient.tenantId
       }
@@ -66,14 +96,17 @@ export class IngredientLabelingProfileService {
         containsAddedFatsOrOils: false,
         containsButterOrMargarine: false,
         containsDairyCream: false,
-        containsIngredientsWithFatsOrCream: false,
+        containsIngredientsWithFatsOrCream: false
       })
       profile = await this.repository.save(profile, ctx)
     }
     return profile
   }
 
-  async save(profile: IngredientLabelingProfile, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async save(
+    profile: IngredientLabelingProfile,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     return this.repository.save(profile, ctx)
   }
 
@@ -83,15 +116,30 @@ export class IngredientLabelingProfileService {
     await this.repository.save(profile, ctx)
   }
 
-  async activate(id: string, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async activate(
+    id: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     const profile = await this.findById(id, ctx)
     profile.activate()
     return this.repository.save(profile, ctx)
   }
 
-  async lock(id: string, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async lock(
+    id: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     const profile = await this.findById(id, ctx)
     profile.lock()
     return this.repository.save(profile, ctx)
+  }
+
+  async unlock(
+    id: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
+    const entity = await this.findById(id, ctx)
+    entity.unlock()
+    return this.repository.save(entity, ctx)
   }
 }

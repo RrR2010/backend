@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { NutrientUnit, NutrientCategory } from '@prisma/client'
+import { SystemState } from '@shared/behaviours/lockable'
 
 export class CreateBaseNutrientDto {
   @ApiProperty({ type: String })
@@ -38,6 +39,9 @@ export class CreateBaseNutrientResponseDto {
   @ApiProperty()
   sortOrder!: number
 
+  @ApiProperty({ enum: SystemState })
+  systemState!: SystemState
+
   @ApiProperty()
   createdAt!: Date
 
@@ -52,6 +56,7 @@ export class CreateBaseNutrientResponseDto {
       category: nutrient.category,
       subcategory: nutrient.subcategory,
       sortOrder: nutrient.sortOrder,
+      systemState: nutrient.systemState,
       createdAt: nutrient.createdAt,
       updatedAt: nutrient.updatedAt
     }

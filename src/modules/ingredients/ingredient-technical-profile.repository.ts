@@ -30,6 +30,9 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
     }
     const prismaProfile = await this.prisma.ingredientTechnicalProfile.findUnique({ where })
     if (!prismaProfile) return null
+    if (prismaProfile && ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientTechnicalProfileMapper.toDomain(prismaProfile)
   }
 
@@ -40,15 +43,21 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
     }
     const prismaProfile = await this.prisma.ingredientTechnicalProfile.findUnique({ where })
     if (!prismaProfile) return null
+    if (ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientTechnicalProfileMapper.toDomain(prismaProfile)
   }
 
   async findAll(filter: IngredientTechnicalProfileFilter, ctx: RequestContext): Promise<IngredientTechnicalProfile[]> {
     const where: Prisma.IngredientTechnicalProfileWhereInput = {
-      systemState: filter.systemState ?? SystemState.ACTIVE
+      ...(filter.systemState && { systemState: filter.systemState })
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaProfiles = await this.prisma.ingredientTechnicalProfile.findMany({ where })
     return prismaProfiles.map((p) => PrismaIngredientTechnicalProfileMapper.toDomain(p))

@@ -114,4 +114,14 @@ export class FunctionalGroupsController {
     const group = await this.service.lock(id, request.context)
     return FunctionalGroupResponseDto.fromDomain(group)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, FunctionalGroup)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<FunctionalGroupResponseDto> {
+    const group = await this.service.unlock(id, request.context)
+    return FunctionalGroupResponseDto.fromDomain(group)
+  }
 }

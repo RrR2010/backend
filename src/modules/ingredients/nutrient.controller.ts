@@ -118,4 +118,14 @@ export class NutrientsController {
     const nutrient = await this.service.lock(id, request.context)
     return NutrientResponseDto.fromDomain(nutrient)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, Nutrient)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<NutrientResponseDto> {
+    const nutrient = await this.service.unlock(id, request.context)
+    return NutrientResponseDto.fromDomain(nutrient)
+  }
 }

@@ -13,9 +13,13 @@ export type AuditLogProps = AuditableProps & {
   action: string
   before: Record<string, unknown> | null
   after: Record<string, unknown> | null
+  description: string | null
 }
 
-export type CreateAuditLogProps = Omit<AuditLogProps, keyof AuditableProps | 'id'>
+export type CreateAuditLogProps = Omit<
+  AuditLogProps,
+  keyof AuditableProps | 'id'
+>
 
 export class AuditLog extends Auditable(Base<AuditLogProps>) {
   protected constructor(props: AuditLogProps) {
@@ -78,5 +82,9 @@ export class AuditLog extends Auditable(Base<AuditLogProps>) {
 
   get after(): Record<string, unknown> | null {
     return this._props.after
+  }
+
+  get description(): string | null {
+    return this._props.description
   }
 }

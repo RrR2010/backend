@@ -26,3 +26,15 @@ export class EntityDeletedError extends HttpException {
     )
   }
 }
+
+export class EntityNotLockedError extends HttpException {
+  constructor(entityType: string) {
+    super(
+      {
+        message: `${entityType} is not locked and cannot be unlocked`,
+        code: 'ENTITY_NOT_LOCKED'
+      },
+      HttpStatus.CONFLICT
+    )
+  }
+}

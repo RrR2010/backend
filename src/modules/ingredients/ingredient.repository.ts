@@ -38,6 +38,9 @@ export class PrismaIngredientRepository implements IngredientRepository {
     }
     const prismaIngredient = await this.prisma.ingredient.findUnique({ where })
     if (!prismaIngredient) return null
+    if (prismaIngredient && ctx.scope === UserScope.TENANT && prismaIngredient.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientMapper.toDomain(prismaIngredient)
   }
 
@@ -56,6 +59,9 @@ export class PrismaIngredientRepository implements IngredientRepository {
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaIngredients = await this.prisma.ingredient.findMany({
       where,

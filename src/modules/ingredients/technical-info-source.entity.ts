@@ -2,6 +2,7 @@ import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+
 import { TechnicalInfoSourceType } from '@prisma/client'
 
 export type TechnicalInfoSourceProps = AuditableProps & LockableProps & {

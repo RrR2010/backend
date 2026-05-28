@@ -109,7 +109,8 @@ class AuditLogMapper {
       userAgent: prismaAuditLog.userAgent,
       action: prismaAuditLog.action,
       before: prismaAuditLog.before as Record<string, unknown> | null,
-      after: prismaAuditLog.after as Record<string, unknown> | null
+      after: prismaAuditLog.after as Record<string, unknown> | null,
+      description: prismaAuditLog.description
     })
   }
 
@@ -126,6 +127,7 @@ class AuditLogMapper {
       ipAddress: auditLog.ipAddress,
       userAgent: auditLog.userAgent,
       action: auditLog.action,
+      description: auditLog.description,
       before:
         auditLog.before === null
           ? Prisma.JsonNull

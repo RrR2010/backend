@@ -112,4 +112,14 @@ export class CompaniesController {
     const company = await this.service.lock(id, request.context)
     return CompanyResponseDto.fromDomain(company)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, Company)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<CompanyResponseDto> {
+    const company = await this.service.unlock(id, request.context)
+    return CompanyResponseDto.fromDomain(company)
+  }
 }

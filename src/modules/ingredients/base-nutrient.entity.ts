@@ -1,23 +1,29 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 import { NutrientUnit, NutrientCategory } from '@prisma/client'
 
-export type BaseNutrientProps = AuditableProps & {
-  id: Id
-  name: string
-  unit: NutrientUnit
-  category: NutrientCategory
-  subcategory: string | null
-  sortOrder: number
-}
+export type BaseNutrientProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    name: string
+    unit: NutrientUnit
+    category: NutrientCategory
+    subcategory: string | null
+    sortOrder: number
+  }
 
 export type CreateBaseNutrientProps = Omit<
   BaseNutrientProps,
-  keyof AuditableProps | 'id'
+  keyof AuditableProps | keyof LockableProps | 'id'
 >
 
-export class BaseNutrient extends Auditable(Base<BaseNutrientProps>) {
+export class BaseNutrient extends Lockable(Auditable(Base<BaseNutrientProps>)) {
   protected constructor(props: BaseNutrientProps) {
     super(props)
   }
@@ -31,7 +37,8 @@ export class BaseNutrient extends Auditable(Base<BaseNutrientProps>) {
       ...props,
       id: Id.generate(),
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      systemState: SystemState.ACTIVE
     })
   }
 
@@ -68,26 +75,31 @@ export class BaseNutrient extends Auditable(Base<BaseNutrientProps>) {
   // --------------- Behaviors ---------------
 
   changeName(name: string): void {
+    this.ensureActivated('BaseNutrient')
     this._props.name = name
     this.touch()
   }
 
   changeUnit(unit: NutrientUnit): void {
+    this.ensureActivated('BaseNutrient')
     this._props.unit = unit
     this.touch()
   }
 
   changeCategory(category: NutrientCategory): void {
+    this.ensureActivated('BaseNutrient')
     this._props.category = category
     this.touch()
   }
 
   changeSubcategory(subcategory: string | null): void {
+    this.ensureActivated('BaseNutrient')
     this._props.subcategory = subcategory
     this.touch()
   }
 
   changeSortOrder(sortOrder: number): void {
+    this.ensureActivated('BaseNutrient')
     this._props.sortOrder = sortOrder
     this.touch()
   }

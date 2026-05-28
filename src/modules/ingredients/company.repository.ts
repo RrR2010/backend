@@ -32,6 +32,9 @@ export class PrismaCompanyRepository implements CompanyRepository {
     }
     const prismaCompany = await this.prisma.company.findUnique({ where })
     if (!prismaCompany) return null
+    if (prismaCompany && ctx.scope === UserScope.TENANT && prismaCompany.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaCompanyMapper.toDomain(prismaCompany)
   }
 
@@ -44,6 +47,9 @@ export class PrismaCompanyRepository implements CompanyRepository {
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaCompanies = await this.prisma.company.findMany({
       where,

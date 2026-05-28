@@ -130,6 +130,16 @@ export class IngredientsController {
     return IngredientResponseDto.fromDomain(ingredient)
   }
 
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, Ingredient)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<IngredientResponseDto> {
+    const ingredient = await this.service.unlock(id, request.context)
+    return IngredientResponseDto.fromDomain(ingredient)
+  }
+
   @Post(':id/save')
   @Authorize(Action.Update, Ingredient)
   @ApiConsumes('application/json')

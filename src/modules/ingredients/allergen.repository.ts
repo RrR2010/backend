@@ -32,6 +32,9 @@ export class PrismaAllergenRepository implements AllergenRepository {
     }
     const prismaAllergen = await this.prisma.allergen.findUnique({ where })
     if (!prismaAllergen) return null
+    if (prismaAllergen && ctx.scope === UserScope.TENANT && prismaAllergen.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaAllergenMapper.toDomain(prismaAllergen)
   }
 
@@ -44,6 +47,9 @@ export class PrismaAllergenRepository implements AllergenRepository {
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaAllergens = await this.prisma.allergen.findMany({
       where,

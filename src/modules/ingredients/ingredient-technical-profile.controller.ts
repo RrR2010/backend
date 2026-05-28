@@ -124,4 +124,14 @@ export class IngredientTechnicalProfilesController {
     const profile = await this.service.lock(id, request.context)
     return IngredientTechnicalProfileResponseDto.fromDomain(profile)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, IngredientTechnicalProfile)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<IngredientTechnicalProfileResponseDto> {
+    const profile = await this.service.unlock(id, request.context)
+    return IngredientTechnicalProfileResponseDto.fromDomain(profile)
+  }
 }

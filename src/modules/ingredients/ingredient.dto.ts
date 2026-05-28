@@ -254,4 +254,7 @@ export class SaveAllIngredientDto {
 
   @ApiProperty({ type: UpdateIngredientTechnicalProfileDto, required: false })
   technicalProfile?: UpdateIngredientTechnicalProfileDto
+
+  @ApiProperty({ type: String, required: false, nullable: true })
+  description?: string | null
 }

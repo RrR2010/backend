@@ -31,6 +31,9 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
     }
     const prismaSource = await this.prisma.technicalInfoSource.findUnique({ where })
     if (!prismaSource) return null
+    if (prismaSource && ctx.scope === UserScope.TENANT && prismaSource.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaTechnicalInfoSourceMapper.toDomain(prismaSource)
   }
 
@@ -42,6 +45,9 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaSources = await this.prisma.technicalInfoSource.findMany({
       where,

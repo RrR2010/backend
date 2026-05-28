@@ -2,6 +2,7 @@ import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+
 import { FlavorOriginType, ColorantOriginType } from '@prisma/client'
 
 export type IngredientRegulatoryProfileProps = AuditableProps & LockableProps & {
@@ -181,5 +182,10 @@ export class IngredientRegulatoryProfile extends Lockable(Auditable(Base<Ingredi
     this.ensureActivated('IngredientRegulatoryProfile')
     this._props.colorantOriginType = colorantOriginType
     this.touch()
+  }
+
+  activate(): void {
+    this.ensureActivated('IngredientRegulatoryProfile')
+    super.activate()
   }
 }

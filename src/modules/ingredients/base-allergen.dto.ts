@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
+import { SystemState } from '@shared/behaviours/lockable'
 
 export class CreateBaseAllergenDto {
   @ApiProperty({ type: String })
@@ -31,6 +32,9 @@ export class CreateBaseAllergenResponseDto {
   @ApiProperty()
   sortOrder!: number
 
+  @ApiProperty({ enum: SystemState })
+  systemState!: SystemState
+
   @ApiProperty()
   createdAt!: Date
 
@@ -44,6 +48,7 @@ export class CreateBaseAllergenResponseDto {
       category: allergen.category,
       regulatoryRef: allergen.regulatoryRef,
       sortOrder: allergen.sortOrder,
+      systemState: allergen.systemState,
       createdAt: allergen.createdAt,
       updatedAt: allergen.updatedAt
     }

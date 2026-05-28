@@ -52,7 +52,7 @@ export class BaseNutrientController {
   @Authorize(Action.Manage, BaseNutrient)
   async findAll(@Req() request: Request): Promise<BaseNutrientResponseDto[]> {
     const nutrients = await this.service.findAll(request.context)
-    return nutrients.map(BaseNutrientResponseDto.fromDomain)
+    return nutrients.map((n) => BaseNutrientResponseDto.fromDomain(n))
   }
 
   @Get(':id')
@@ -78,7 +78,8 @@ export class BaseNutrientController {
     if (dto.name) nutrient.changeName(dto.name)
     if (dto.unit) nutrient.changeUnit(dto.unit)
     if (dto.category) nutrient.changeCategory(dto.category)
-    if (dto.subcategory !== undefined) nutrient.changeSubcategory(dto.subcategory)
+    if (dto.subcategory !== undefined)
+      nutrient.changeSubcategory(dto.subcategory)
     if (dto.sortOrder !== undefined) nutrient.changeSortOrder(dto.sortOrder)
 
     const saved = await this.service.save(nutrient, request.context)
@@ -92,5 +93,36 @@ export class BaseNutrientController {
     @Req() request: Request
   ): Promise<void> {
     await this.service.delete(id, request.context)
+  }
+
+  @Post(':id/activate')
+  @Authorize(Action.Manage, BaseNutrient)
+  async activate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<BaseNutrientResponseDto> {
+    const nutrient = await this.service.activate(id, request.context)
+    return BaseNutrientResponseDto.fromDomain(nutrient)
+  }
+
+  @Post(':id/lock')
+  @Authorize(Action.Manage, BaseNutrient)
+  async lock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<BaseNutrientResponseDto> {
+    const nutrient = await this.service.lock(id, request.context)
+    return BaseNutrientResponseDto.fromDomain(nutrient)
+  }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Manage, BaseNutrient)
+  @ApiConsumes('application/json')
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<BaseNutrientResponseDto> {
+    const nutrient = await this.service.unlock(id, request.context)
+    return BaseNutrientResponseDto.fromDomain(nutrient)
   }
 }

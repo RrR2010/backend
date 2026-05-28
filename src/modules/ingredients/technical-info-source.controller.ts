@@ -112,4 +112,14 @@ export class TechnicalInfoSourcesController {
     const source = await this.service.lock(id, request.context)
     return TechnicalInfoSourceResponseDto.fromDomain(source)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, TechnicalInfoSource)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<TechnicalInfoSourceResponseDto> {
+    const source = await this.service.unlock(id, request.context)
+    return TechnicalInfoSourceResponseDto.fromDomain(source)
+  }
 }

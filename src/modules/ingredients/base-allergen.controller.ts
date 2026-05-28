@@ -51,7 +51,7 @@ export class BaseAllergenController {
   @Authorize(Action.Manage, BaseAllergen)
   async findAll(@Req() request: Request): Promise<BaseAllergenResponseDto[]> {
     const allergens = await this.service.findAll(request.context)
-    return allergens.map(BaseAllergenResponseDto.fromDomain)
+    return allergens.map((a) => BaseAllergenResponseDto.fromDomain(a))
   }
 
   @Get(':id')
@@ -76,7 +76,8 @@ export class BaseAllergenController {
 
     if (dto.name) allergen.changeName(dto.name)
     if (dto.category !== undefined) allergen.changeCategory(dto.category)
-    if (dto.regulatoryRef !== undefined) allergen.changeRegulatoryRef(dto.regulatoryRef)
+    if (dto.regulatoryRef !== undefined)
+      allergen.changeRegulatoryRef(dto.regulatoryRef)
     if (dto.sortOrder !== undefined) allergen.changeSortOrder(dto.sortOrder)
 
     const saved = await this.service.save(allergen, request.context)
@@ -90,5 +91,36 @@ export class BaseAllergenController {
     @Req() request: Request
   ): Promise<void> {
     await this.service.delete(id, request.context)
+  }
+
+  @Post(':id/activate')
+  @Authorize(Action.Manage, BaseAllergen)
+  async activate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<BaseAllergenResponseDto> {
+    const allergen = await this.service.activate(id, request.context)
+    return BaseAllergenResponseDto.fromDomain(allergen)
+  }
+
+  @Post(':id/lock')
+  @Authorize(Action.Manage, BaseAllergen)
+  async lock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<BaseAllergenResponseDto> {
+    const allergen = await this.service.lock(id, request.context)
+    return BaseAllergenResponseDto.fromDomain(allergen)
+  }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Manage, BaseAllergen)
+  @ApiConsumes('application/json')
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<BaseAllergenResponseDto> {
+    const allergen = await this.service.unlock(id, request.context)
+    return BaseAllergenResponseDto.fromDomain(allergen)
   }
 }

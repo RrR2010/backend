@@ -28,6 +28,9 @@ export class CreateAuditLogDto {
 
   @ApiProperty({ required: false })
   after?: Record<string, unknown>
+
+  @ApiProperty({ required: false, nullable: true })
+  description?: string | null
 }
 
 export class CreateAuditLogResponseDto {
@@ -61,7 +64,10 @@ export class CreateAuditLogResponseDto {
   @ApiProperty({ required: false, nullable: true })
   after?: Record<string, unknown> | null
 
-  @ApiProperty()
+  @ApiProperty({ required: false, nullable: true })
+  description?: string | null
+
+  @ApiProperty({ required: false, nullable: true })
   createdAt!: Date
 
   static fromDomain(log: AuditLog): CreateAuditLogResponseDto {
@@ -76,6 +82,7 @@ export class CreateAuditLogResponseDto {
       action: log.action,
       before: log.before,
       after: log.after,
+      description: log.description,
       createdAt: log.createdAt
     }
   }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { PrismaModule } from '@shared/prisma/prisma.module'
+import { AuditLogModule } from '@audit-logs/audit-log.module'
 
 // Base catalogs
 import { BaseAllergenRepository, PrismaBaseAllergenRepository } from '@ingredients/base-allergen.repository'
@@ -60,7 +61,7 @@ import { IngredientTechnicalProfileService } from '@ingredients/ingredient-techn
 import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-technical-profile.controller'
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuditLogModule],
   controllers: [
     BaseAllergenController,
     BaseNutrientController,

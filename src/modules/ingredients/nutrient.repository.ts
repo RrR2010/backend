@@ -33,6 +33,9 @@ export class PrismaNutrientRepository implements NutrientRepository {
     }
     const prismaNutrient = await this.prisma.nutrient.findUnique({ where })
     if (!prismaNutrient) return null
+    if (prismaNutrient && ctx.scope === UserScope.TENANT && prismaNutrient.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaNutrientMapper.toDomain(prismaNutrient)
   }
 
@@ -46,6 +49,9 @@ export class PrismaNutrientRepository implements NutrientRepository {
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaNutrients = await this.prisma.nutrient.findMany({
       where,

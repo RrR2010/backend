@@ -9,6 +9,13 @@ import {
 import { User } from '@users/user.entity'
 import { Tenant } from '@tenants/tenant.entity'
 import { Ingredient } from '@ingredients/ingredient.entity'
+import { Allergen } from '@ingredients/allergen.entity'
+import { Nutrient } from '@ingredients/nutrient.entity'
+import { Company } from '@ingredients/company.entity'
+import { FunctionalGroup } from '@ingredients/functional-group.entity'
+import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
+import { BaseAllergen } from '@ingredients/base-allergen.entity'
+import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Identity } from '@identities/identity.entity'
 
 type TenantContext = Extract<RequestContext, { scope: UserScope.TENANT }> & {
@@ -48,6 +55,24 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 
+    // Can read catalog entities within their tenant
+    can(Action.Read, Allergen, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Read, Nutrient, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Read, Company, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Read, FunctionalGroup, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Read, TechnicalInfoSource, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+
+    // Can manage catalog entities (for create/update/lock/unlock/delete operations)
+    can(Action.Manage, Allergen, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Manage, Nutrient, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Manage, Company, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Manage, FunctionalGroup, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+    can(Action.Manage, TechnicalInfoSource, { tenantId: { $eq: ctx.tenantId } } as AppConditions)
+
+    // Can read global base catalogs (no tenantId — shared reference data)
+    can(Action.Read, BaseAllergen)
+    can(Action.Read, BaseNutrient)
+
     // Can read identities within their tenant
     can(Action.Read, Identity, {
       tenantId: { $eq: ctx.tenantId }
@@ -55,6 +80,9 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
 
     // Can read tenant info
     can(Action.Read, Tenant, { id: { $eq: ctx.tenantId } } as AppConditions)
+
+    // Tenant USER cannot unlock resources (only ADMIN/owner can)
+    cannot(Action.Unlock, 'all')
 
     return build()
   }

@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common'
-import { AllergenRepository, AllergenFilter } from '@ingredients/allergen.repository'
+import {
+  AllergenRepository,
+  AllergenFilter
+} from '@ingredients/allergen.repository'
 import { Allergen, CreateAllergenProps } from '@ingredients/allergen.entity'
-import { AllergenNotFoundError, AllergenAlreadyExistsError } from '@ingredients/allergen.errors'
+import {
+  AllergenNotFoundError,
+  AllergenAlreadyExistsError
+} from '@ingredients/allergen.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { Prisma } from '@prisma/client'
@@ -10,9 +16,13 @@ import { Prisma } from '@prisma/client'
 export class AllergenService {
   constructor(private readonly repository: AllergenRepository) {}
 
-  async create(props: CreateAllergenProps, ctx: RequestContext): Promise<Allergen> {
+  async create(
+    props: CreateAllergenProps,
+    ctx: RequestContext
+  ): Promise<Allergen> {
     // TODO: zod validate input
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+    const tenantId =
+      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
     const allergen = Allergen.create({ ...props, tenantId })
     try {
       return await this.repository.save(allergen, ctx)
@@ -27,7 +37,10 @@ export class AllergenService {
     }
   }
 
-  async findAll(filter: AllergenFilter, ctx: RequestContext): Promise<Allergen[]> {
+  async findAll(
+    filter: AllergenFilter,
+    ctx: RequestContext
+  ): Promise<Allergen[]> {
     return this.repository.findAll(filter, ctx)
   }
 
@@ -58,6 +71,12 @@ export class AllergenService {
   async lock(id: string, ctx: RequestContext): Promise<Allergen> {
     const allergen = await this.findById(id, ctx)
     allergen.lock()
+    return this.repository.save(allergen, ctx)
+  }
+
+  async unlock(id: string, ctx: RequestContext): Promise<Allergen> {
+    const allergen = await this.findById(id, ctx)
+    allergen.unlock()
     return this.repository.save(allergen, ctx)
   }
 }

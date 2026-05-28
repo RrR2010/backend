@@ -32,6 +32,9 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     }
     const prismaGroup = await this.prisma.functionalGroup.findUnique({ where })
     if (!prismaGroup) return null
+    if (prismaGroup && ctx.scope === UserScope.TENANT && prismaGroup.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaFunctionalGroupMapper.toDomain(prismaGroup)
   }
 
@@ -44,6 +47,9 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaGroups = await this.prisma.functionalGroup.findMany({
       where,

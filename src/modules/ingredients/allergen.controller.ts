@@ -116,4 +116,15 @@ export class AllergensController {
     const allergen = await this.service.lock(id, request.context)
     return AllergenResponseDto.fromDomain(allergen)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, Allergen)
+  @ApiConsumes('application/json')
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<AllergenResponseDto> {
+    const allergen = await this.service.unlock(id, request.context)
+    return AllergenResponseDto.fromDomain(allergen)
+  }
 }

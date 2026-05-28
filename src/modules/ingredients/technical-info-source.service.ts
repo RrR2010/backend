@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { TechnicalInfoSourceRepository, TechnicalInfoSourceFilter } from '@ingredients/technical-info-source.repository'
-import { TechnicalInfoSource, CreateTechnicalInfoSourceProps } from '@ingredients/technical-info-source.entity'
+import {
+  TechnicalInfoSourceRepository,
+  TechnicalInfoSourceFilter
+} from '@ingredients/technical-info-source.repository'
+import {
+  TechnicalInfoSource,
+  CreateTechnicalInfoSourceProps
+} from '@ingredients/technical-info-source.entity'
 import { TechnicalInfoSourceNotFoundError } from '@ingredients/technical-info-source.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
@@ -9,18 +15,28 @@ import { UserScope } from '@users/user.types'
 export class TechnicalInfoSourceService {
   constructor(private readonly repository: TechnicalInfoSourceRepository) {}
 
-  async create(props: CreateTechnicalInfoSourceProps, ctx: RequestContext): Promise<TechnicalInfoSource> {
+  async create(
+    props: CreateTechnicalInfoSourceProps,
+    ctx: RequestContext
+  ): Promise<TechnicalInfoSource> {
     // TODO: zod validate input
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+    const tenantId =
+      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
     const source = TechnicalInfoSource.create({ ...props, tenantId })
     return this.repository.save(source, ctx)
   }
 
-  async findAll(filter: TechnicalInfoSourceFilter, ctx: RequestContext): Promise<TechnicalInfoSource[]> {
+  async findAll(
+    filter: TechnicalInfoSourceFilter,
+    ctx: RequestContext
+  ): Promise<TechnicalInfoSource[]> {
     return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, ctx: RequestContext): Promise<TechnicalInfoSource> {
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<TechnicalInfoSource> {
     const source = await this.repository.findById(id, ctx)
     if (!source) {
       throw new TechnicalInfoSourceNotFoundError(id)
@@ -28,7 +44,10 @@ export class TechnicalInfoSourceService {
     return source
   }
 
-  async save(source: TechnicalInfoSource, ctx: RequestContext): Promise<TechnicalInfoSource> {
+  async save(
+    source: TechnicalInfoSource,
+    ctx: RequestContext
+  ): Promise<TechnicalInfoSource> {
     return this.repository.save(source, ctx)
   }
 
@@ -38,7 +57,10 @@ export class TechnicalInfoSourceService {
     await this.repository.save(source, ctx)
   }
 
-  async activate(id: string, ctx: RequestContext): Promise<TechnicalInfoSource> {
+  async activate(
+    id: string,
+    ctx: RequestContext
+  ): Promise<TechnicalInfoSource> {
     const source = await this.findById(id, ctx)
     source.activate()
     return this.repository.save(source, ctx)
@@ -47,6 +69,12 @@ export class TechnicalInfoSourceService {
   async lock(id: string, ctx: RequestContext): Promise<TechnicalInfoSource> {
     const source = await this.findById(id, ctx)
     source.lock()
+    return this.repository.save(source, ctx)
+  }
+
+  async unlock(id: string, ctx: RequestContext): Promise<TechnicalInfoSource> {
+    const source = await this.findById(id, ctx)
+    source.unlock()
     return this.repository.save(source, ctx)
   }
 }

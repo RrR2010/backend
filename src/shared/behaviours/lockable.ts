@@ -1,7 +1,8 @@
 import { Base, Constructor } from '@shared/base-entity'
 import {
   EntityLockedError,
-  EntityDeletedError
+  EntityDeletedError,
+  EntityNotLockedError
 } from '@shared/errors/entity-state.errors'
 
 export enum SystemState {
@@ -26,6 +27,7 @@ export type LockableMethods = {
   activate(): void
   lock(): void
   delete(): void
+  unlock(): void
 
   ensureActivated(entityType?: string): void
 }
@@ -47,6 +49,7 @@ type Touchable = {
  * - activate()
  * - lock()
  * - delete()
+ * - unlock()
  * - ensureActivated()
  *
  * Requires:
@@ -76,6 +79,14 @@ export function Lockable<
 
     delete(): void {
       this._props.systemState = SystemState.HIDDEN
+      this.touch?.()
+    }
+
+    unlock(): void {
+      if (this.systemState !== SystemState.LOCKED) {
+        throw new EntityNotLockedError('Entity')
+      }
+      this._props.systemState = SystemState.ACTIVE
       this.touch?.()
     }
 

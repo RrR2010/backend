@@ -29,7 +29,8 @@ export enum Action {
   Read = 'read',
   Update = 'update',
   Delete = 'delete',
-  Approve = 'approve'
+  Approve = 'approve',
+  Unlock = 'unlock'
 }
 
 type AnyClass = new (...args: any[]) => any

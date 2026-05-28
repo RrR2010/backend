@@ -34,6 +34,9 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     }
     const prismaProfile = await this.prisma.ingredientLabelingProfile.findUnique({ where })
     if (!prismaProfile) return null
+    if (prismaProfile && ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientLabelingProfileMapper.toDomain(prismaProfile)
   }
 
@@ -44,12 +47,15 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     }
     const prismaProfile = await this.prisma.ingredientLabelingProfile.findUnique({ where })
     if (!prismaProfile) return null
+    if (ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientLabelingProfileMapper.toDomain(prismaProfile)
   }
 
   async findAll(filter: IngredientLabelingProfileFilter, ctx: RequestContext): Promise<IngredientLabelingProfile[]> {
     const where: Prisma.IngredientLabelingProfileWhereInput = {
-      systemState: filter.systemState ?? SystemState.ACTIVE,
+      ...(filter.systemState && { systemState: filter.systemState }),
       ...(filter.containsAddedSugars !== undefined && { containsAddedSugars: filter.containsAddedSugars }),
       ...(filter.containsAddedFatsOrOils !== undefined && { containsAddedFatsOrOils: filter.containsAddedFatsOrOils }),
       ...(filter.containsButterOrMargarine !== undefined && { containsButterOrMargarine: filter.containsButterOrMargarine }),
@@ -57,6 +63,9 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaProfiles = await this.prisma.ingredientLabelingProfile.findMany({ where })
     return prismaProfiles.map((p) => PrismaIngredientLabelingProfileMapper.toDomain(p))

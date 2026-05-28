@@ -3,6 +3,7 @@ import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
 
+
 export type IngredientTechnicalProfileProps = AuditableProps & LockableProps & {
   id: Id
   tenantId: string
@@ -92,5 +93,10 @@ export class IngredientTechnicalProfile extends Lockable(Auditable(Base<Ingredie
     this.ensureActivated('IngredientTechnicalProfile')
     this._props.ashContent = ashContent
     this.touch()
+  }
+
+  activate(): void {
+    this.ensureActivated('IngredientTechnicalProfile')
+    super.activate()
   }
 }

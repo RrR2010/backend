@@ -132,4 +132,14 @@ export class IngredientLabelingProfilesController {
     const profile = await this.service.lock(id, request.context)
     return IngredientLabelingProfileResponseDto.fromDomain(profile)
   }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, IngredientLabelingProfile)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<IngredientLabelingProfileResponseDto> {
+    const profile = await this.service.unlock(id, request.context)
+    return IngredientLabelingProfileResponseDto.fromDomain(profile)
+  }
 }

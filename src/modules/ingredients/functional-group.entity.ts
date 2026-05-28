@@ -3,6 +3,7 @@ import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
 
+
 export type FunctionalGroupProps = AuditableProps & LockableProps & {
   id: Id
   tenantId: string

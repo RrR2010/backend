@@ -36,6 +36,9 @@ export class PrismaIngredientRegulatoryProfileRepository implements IngredientRe
     }
     const prismaProfile = await this.prisma.ingredientRegulatoryProfile.findUnique({ where })
     if (!prismaProfile) return null
+    if (prismaProfile && ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientRegulatoryProfileMapper.toDomain(prismaProfile)
   }
 
@@ -46,12 +49,15 @@ export class PrismaIngredientRegulatoryProfileRepository implements IngredientRe
     }
     const prismaProfile = await this.prisma.ingredientRegulatoryProfile.findUnique({ where })
     if (!prismaProfile) return null
+    if (ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+      return null
+    }
     return PrismaIngredientRegulatoryProfileMapper.toDomain(prismaProfile)
   }
 
   async findAll(filter: IngredientRegulatoryProfileFilter, ctx: RequestContext): Promise<IngredientRegulatoryProfile[]> {
     const where: Prisma.IngredientRegulatoryProfileWhereInput = {
-      systemState: filter.systemState ?? SystemState.ACTIVE,
+      ...(filter.systemState && { systemState: filter.systemState }),
       ...(filter.hasRtiq !== undefined && { hasRtiq: filter.hasRtiq }),
       ...(filter.isGmo !== undefined && { isGmo: filter.isGmo }),
       ...(filter.containsLactose !== undefined && { containsLactose: filter.containsLactose }),
@@ -61,6 +67,9 @@ export class PrismaIngredientRegulatoryProfileRepository implements IngredientRe
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
+    }
+    if (ctx.scope === UserScope.TENANT) {
+      where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaProfiles = await this.prisma.ingredientRegulatoryProfile.findMany({ where })
     return prismaProfiles.map((p) => PrismaIngredientRegulatoryProfileMapper.toDomain(p))

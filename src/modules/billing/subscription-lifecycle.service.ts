@@ -101,7 +101,8 @@ export class SubscriptionLifecycleService {
         userAgent: null,
         action: 'subscription.expired_tenant_locked',
         before: { systemState: stateBefore },
-        after: { systemState: savedTenant.systemState }
+        after: { systemState: savedTenant.systemState },
+        description: null
       },
       ctx
     )

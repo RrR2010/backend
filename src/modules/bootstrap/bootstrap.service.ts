@@ -257,7 +257,8 @@ export class BootstrapService {
           taxId: normalizedTaxId,
           tenantName: normalizedTenantName,
           planType: dto.planType
-        }
+        },
+        description: null
       },
       this.platformCtx
     )
@@ -272,12 +273,13 @@ export class BootstrapService {
         userAgent: null,
         action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_CREATED,
         before: null,
+
+
         after: {
-          providerSubscriptionId:
-            onboardingResult.providerResult.providerSubscriptionId,
-          planType: dto.planType,
-          amount: onboardingResult.priceSnapshot.totalPrice
-        }
+          state: RegistrationState.PENDING,
+          providerSubscriptionId: 'pending'
+        },
+        description: null
       },
       this.platformCtx
     )
@@ -464,7 +466,8 @@ export class BootstrapService {
         after: {
           state: RegistrationState.APPROVED,
           providerSubscriptionId: preapprovalId
-        }
+        },
+        description: null
       },
       ctx
     )
@@ -543,7 +546,8 @@ export class BootstrapService {
           userAgent: null,
           action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_STARTED,
           before: { state: RegistrationState.APPROVED },
-          after: { state: RegistrationState.PROVISIONING }
+          after: { state: RegistrationState.PROVISIONING },
+          description: null
         },
         ctx
       )
@@ -606,14 +610,15 @@ export class BootstrapService {
             entityId: registration.id.value,
             ipAddress: null,
             userAgent: null,
-            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_COMPLETED,
-            before: { state: RegistrationState.PROVISIONING },
-            after: {
-              state: RegistrationState.PROVISIONED,
-              ...provisioningResult
-            }
+          action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_COMPLETED,
+          before: { state: RegistrationState.PROVISIONING },
+          after: {
+            state: RegistrationState.PROVISIONED,
+            ...provisioningResult
           },
-          ctx
+          description: null
+        },
+        ctx
         )
       } catch (error) {
         // Finding 3: Do NOT throw — keep registration in PROVISIONING for operator recovery
@@ -630,14 +635,15 @@ export class BootstrapService {
             entityId: registration.id.value,
             ipAddress: null,
             userAgent: null,
-            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_FAILED,
-            before: { state: RegistrationState.PROVISIONING },
-            after: {
-              state: RegistrationState.PROVISIONING,
-              error: (error as Error).message
-            }
+          action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_FAILED,
+          before: { state: RegistrationState.PROVISIONING },
+          after: {
+            state: RegistrationState.PROVISIONING,
+            error: (error as Error).message
           },
-          ctx
+          description: null
+        },
+        ctx
         )
       }
     })
@@ -1089,7 +1095,8 @@ export class BootstrapService {
           userAgent: null,
           action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_EXPIRED,
           before: { state: RegistrationState.PENDING },
-          after: { state: RegistrationState.EXPIRED }
+          after: { state: RegistrationState.EXPIRED },
+          description: null
         },
         ctx
       )
@@ -1202,7 +1209,8 @@ export class BootstrapService {
             state: RegistrationState.PROVISIONED,
             userId: user.id.value,
             tenantId: tenant.id.value
-          }
+          },
+          description: null
         },
         platformCtx
       )
