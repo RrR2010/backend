@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { IngredientBaseAllergenRepository } from '@ingredients/ingredient-base-allergen.repository'
 import {
   IngredientBaseAllergen,
@@ -6,11 +6,9 @@ import {
 } from '@ingredients/ingredient-base-allergen.entity'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { SaveBaseAllergenDiff } from '@ingredients/ingredient.dto'
 
-export type SaveBaseAllergenDiff = {
-  baseAllergenId: string
-  relationType: 'CONTAINS' | 'MAY_CONTAIN'
-}
+export { SaveBaseAllergenDiff }
 
 @Injectable()
 export class IngredientBaseAllergenService {
@@ -21,9 +19,15 @@ export class IngredientBaseAllergenService {
     ctx: RequestContext
   ): Promise<IngredientBaseAllergen> {
     // TODO: zod validate input
-    const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
-    const entry = IngredientBaseAllergen.create({ ...props, tenantId })
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base allergens'
+      )
+    }
+    const entry = IngredientBaseAllergen.create({
+      ...props,
+      tenantId: ctx.tenantId
+    })
     return this.repository.create(entry, ctx)
   }
 
@@ -36,15 +40,20 @@ export class IngredientBaseAllergenService {
 
   /**
    * Processes base allergen diffs: creates new entries and deletes removed ones.
-   * All operations are performed via the repository (which is called within
-   * a transaction managed by ingredient.service.ts saveAll()).
+   * This method does NOT manage the transaction itself — it expects the caller
+   * to have already opened a Prisma transaction (e.g., within saveAll()).
    */
   async saveDiff(
     ingredientId: string,
     diffs: { created: SaveBaseAllergenDiff[]; deleted: string[] },
     ctx: RequestContext
   ): Promise<void> {
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : ''
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base allergens'
+      )
+    }
+    const tenantId = ctx.tenantId
 
     // Delete removed entries
     if (diffs.deleted.length > 0) {
@@ -68,6 +77,11 @@ export class IngredientBaseAllergenService {
   }
 
   async remove(id: string, ctx: RequestContext): Promise<void> {
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base allergens'
+      )
+    }
     await this.repository.delete(id, ctx)
   }
 
@@ -75,6 +89,11 @@ export class IngredientBaseAllergenService {
     ingredientId: string,
     ctx: RequestContext
   ): Promise<void> {
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base allergens'
+      )
+    }
     await this.repository.deleteManyByIngredientId(ingredientId, ctx)
   }
 }

@@ -11,17 +11,16 @@ import {
   Ingredient,
   CreateIngredientProps
 } from '@ingredients/ingredient.entity'
-import {
-  IngredientNotFoundError,
-  IngredientAlreadyExistsError
-} from '@ingredients/ingredient.errors'
+import { IngredientNotFoundError } from '@ingredients/ingredient.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
-import { Prisma, AllergenRelationType } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { Id } from '@shared/value-objects'
 import { SaveAllIngredientDto } from '@ingredients/ingredient.dto'
 import { AuditLogService } from '@audit-logs/audit-log.service'
+import { BaseAllergenNotFoundError } from '@ingredients/base-allergen.errors'
+import { BaseNutrientNotFoundError } from '@ingredients/base-nutrient.errors'
 
 @Injectable()
 export class IngredientService {
@@ -152,10 +151,38 @@ export class IngredientService {
     // Snapshot before
     const before = await this.buildSnapshot(id, tenantId)
 
+    // Validate base items exist and are ACTIVE
+    if (dto.baseAllergenDiff?.length) {
+      const baseAllergenIds = dto.baseAllergenDiff.map((d) => d.baseAllergenId)
+      const existingBaseAllergens = await this.prisma.baseAllergen.findMany({
+        where: { id: { in: baseAllergenIds }, systemState: 'ACTIVE' }
+      })
+      const existingIds = new Set(existingBaseAllergens.map((a) => a.id))
+      for (const baseId of baseAllergenIds) {
+        if (!existingIds.has(baseId)) {
+          throw new BaseAllergenNotFoundError(baseId)
+        }
+      }
+    }
+    if (dto.baseNutrientDiff?.length) {
+      const baseNutrientIds = dto.baseNutrientDiff.map((d) => d.baseNutrientId)
+      const existingBaseNutrients = await this.prisma.baseNutrient.findMany({
+        where: { id: { in: baseNutrientIds }, systemState: 'ACTIVE' }
+      })
+      const existingIds = new Set(existingBaseNutrients.map((n) => n.id))
+      for (const baseId of baseNutrientIds) {
+        if (!existingIds.has(baseId)) {
+          throw new BaseNutrientNotFoundError(baseId)
+        }
+      }
+    }
+
     // Execute the save transaction
     await this.prisma.$transaction(async (tx) => {
-      // Verify ingredient exists
-      const ingredient = await tx.ingredient.findUnique({ where: { id } })
+      // Verify ingredient exists and belongs to tenant
+      const ingredient = await tx.ingredient.findFirst({
+        where: { id, tenantId }
+      })
       if (!ingredient) throw new NotFoundException('Ingredient not found')
 
       // Validate referenced entities belong to same tenant
@@ -335,6 +362,61 @@ export class IngredientService {
           update: { ...cleanData, updatedAt: new Date() }
         })
       }
+
+      // --- Handle Base Allergen Diffs ---
+      if (dto.baseAllergenDeleted?.length) {
+        await tx.ingredientBaseAllergen.deleteMany({
+          where: {
+            id: { in: dto.baseAllergenDeleted },
+            ingredientId: id,
+            tenantId
+          }
+        })
+      }
+      if (dto.baseAllergenDiff?.length) {
+        const now = new Date()
+        await tx.ingredientBaseAllergen.createMany({
+          data: dto.baseAllergenDiff.map((a) => ({
+            id: Id.generate().value,
+            ingredientId: id,
+            baseAllergenId: a.baseAllergenId,
+            relationType: a.relationType,
+            tenantId,
+            createdAt: now,
+            updatedAt: now
+          })),
+          skipDuplicates: true
+        })
+      }
+
+      // --- Handle Base Nutrient Diffs ---
+      if (dto.baseNutrientDeleted?.length) {
+        await tx.ingredientBaseNutrient.deleteMany({
+          where: {
+            id: { in: dto.baseNutrientDeleted },
+            ingredientId: id,
+            tenantId
+          }
+        })
+      }
+      if (dto.baseNutrientDiff?.length) {
+        const now = new Date()
+        await tx.ingredientBaseNutrient.createMany({
+          data: dto.baseNutrientDiff.map((n) => ({
+            id: Id.generate().value,
+            ingredientId: id,
+            baseNutrientId: n.baseNutrientId,
+            value:
+              n.value !== null && n.value !== undefined
+                ? new Prisma.Decimal(n.value)
+                : null,
+            tenantId,
+            createdAt: now,
+            updatedAt: now
+          })),
+          skipDuplicates: true
+        })
+      }
     })
 
     // Snapshot after
@@ -368,6 +450,8 @@ export class IngredientService {
       ingredient,
       allergens,
       nutrients,
+      baseAllergens,
+      baseNutrients,
       regulatoryProfile,
       labelingProfile,
       technicalProfile
@@ -380,6 +464,14 @@ export class IngredientService {
       this.prisma.ingredientTenantNutrient.findMany({
         where: { ingredientId, tenantId },
         include: { nutrient: { select: { name: true, unit: true } } }
+      }),
+      this.prisma.ingredientBaseAllergen.findMany({
+        where: { ingredientId, tenantId },
+        include: { baseAllergen: { select: { name: true } } }
+      }),
+      this.prisma.ingredientBaseNutrient.findMany({
+        where: { ingredientId, tenantId },
+        include: { baseNutrient: { select: { name: true, unit: true } } }
       }),
       this.prisma.ingredientRegulatoryProfile.findUnique({
         where: { ingredientId }
@@ -420,6 +512,19 @@ export class IngredientService {
         nutrientId: n.nutrientId,
         name: n.nutrient.name,
         unit: n.nutrient.unit,
+        value: n.value?.toString() ?? null
+      })),
+      baseAllergens: baseAllergens.map((a) => ({
+        id: a.id,
+        baseAllergenId: a.baseAllergenId,
+        name: a.baseAllergen.name,
+        relationType: a.relationType
+      })),
+      baseNutrients: baseNutrients.map((n) => ({
+        id: n.id,
+        baseNutrientId: n.baseNutrientId,
+        name: n.baseNutrient.name,
+        unit: n.baseNutrient.unit,
         value: n.value?.toString() ?? null
       })),
       regulatoryProfile: regulatoryProfile

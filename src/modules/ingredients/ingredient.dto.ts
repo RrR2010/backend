@@ -256,6 +256,27 @@ export class SaveNutrientDiffDto {
   removed?: string[]
 }
 
+export class SaveBaseAllergenDiff {
+  @ApiProperty()
+  @IsUUID()
+  baseAllergenId!: string
+
+  @ApiProperty({ enum: ['CONTAINS', 'MAY_CONTAIN'] })
+  @IsEnum(['CONTAINS', 'MAY_CONTAIN'])
+  relationType!: 'CONTAINS' | 'MAY_CONTAIN'
+}
+
+export class SaveBaseNutrientDiff {
+  @ApiProperty()
+  @IsUUID()
+  baseNutrientId!: string
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsNumberString()
+  value?: string | null
+}
+
 export class SaveAllIngredientDto {
   @ApiProperty({ type: SaveAllergenDiffDto, required: false })
   allergens?: SaveAllergenDiffDto
@@ -274,4 +295,26 @@ export class SaveAllIngredientDto {
 
   @ApiProperty({ type: String, required: false, nullable: true })
   description?: string | null
+
+  @ApiProperty({ type: [SaveBaseAllergenDiff], required: false })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SaveBaseAllergenDiff)
+  baseAllergenDiff?: SaveBaseAllergenDiff[]
+
+  @ApiProperty({ type: [SaveBaseNutrientDiff], required: false })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SaveBaseNutrientDiff)
+  baseNutrientDiff?: SaveBaseNutrientDiff[]
+
+  @ApiProperty({ type: [String], required: false })
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  baseAllergenDeleted?: string[]
+
+  @ApiProperty({ type: [String], required: false })
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  baseNutrientDeleted?: string[]
 }

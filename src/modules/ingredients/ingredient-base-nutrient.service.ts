@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { IngredientBaseNutrientRepository } from '@ingredients/ingredient-base-nutrient.repository'
 import {
   IngredientBaseNutrient,
@@ -6,11 +6,9 @@ import {
 } from '@ingredients/ingredient-base-nutrient.entity'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { SaveBaseNutrientDiff } from '@ingredients/ingredient.dto'
 
-export type SaveBaseNutrientDiff = {
-  baseNutrientId: string
-  value: number | null
-}
+export { SaveBaseNutrientDiff }
 
 @Injectable()
 export class IngredientBaseNutrientService {
@@ -21,9 +19,15 @@ export class IngredientBaseNutrientService {
     ctx: RequestContext
   ): Promise<IngredientBaseNutrient> {
     // TODO: zod validate input
-    const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
-    const entry = IngredientBaseNutrient.create({ ...props, tenantId })
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base nutrients'
+      )
+    }
+    const entry = IngredientBaseNutrient.create({
+      ...props,
+      tenantId: ctx.tenantId
+    })
     return this.repository.create(entry, ctx)
   }
 
@@ -36,15 +40,20 @@ export class IngredientBaseNutrientService {
 
   /**
    * Processes base nutrient diffs: creates new entries and deletes removed ones.
-   * All operations are performed via the repository (which is called within
-   * a transaction managed by ingredient.service.ts saveAll()).
+   * This method does NOT manage the transaction itself — it expects the caller
+   * to have already opened a Prisma transaction (e.g., within saveAll()).
    */
   async saveDiff(
     ingredientId: string,
     diffs: { created: SaveBaseNutrientDiff[]; deleted: string[] },
     ctx: RequestContext
   ): Promise<void> {
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : ''
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base nutrients'
+      )
+    }
+    const tenantId = ctx.tenantId
 
     // Delete removed entries
     if (diffs.deleted.length > 0) {
@@ -60,7 +69,10 @@ export class IngredientBaseNutrientService {
           tenantId,
           ingredientId,
           baseNutrientId: d.baseNutrientId,
-          value: d.value
+          value:
+            d.value !== null && d.value !== undefined
+              ? parseFloat(d.value)
+              : null
         })
       )
       await this.repository.createMany(entries, ctx)
@@ -68,6 +80,11 @@ export class IngredientBaseNutrientService {
   }
 
   async remove(id: string, ctx: RequestContext): Promise<void> {
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base nutrients'
+      )
+    }
     await this.repository.delete(id, ctx)
   }
 
@@ -75,6 +92,11 @@ export class IngredientBaseNutrientService {
     ingredientId: string,
     ctx: RequestContext
   ): Promise<void> {
+    if (ctx.scope !== UserScope.TENANT) {
+      throw new ForbiddenException(
+        'Only tenant-scoped users can manage ingredient base nutrients'
+      )
+    }
     await this.repository.deleteManyByIngredientId(ingredientId, ctx)
   }
 }
