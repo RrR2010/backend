@@ -16,6 +16,10 @@ import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
 import { BaseNutrient } from '@ingredients/base-nutrient.entity'
+import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
+import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
+import { IngredientTenantAllergen } from '@ingredients/ingredient-tenant-allergen.entity'
+import { IngredientTenantNutrient } from '@ingredients/ingredient-tenant-nutrient.entity'
 import { Identity } from '@identities/identity.entity'
 
 type TenantContext = Extract<RequestContext, { scope: UserScope.TENANT }> & {
@@ -92,6 +96,26 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     // Can read global base catalogs (no tenantId — shared reference data)
     can(Action.Read, BaseAllergen)
     can(Action.Read, BaseNutrient)
+
+    // Can manage ingredient-base-allergen junctions within their tenant
+    can(Action.Manage, IngredientBaseAllergen, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage ingredient-base-nutrient junctions within their tenant
+    can(Action.Manage, IngredientBaseNutrient, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage ingredient-tenant-allergen junctions within their tenant
+    can(Action.Manage, IngredientTenantAllergen, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage ingredient-tenant-nutrient junctions within their tenant
+    can(Action.Manage, IngredientTenantNutrient, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can read identities within their tenant
     can(Action.Read, Identity, {

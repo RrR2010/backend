@@ -189,6 +189,8 @@ model Tenant {
   ingredients         Ingredient[]
   ingredientAllergens IngredientTenantAllergen[]
   ingredientNutrients IngredientTenantNutrient[]
+  ingredientBaseAllergens IngredientBaseAllergen[]
+  ingredientBaseNutrients IngredientBaseNutrient[]
   ingredientRegulatoryProfiles IngredientRegulatoryProfile[]
   ingredientLabelingProfiles   IngredientLabelingProfile[]
   ingredientTechnicalProfiles  IngredientTechnicalProfile[]
@@ -557,6 +559,8 @@ model BaseAllergen {
   category      String?
   regulatoryRef String?
   sortOrder     Int         @default(0)
+
+  ingredientBaseAllergens IngredientBaseAllergen[]
 }
 
 model BaseNutrient {
@@ -568,6 +572,8 @@ model BaseNutrient {
   unit          NutrientUnit
   category      NutrientCategory
   sortOrder     Int             @default(0)
+
+  ingredientNutrients IngredientBaseNutrient[]
 }
 
 // ============== INGREDIENT DOMAIN ==============
@@ -690,6 +696,8 @@ model Ingredient {
 
   tenantAllergens   IngredientTenantAllergen[]
   tenantNutrients   IngredientTenantNutrient[]
+  baseAllergens     IngredientBaseAllergen[]
+  baseNutrients     IngredientBaseNutrient[]
   regulatoryProfile IngredientRegulatoryProfile?
   labelingProfile   IngredientLabelingProfile?
   technicalProfile  IngredientTechnicalProfile?
@@ -736,6 +744,42 @@ model IngredientTenantNutrient {
   @@index([tenantId])
   @@index([ingredientId])
   @@index([nutrientId])
+}
+
+model IngredientBaseAllergen {
+  id            String               @id @unique @default(uuid())
+  createdAt     DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
+  tenantId      String
+  tenant        Tenant               @relation(fields: [tenantId], references: [id])
+  ingredientId  String
+  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id])
+  baseAllergenId String
+  baseAllergen  BaseAllergen         @relation(fields: [baseAllergenId], references: [id])
+  relationType  AllergenRelationType
+
+  @@unique([tenantId, ingredientId, baseAllergenId])
+  @@index([tenantId])
+  @@index([ingredientId])
+  @@index([baseAllergenId])
+}
+
+model IngredientBaseNutrient {
+  id             String   @id @unique @default(uuid())
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  ingredientId   String
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id])
+  baseNutrientId String
+  baseNutrient   BaseNutrient @relation(fields: [baseNutrientId], references: [id])
+  value          Decimal?
+
+  @@unique([tenantId, ingredientId, baseNutrientId])
+  @@index([tenantId])
+  @@index([ingredientId])
+  @@index([baseNutrientId])
 }
 
 model IngredientRegulatoryProfile {

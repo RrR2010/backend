@@ -77,6 +77,21 @@ import {
 import { IngredientTenantNutrientService } from '@ingredients/ingredient-tenant-nutrient.service'
 import { IngredientTenantNutrientsController } from '@ingredients/ingredient-tenant-nutrient.controller'
 
+// Base junction tables
+import {
+  IngredientBaseAllergenRepository,
+  PrismaIngredientBaseAllergenRepository
+} from '@ingredients/ingredient-base-allergen.repository'
+import { IngredientBaseAllergenService } from '@ingredients/ingredient-base-allergen.service'
+import { IngredientBaseAllergensController } from '@ingredients/ingredient-base-allergen.controller'
+
+import {
+  IngredientBaseNutrientRepository,
+  PrismaIngredientBaseNutrientRepository
+} from '@ingredients/ingredient-base-nutrient.repository'
+import { IngredientBaseNutrientService } from '@ingredients/ingredient-base-nutrient.service'
+import { IngredientBaseNutrientsController } from '@ingredients/ingredient-base-nutrient.controller'
+
 // Profile entities
 import {
   IngredientRegulatoryProfileRepository,
@@ -112,6 +127,8 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     IngredientsController,
     IngredientTenantAllergensController,
     IngredientTenantNutrientsController,
+    IngredientBaseAllergensController,
+    IngredientBaseNutrientsController,
     IngredientRegulatoryProfilesController,
     IngredientLabelingProfilesController,
     IngredientTechnicalProfilesController
@@ -176,6 +193,19 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
       provide: IngredientTenantNutrientRepository,
       useExisting: PrismaIngredientTenantNutrientRepository
     },
+    // Base junction tables
+    IngredientBaseAllergenService,
+    PrismaIngredientBaseAllergenRepository,
+    {
+      provide: IngredientBaseAllergenRepository,
+      useExisting: PrismaIngredientBaseAllergenRepository
+    },
+    IngredientBaseNutrientService,
+    PrismaIngredientBaseNutrientRepository,
+    {
+      provide: IngredientBaseNutrientRepository,
+      useExisting: PrismaIngredientBaseNutrientRepository
+    },
     // Profile entities
     IngredientRegulatoryProfileService,
     PrismaIngredientRegulatoryProfileRepository,
@@ -218,6 +248,11 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     IngredientTenantAllergenService,
     IngredientTenantNutrientRepository,
     IngredientTenantNutrientService,
+    // Base junction tables
+    IngredientBaseAllergenRepository,
+    IngredientBaseAllergenService,
+    IngredientBaseNutrientRepository,
+    IngredientBaseNutrientService,
     // Profile entities
     IngredientRegulatoryProfileRepository,
     IngredientRegulatoryProfileService,

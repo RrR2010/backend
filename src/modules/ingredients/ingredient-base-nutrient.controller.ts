@@ -17,25 +17,23 @@ import {
 import type { Request } from 'express'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import { IngredientTenantNutrientService } from '@ingredients/ingredient-tenant-nutrient.service'
-import { IngredientTenantNutrient } from '@ingredients/ingredient-tenant-nutrient.entity'
+import { UserScope } from '@users/user.types'
+import { IngredientBaseNutrientService } from '@ingredients/ingredient-base-nutrient.service'
+import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
 
 // TODO: zod validate dto
-export class CreateIngredientTenantNutrientDto {
-  @ApiProperty({ type: String, required: false })
-  tenantId?: string
-
+export class CreateIngredientBaseNutrientDto {
   @ApiProperty({ type: String })
   ingredientId!: string
 
   @ApiProperty({ type: String })
-  nutrientId!: string
+  baseNutrientId!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
   value?: string | null
 }
 
-export class IngredientTenantNutrientResponseDto {
+export class IngredientBaseNutrientResponseDto {
   @ApiProperty()
   id!: string
 
@@ -52,44 +50,46 @@ export class IngredientTenantNutrientResponseDto {
   ingredientId!: string
 
   @ApiProperty()
-  nutrientId!: string
+  baseNutrientId!: string
 
   @ApiProperty({ required: false, nullable: true })
   value!: string | null
 
   static fromDomain(
-    entry: IngredientTenantNutrient
-  ): IngredientTenantNutrientResponseDto {
+    entry: IngredientBaseNutrient
+  ): IngredientBaseNutrientResponseDto {
     return {
       id: entry.id.value,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
       tenantId: entry.tenantId,
       ingredientId: entry.ingredientId,
-      nutrientId: entry.nutrientId,
+      baseNutrientId: entry.baseNutrientId,
       value: entry.value !== null ? entry.value.toString() : null
     }
   }
 }
 
-@ApiTags('Ingredient Tenant Nutrients')
+@ApiTags('Ingredient Base Nutrients')
 @ApiBearerAuth('accessToken')
-@Controller('ingredient-tenant-nutrients')
-export class IngredientTenantNutrientsController {
-  constructor(private readonly service: IngredientTenantNutrientService) {}
+@Controller('ingredient-base-nutrients')
+export class IngredientBaseNutrientsController {
+  constructor(private readonly service: IngredientBaseNutrientService) {}
 
   @Post()
-  @Authorize(Action.Create, IngredientTenantNutrient)
+  @Authorize(Action.Create, IngredientBaseNutrient)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateIngredientTenantNutrientDto,
+    @Body() dto: CreateIngredientBaseNutrientDto,
     @Req() request: Request
-  ): Promise<IngredientTenantNutrientResponseDto> {
+  ): Promise<IngredientBaseNutrientResponseDto> {
+    const tenantId =
+      request.context.scope === UserScope.TENANT ? request.context.tenantId : ''
     const entry = await this.service.create(
       {
-        tenantId: dto.tenantId ?? '',
+        tenantId,
         ingredientId: dto.ingredientId,
-        nutrientId: dto.nutrientId,
+        baseNutrientId: dto.baseNutrientId,
         value:
           dto.value !== null && dto.value !== undefined
             ? parseFloat(dto.value)
@@ -97,24 +97,24 @@ export class IngredientTenantNutrientsController {
       },
       request.context
     )
-    return IngredientTenantNutrientResponseDto.fromDomain(entry)
+    return IngredientBaseNutrientResponseDto.fromDomain(entry)
   }
 
   @Get('by-ingredient/:ingredientId')
-  @Authorize(Action.Read, IngredientTenantNutrient)
+  @Authorize(Action.Read, IngredientBaseNutrient)
   async findByIngredientId(
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
-  ): Promise<IngredientTenantNutrientResponseDto[]> {
+  ): Promise<IngredientBaseNutrientResponseDto[]> {
     const entries = await this.service.findByIngredientId(
       ingredientId,
       request.context
     )
-    return entries.map((e) => IngredientTenantNutrientResponseDto.fromDomain(e))
+    return entries.map((e) => IngredientBaseNutrientResponseDto.fromDomain(e))
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, IngredientTenantNutrient)
+  @Authorize(Action.Delete, IngredientBaseNutrient)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request

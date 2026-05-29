@@ -17,26 +17,24 @@ import {
 import type { Request } from 'express'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
 import { AllergenRelationType } from '@prisma/client'
-import { IngredientTenantAllergenService } from '@ingredients/ingredient-tenant-allergen.service'
-import { IngredientTenantAllergen } from '@ingredients/ingredient-tenant-allergen.entity'
+import { IngredientBaseAllergenService } from '@ingredients/ingredient-base-allergen.service'
+import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
 
 // TODO: zod validate dto
-export class CreateIngredientTenantAllergenDto {
-  @ApiProperty({ type: String, required: false })
-  tenantId?: string
-
+export class CreateIngredientBaseAllergenDto {
   @ApiProperty({ type: String })
   ingredientId!: string
 
   @ApiProperty({ type: String })
-  allergenId!: string
+  baseAllergenId!: string
 
   @ApiProperty({ enum: AllergenRelationType, enumName: 'AllergenRelationType' })
   relationType!: AllergenRelationType
 }
 
-export class IngredientTenantAllergenResponseDto {
+export class IngredientBaseAllergenResponseDto {
   @ApiProperty()
   id!: string
 
@@ -53,66 +51,68 @@ export class IngredientTenantAllergenResponseDto {
   ingredientId!: string
 
   @ApiProperty()
-  allergenId!: string
+  baseAllergenId!: string
 
   @ApiProperty({ enum: AllergenRelationType, enumName: 'AllergenRelationType' })
   relationType!: AllergenRelationType
 
   static fromDomain(
-    entry: IngredientTenantAllergen
-  ): IngredientTenantAllergenResponseDto {
+    entry: IngredientBaseAllergen
+  ): IngredientBaseAllergenResponseDto {
     return {
       id: entry.id.value,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
       tenantId: entry.tenantId,
       ingredientId: entry.ingredientId,
-      allergenId: entry.allergenId,
+      baseAllergenId: entry.baseAllergenId,
       relationType: entry.relationType
     }
   }
 }
 
-@ApiTags('Ingredient Tenant Allergens')
+@ApiTags('Ingredient Base Allergens')
 @ApiBearerAuth('accessToken')
-@Controller('ingredient-tenant-allergens')
-export class IngredientTenantAllergensController {
-  constructor(private readonly service: IngredientTenantAllergenService) {}
+@Controller('ingredient-base-allergens')
+export class IngredientBaseAllergensController {
+  constructor(private readonly service: IngredientBaseAllergenService) {}
 
   @Post()
-  @Authorize(Action.Create, IngredientTenantAllergen)
+  @Authorize(Action.Create, IngredientBaseAllergen)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateIngredientTenantAllergenDto,
+    @Body() dto: CreateIngredientBaseAllergenDto,
     @Req() request: Request
-  ): Promise<IngredientTenantAllergenResponseDto> {
+  ): Promise<IngredientBaseAllergenResponseDto> {
+    const tenantId =
+      request.context.scope === UserScope.TENANT ? request.context.tenantId : ''
     const entry = await this.service.create(
       {
-        tenantId: dto.tenantId ?? '',
+        tenantId,
         ingredientId: dto.ingredientId,
-        allergenId: dto.allergenId,
+        baseAllergenId: dto.baseAllergenId,
         relationType: dto.relationType
       },
       request.context
     )
-    return IngredientTenantAllergenResponseDto.fromDomain(entry)
+    return IngredientBaseAllergenResponseDto.fromDomain(entry)
   }
 
   @Get('by-ingredient/:ingredientId')
-  @Authorize(Action.Read, IngredientTenantAllergen)
+  @Authorize(Action.Read, IngredientBaseAllergen)
   async findByIngredientId(
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
-  ): Promise<IngredientTenantAllergenResponseDto[]> {
+  ): Promise<IngredientBaseAllergenResponseDto[]> {
     const entries = await this.service.findByIngredientId(
       ingredientId,
       request.context
     )
-    return entries.map((e) => IngredientTenantAllergenResponseDto.fromDomain(e))
+    return entries.map((e) => IngredientBaseAllergenResponseDto.fromDomain(e))
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, IngredientTenantAllergen)
+  @Authorize(Action.Delete, IngredientBaseAllergen)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
