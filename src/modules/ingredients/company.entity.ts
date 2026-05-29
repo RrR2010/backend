@@ -1,19 +1,26 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
+export type CompanyProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    name: string
+    type: string
+    contactInfo: string | null
+    taxId: string | null
+  }
 
-export type CompanyProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  name: string
-  type: string
-  contactInfo: string | null
-  taxId: string | null
-}
-
-export type CreateCompanyProps = Omit<CompanyProps, keyof AuditableProps | keyof LockableProps | 'id'>
+export type CreateCompanyProps = Omit<
+  CompanyProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
 export class Company extends Lockable(Auditable(Base<CompanyProps>)) {
   protected constructor(props: CompanyProps) {

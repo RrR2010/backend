@@ -66,13 +66,16 @@ export class AuthenticationService {
     if (user.scope === UserScope.PLATFORM) {
       // Get platform roles from PlatformMembership
       const platformMembership =
-        await this.platformMembershipRepository.findAll({
-          userId: user.id.value
-        }, {
-          userId: user.id.value,
-          scope: UserScope.PLATFORM,
-          roles: []
-        })
+        await this.platformMembershipRepository.findAll(
+          {
+            userId: user.id.value
+          },
+          {
+            userId: user.id.value,
+            scope: UserScope.PLATFORM,
+            roles: []
+          }
+        )
       if (platformMembership.length === 0 || !platformMembership[0]) {
         throw new InvalidCredentialsError()
       }
@@ -100,9 +103,12 @@ export class AuthenticationService {
         roles: []
       }
       const memberships = await this.tenantMembershipRepository
-        .findAll({
-          userId: user.id.value
-        }, tenantCtx)
+        .findAll(
+          {
+            userId: user.id.value
+          },
+          tenantCtx
+        )
         .then((memberships) => memberships.filter((membership) => !!membership))
 
       if (memberships.length === 0) throw new InvalidCredentialsError()
@@ -168,17 +174,23 @@ export class AuthenticationService {
       scope: UserScope.PLATFORM,
       roles: []
     }
-    const memberships = await this.tenantMembershipRepository.findAll({
-      userId: user.id.value,
-      tenantId: selectTenantInput.tenantId
-    }, tenantCtx)
+    const memberships = await this.tenantMembershipRepository.findAll(
+      {
+        userId: user.id.value,
+        tenantId: selectTenantInput.tenantId
+      },
+      tenantCtx
+    )
 
     if (memberships.length === 0 || !memberships[0]) {
       throw new TenantNotFoundError()
     }
 
     const membership = memberships[0]
-    const tenant = await this.tenantRepository.findById(membership.tenantId, tenantCtx)
+    const tenant = await this.tenantRepository.findById(
+      membership.tenantId,
+      tenantCtx
+    )
     if (!tenant) {
       throw new TenantNotFoundError()
     }

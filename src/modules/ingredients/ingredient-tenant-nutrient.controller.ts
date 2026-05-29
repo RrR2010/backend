@@ -1,13 +1,27 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common'
-import { ApiBearerAuth, ApiConsumes, ApiProperty, ApiTags } from '@nestjs/swagger'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req
+} from '@nestjs/common'
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiProperty,
+  ApiTags
+} from '@nestjs/swagger'
 import type { Request } from 'express'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import { IngredientNutrientService } from '@ingredients/ingredient-nutrient.service'
-import { IngredientNutrient } from '@ingredients/ingredient-nutrient.entity'
+import { IngredientTenantNutrientService } from '@ingredients/ingredient-tenant-nutrient.service'
+import { IngredientTenantNutrient } from '@ingredients/ingredient-tenant-nutrient.entity'
 
 // TODO: zod validate dto
-export class CreateIngredientNutrientDto {
+export class CreateIngredientTenantNutrientDto {
   @ApiProperty({ type: String, required: false })
   tenantId?: string
 
@@ -21,7 +35,7 @@ export class CreateIngredientNutrientDto {
   value?: string | null
 }
 
-export class IngredientNutrientResponseDto {
+export class IngredientTenantNutrientResponseDto {
   @ApiProperty()
   id!: string
 
@@ -43,7 +57,9 @@ export class IngredientNutrientResponseDto {
   @ApiProperty({ required: false, nullable: true })
   value!: string | null
 
-  static fromDomain(entry: IngredientNutrient): IngredientNutrientResponseDto {
+  static fromDomain(
+    entry: IngredientTenantNutrient
+  ): IngredientTenantNutrientResponseDto {
     return {
       id: entry.id.value,
       createdAt: entry.createdAt,
@@ -56,43 +72,49 @@ export class IngredientNutrientResponseDto {
   }
 }
 
-@ApiTags('Ingredient Nutrients')
+@ApiTags('Ingredient Tenant Nutrients')
 @ApiBearerAuth('accessToken')
-@Controller('ingredient-nutrients')
-export class IngredientNutrientsController {
-  constructor(private readonly service: IngredientNutrientService) {}
+@Controller('ingredient-tenant-nutrients')
+export class IngredientTenantNutrientsController {
+  constructor(private readonly service: IngredientTenantNutrientService) {}
 
   @Post()
-  @Authorize(Action.Create, IngredientNutrient)
+  @Authorize(Action.Create, IngredientTenantNutrient)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateIngredientNutrientDto,
+    @Body() dto: CreateIngredientTenantNutrientDto,
     @Req() request: Request
-  ): Promise<IngredientNutrientResponseDto> {
+  ): Promise<IngredientTenantNutrientResponseDto> {
     const entry = await this.service.create(
       {
         tenantId: dto.tenantId ?? '',
         ingredientId: dto.ingredientId,
         nutrientId: dto.nutrientId,
-        value: dto.value !== null && dto.value !== undefined ? parseFloat(dto.value) : null
+        value:
+          dto.value !== null && dto.value !== undefined
+            ? parseFloat(dto.value)
+            : null
       },
       request.context
     )
-    return IngredientNutrientResponseDto.fromDomain(entry)
+    return IngredientTenantNutrientResponseDto.fromDomain(entry)
   }
 
   @Get('by-ingredient/:ingredientId')
-  @Authorize(Action.Read, IngredientNutrient)
+  @Authorize(Action.Read, IngredientTenantNutrient)
   async findByIngredientId(
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
-  ): Promise<IngredientNutrientResponseDto[]> {
-    const entries = await this.service.findByIngredientId(ingredientId, request.context)
-    return entries.map(IngredientNutrientResponseDto.fromDomain)
+  ): Promise<IngredientTenantNutrientResponseDto[]> {
+    const entries = await this.service.findByIngredientId(
+      ingredientId,
+      request.context
+    )
+    return entries.map(IngredientTenantNutrientResponseDto.fromDomain)
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, IngredientNutrient)
+  @Authorize(Action.Delete, IngredientTenantNutrient)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request

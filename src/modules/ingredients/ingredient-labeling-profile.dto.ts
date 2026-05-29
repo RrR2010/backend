@@ -78,19 +78,25 @@ export class CreateIngredientLabelingProfileResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(profile: IngredientLabelingProfile): CreateIngredientLabelingProfileResponseDto {
+  static fromDomain(
+    profile: IngredientLabelingProfile
+  ): CreateIngredientLabelingProfileResponseDto {
     return {
       id: profile.id.value,
       tenantId: profile.tenantId,
       ingredientId: profile.ingredientId,
       containsAddedSugars: profile.containsAddedSugars,
-      containsIngredientWithAddedSugars: profile.containsIngredientWithAddedSugars,
-      containsNaturallyOccurringSugarSubstitutes: profile.containsNaturallyOccurringSugarSubstitutes,
-      usesProcessingThatIncreasesSugars: profile.usesProcessingThatIncreasesSugars,
+      containsIngredientWithAddedSugars:
+        profile.containsIngredientWithAddedSugars,
+      containsNaturallyOccurringSugarSubstitutes:
+        profile.containsNaturallyOccurringSugarSubstitutes,
+      usesProcessingThatIncreasesSugars:
+        profile.usesProcessingThatIncreasesSugars,
       containsAddedFatsOrOils: profile.containsAddedFatsOrOils,
       containsButterOrMargarine: profile.containsButterOrMargarine,
       containsDairyCream: profile.containsDairyCream,
-      containsIngredientsWithFatsOrCream: profile.containsIngredientsWithFatsOrCream,
+      containsIngredientsWithFatsOrCream:
+        profile.containsIngredientsWithFatsOrCream,
       systemState: profile.systemState,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt

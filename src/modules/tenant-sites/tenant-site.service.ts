@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { TenantSiteRepository, TenantSiteFilter } from '@tenant-sites/tenant-site.repository'
-import { TenantSite, CreateTenantSiteProps } from '@tenant-sites/tenant-site.entity'
+import {
+  TenantSiteRepository,
+  TenantSiteFilter
+} from '@tenant-sites/tenant-site.repository'
+import {
+  TenantSite,
+  CreateTenantSiteProps
+} from '@tenant-sites/tenant-site.entity'
 import { TenantSiteNotFoundError } from '@tenant-sites/tenant-site.errors'
 import { RequestContext } from '@authorization/authorization.types'
 
@@ -8,12 +14,18 @@ import { RequestContext } from '@authorization/authorization.types'
 export class TenantSiteService {
   constructor(private readonly repository: TenantSiteRepository) {}
 
-  async create(props: CreateTenantSiteProps, ctx: RequestContext): Promise<TenantSite> {
+  async create(
+    props: CreateTenantSiteProps,
+    ctx: RequestContext
+  ): Promise<TenantSite> {
     const tenantSite = TenantSite.create(props)
     return this.repository.save(tenantSite, ctx)
   }
 
-  async findAll(filter: TenantSiteFilter, ctx: RequestContext): Promise<TenantSite[]> {
+  async findAll(
+    filter: TenantSiteFilter,
+    ctx: RequestContext
+  ): Promise<TenantSite[]> {
     return this.repository.findAll(filter, ctx)
   }
 

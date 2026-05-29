@@ -1,38 +1,50 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
 import { FlavorOriginType, ColorantOriginType } from '@prisma/client'
 
-export type IngredientRegulatoryProfileProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  ingredientId: string
-  hasRtiq: boolean
-  isGmo: boolean
-  gmoIngredient: string | null
-  gmoDonorSpecies: string | null
-  gmoPercentage: number | null
-  isIrradiated: boolean
-  irradiatedIngredient: string | null
-  containsLactose: boolean
-  containsGluten: boolean
-  containsAspartame: boolean
-  flavorOriginType: FlavorOriginType | null
-  colorantOriginType: ColorantOriginType | null
-}
+export type IngredientRegulatoryProfileProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    ingredientId: string
+    hasRtiq: boolean
+    isGmo: boolean
+    gmoIngredient: string | null
+    gmoDonorSpecies: string | null
+    gmoPercentage: number | null
+    isIrradiated: boolean
+    irradiatedIngredient: string | null
+    containsLactose: boolean
+    containsGluten: boolean
+    containsAspartame: boolean
+    flavorOriginType: FlavorOriginType | null
+    colorantOriginType: ColorantOriginType | null
+  }
 
-export type CreateIngredientRegulatoryProfileProps = Omit<IngredientRegulatoryProfileProps, keyof AuditableProps | keyof LockableProps | 'id'>
+export type CreateIngredientRegulatoryProfileProps = Omit<
+  IngredientRegulatoryProfileProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export class IngredientRegulatoryProfile extends Lockable(Auditable(Base<IngredientRegulatoryProfileProps>)) {
+export class IngredientRegulatoryProfile extends Lockable(
+  Auditable(Base<IngredientRegulatoryProfileProps>)
+) {
   protected constructor(props: IngredientRegulatoryProfileProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateIngredientRegulatoryProfileProps): IngredientRegulatoryProfile {
+  static create(
+    props: CreateIngredientRegulatoryProfileProps
+  ): IngredientRegulatoryProfile {
     // TODO: zod validate input
     const now = new Date()
     return new IngredientRegulatoryProfile({
@@ -44,7 +56,9 @@ export class IngredientRegulatoryProfile extends Lockable(Auditable(Base<Ingredi
     })
   }
 
-  static rehydrate(props: IngredientRegulatoryProfileProps): IngredientRegulatoryProfile {
+  static rehydrate(
+    props: IngredientRegulatoryProfileProps
+  ): IngredientRegulatoryProfile {
     return new IngredientRegulatoryProfile(props)
   }
 
@@ -178,7 +192,9 @@ export class IngredientRegulatoryProfile extends Lockable(Auditable(Base<Ingredi
     this.touch()
   }
 
-  changeColorantOriginType(colorantOriginType: ColorantOriginType | null): void {
+  changeColorantOriginType(
+    colorantOriginType: ColorantOriginType | null
+  ): void {
     this.ensureActivated('IngredientRegulatoryProfile')
     this._props.colorantOriginType = colorantOriginType
     this.touch()

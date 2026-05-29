@@ -62,10 +62,7 @@ export class MemberProfileDocumentService {
     return this.repository.save(document, ctx)
   }
 
-  async lock(
-    id: string,
-    ctx: RequestContext
-  ): Promise<MemberProfileDocument> {
+  async lock(id: string, ctx: RequestContext): Promise<MemberProfileDocument> {
     const document = await this.findById(id, ctx)
     document.lock()
     return this.repository.save(document, ctx)

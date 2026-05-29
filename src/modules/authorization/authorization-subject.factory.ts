@@ -21,7 +21,9 @@ export class AuthorizationSubjectFactory {
     ctx: RequestContext,
     membership: PlatformMembership | TenantMembership
   ): UserSubject {
-    const isTenantMembership = (m: PlatformMembership | TenantMembership): m is TenantMembership => {
+    const isTenantMembership = (
+      m: PlatformMembership | TenantMembership
+    ): m is TenantMembership => {
       return 'tenantId' in m
     }
 
@@ -29,7 +31,9 @@ export class AuthorizationSubjectFactory {
       __subjectType__: User,
       id: user.id.value,
       scope: user.scope,
-      tenantId: isTenantMembership(membership) ? membership.tenantId : undefined,
+      tenantId: isTenantMembership(membership)
+        ? membership.tenantId
+        : undefined,
       roles: isTenantMembership(membership) ? membership.roles : undefined,
       isSelf: user.id.value === ctx.userId
     }

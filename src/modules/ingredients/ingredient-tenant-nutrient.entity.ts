@@ -2,7 +2,7 @@ import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 
-export type IngredientNutrientProps = AuditableProps & {
+export type IngredientTenantNutrientProps = AuditableProps & {
   id: Id
   tenantId: string
   ingredientId: string
@@ -10,19 +10,26 @@ export type IngredientNutrientProps = AuditableProps & {
   value: number | null
 }
 
-export type CreateIngredientNutrientProps = Omit<IngredientNutrientProps, keyof AuditableProps | 'id'>
+export type CreateIngredientTenantNutrientProps = Omit<
+  IngredientTenantNutrientProps,
+  keyof AuditableProps | 'id'
+>
 
-export class IngredientNutrient extends Auditable(Base<IngredientNutrientProps>) {
-  protected constructor(props: IngredientNutrientProps) {
+export class IngredientTenantNutrient extends Auditable(
+  Base<IngredientTenantNutrientProps>
+) {
+  protected constructor(props: IngredientTenantNutrientProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateIngredientNutrientProps): IngredientNutrient {
+  static create(
+    props: CreateIngredientTenantNutrientProps
+  ): IngredientTenantNutrient {
     // TODO: zod validate input
     const now = new Date()
-    return new IngredientNutrient({
+    return new IngredientTenantNutrient({
       ...props,
       id: Id.generate(),
       createdAt: now,
@@ -30,8 +37,10 @@ export class IngredientNutrient extends Auditable(Base<IngredientNutrientProps>)
     })
   }
 
-  static rehydrate(props: IngredientNutrientProps): IngredientNutrient {
-    return new IngredientNutrient(props)
+  static rehydrate(
+    props: IngredientTenantNutrientProps
+  ): IngredientTenantNutrient {
+    return new IngredientTenantNutrient(props)
   }
 
   // --------------- Getters ---------------

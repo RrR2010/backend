@@ -11,7 +11,11 @@ import {
   mockWebhookHeaders
 } from '../helpers/bootstrap.helper'
 
-async function waitForProvisioned(app: INestApplication, registrationId: string, timeoutMs = 5000): Promise<void> {
+async function waitForProvisioned(
+  app: INestApplication,
+  registrationId: string,
+  timeoutMs = 5000
+): Promise<void> {
   const start = Date.now()
   while (Date.now() - start < timeoutMs) {
     const res = await supertest(app.getHttpServer())
@@ -19,9 +23,11 @@ async function waitForProvisioned(app: INestApplication, registrationId: string,
       .expect(200)
 
     if (res.body.state === 'PROVISIONED') return
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
   }
-  throw new Error(`Timed out waiting for PROVISIONED state after ${timeoutMs}ms`)
+  throw new Error(
+    `Timed out waiting for PROVISIONED state after ${timeoutMs}ms`
+  )
 }
 
 describe('Bootstrap E2E (Phase 7)', () => {

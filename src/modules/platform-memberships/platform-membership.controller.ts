@@ -30,7 +30,6 @@ import { PlatformRole } from '@users/user.types'
 export class PlatformMembershipsController {
   constructor(private readonly service: PlatformMembershipService) {}
 
-
   @Post()
   @Authorize(Action.Create, PlatformMembership)
   @ApiConsumes('application/json')
@@ -47,7 +46,9 @@ export class PlatformMembershipsController {
 
   @Get()
   @Authorize(Action.Read, PlatformMembership)
-  async findAll(@Req() request: Request): Promise<PlatformMembershipResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<PlatformMembershipResponseDto[]> {
     const memberships = await this.service.findAll({}, request.context)
     return memberships.map(PlatformMembershipResponseDto.fromDomain)
   }

@@ -161,7 +161,7 @@ export class IngredientService {
       // Validate referenced entities belong to same tenant
       if (dto.allergens?.added?.length) {
         const allergenIds = dto.allergens.added.map((a) => a.allergenId)
-        const existingAllergens = await tx.allergen.findMany({
+        const existingAllergens = await tx.tenantAllergen.findMany({
           where: { id: { in: allergenIds }, tenantId }
         })
         if (existingAllergens.length !== allergenIds.length) {
@@ -172,7 +172,7 @@ export class IngredientService {
       }
       if (dto.nutrients?.added?.length) {
         const nutrientIds = dto.nutrients.added.map((n) => n.nutrientId)
-        const existingNutrients = await tx.nutrient.findMany({
+        const existingNutrients = await tx.tenantNutrient.findMany({
           where: { id: { in: nutrientIds }, tenantId }
         })
         if (existingNutrients.length !== nutrientIds.length) {
@@ -185,7 +185,7 @@ export class IngredientService {
       // --- Handle Allergens ---
       if (dto.allergens) {
         if (dto.allergens.removed?.length) {
-          await tx.ingredientAllergen.deleteMany({
+          await tx.ingredientTenantAllergen.deleteMany({
             where: {
               id: { in: dto.allergens.removed },
               ingredientId: id,
@@ -196,7 +196,7 @@ export class IngredientService {
         if (dto.allergens.added?.length) {
           const now = new Date()
           for (const a of dto.allergens.added) {
-            await tx.ingredientAllergen.create({
+            await tx.ingredientTenantAllergen.create({
               data: {
                 id: Id.generate().value,
                 ingredientId: id,
@@ -211,7 +211,7 @@ export class IngredientService {
         }
         if (dto.allergens.updated?.length) {
           for (const a of dto.allergens.updated) {
-            await tx.ingredientAllergen.updateMany({
+            await tx.ingredientTenantAllergen.updateMany({
               where: { id: a.id, tenantId },
               data: {
                 relationType: a.relationType,
@@ -225,7 +225,7 @@ export class IngredientService {
       // --- Handle Nutrients ---
       if (dto.nutrients) {
         if (dto.nutrients.removed?.length) {
-          await tx.ingredientNutrient.deleteMany({
+          await tx.ingredientTenantNutrient.deleteMany({
             where: {
               id: { in: dto.nutrients.removed },
               ingredientId: id,
@@ -236,7 +236,7 @@ export class IngredientService {
         if (dto.nutrients.added?.length) {
           const now = new Date()
           for (const n of dto.nutrients.added) {
-            await tx.ingredientNutrient.create({
+            await tx.ingredientTenantNutrient.create({
               data: {
                 id: Id.generate().value,
                 ingredientId: id,
@@ -254,7 +254,7 @@ export class IngredientService {
         }
         if (dto.nutrients.updated?.length) {
           for (const n of dto.nutrients.updated) {
-            await tx.ingredientNutrient.updateMany({
+            await tx.ingredientTenantNutrient.updateMany({
               where: { id: n.id, tenantId },
               data: {
                 value:
@@ -373,11 +373,11 @@ export class IngredientService {
       technicalProfile
     ] = await Promise.all([
       this.prisma.ingredient.findUnique({ where: { id: ingredientId } }),
-      this.prisma.ingredientAllergen.findMany({
+      this.prisma.ingredientTenantAllergen.findMany({
         where: { ingredientId, tenantId },
         include: { allergen: { select: { name: true } } }
       }),
-      this.prisma.ingredientNutrient.findMany({
+      this.prisma.ingredientTenantNutrient.findMany({
         where: { ingredientId, tenantId },
         include: { nutrient: { select: { name: true, unit: true } } }
       }),

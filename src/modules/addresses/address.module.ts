@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common'
 
-import { AddressRepository, PrismaAddressRepository } from '@addresses/address.repository'
+import {
+  AddressRepository,
+  PrismaAddressRepository
+} from '@addresses/address.repository'
 import { AddressService } from '@addresses/address.service'
 import { AddressesController } from '@addresses/address.controller'
 

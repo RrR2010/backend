@@ -1,24 +1,29 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 import { OwnerType, AddressType } from '@shared/enums'
 
-export type AddressProps = AuditableProps & LockableProps & {
-  id: Id
-  ownerId: string
-  ownerType: OwnerType
-  type: AddressType
-  street: string
-  number: string
-  complement: string | null
-  district: string | null
-  city: string
-  state: string
-  postalCode: string
-  country: string
-  isDefault: boolean
-}
+export type AddressProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    ownerId: string
+    ownerType: OwnerType
+    type: AddressType
+    street: string
+    number: string
+    complement: string | null
+    district: string | null
+    city: string
+    state: string
+    postalCode: string
+    country: string
+    isDefault: boolean
+  }
 
 export type CreateAddressProps = Omit<
   AddressProps,

@@ -51,7 +51,9 @@ export class IngredientTechnicalProfilesController {
 
   @Get()
   @Authorize(Action.Read, IngredientTechnicalProfile)
-  async findAll(@Req() request: Request): Promise<IngredientTechnicalProfileResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<IngredientTechnicalProfileResponseDto[]> {
     const profiles = await this.service.findAll({}, request.context)
     return profiles.map(IngredientTechnicalProfileResponseDto.fromDomain)
   }
@@ -62,7 +64,10 @@ export class IngredientTechnicalProfilesController {
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
   ): Promise<IngredientTechnicalProfileResponseDto | null> {
-    const profile = await this.service.findByIngredientId(ingredientId, request.context)
+    const profile = await this.service.findByIngredientId(
+      ingredientId,
+      request.context
+    )
     if (!profile) return null
     return IngredientTechnicalProfileResponseDto.fromDomain(profile)
   }
@@ -89,7 +94,8 @@ export class IngredientTechnicalProfilesController {
 
     if (dto.pac !== undefined) profile.changePac(dto.pac)
     if (dto.pod !== undefined) profile.changePod(dto.pod)
-    if (dto.totalSolids !== undefined) profile.changeTotalSolids(dto.totalSolids)
+    if (dto.totalSolids !== undefined)
+      profile.changeTotalSolids(dto.totalSolids)
     if (dto.ashContent !== undefined) profile.changeAshContent(dto.ashContent)
 
     const saved = await this.service.save(profile, request.context)

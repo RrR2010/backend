@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common'
-import { AuditLogRepository, AuditLogFilter } from '@audit-logs/audit-log.repository'
+import {
+  AuditLogRepository,
+  AuditLogFilter
+} from '@audit-logs/audit-log.repository'
 import { AuditLog, CreateAuditLogProps } from '@audit-logs/audit-log.entity'
 import { AuditLogNotFoundError } from '@audit-logs/audit-log.errors'
 import { RequestContext } from '@authorization/authorization.types'
@@ -8,12 +11,18 @@ import { RequestContext } from '@authorization/authorization.types'
 export class AuditLogService {
   constructor(private readonly repository: AuditLogRepository) {}
 
-  async create(props: CreateAuditLogProps, ctx: RequestContext): Promise<AuditLog> {
+  async create(
+    props: CreateAuditLogProps,
+    ctx: RequestContext
+  ): Promise<AuditLog> {
     const auditLog = AuditLog.create(props)
     return this.repository.save(auditLog, ctx)
   }
 
-  async findAll(filter: AuditLogFilter, ctx: RequestContext): Promise<AuditLog[]> {
+  async findAll(
+    filter: AuditLogFilter,
+    ctx: RequestContext
+  ): Promise<AuditLog[]> {
     return this.repository.findAll(filter, ctx)
   }
 

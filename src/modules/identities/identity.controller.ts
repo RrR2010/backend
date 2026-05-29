@@ -27,8 +27,6 @@ import { IdentityService } from '@identities/identity.service'
 export class IdentitiesController {
   constructor(private readonly identityService: IdentityService) {}
 
-
-
   @Post()
   @Authorize(Action.Create, Identity)
   @ApiConsumes('application/x-www-form-urlencoded', 'application/json')
@@ -43,10 +41,7 @@ export class IdentitiesController {
   @Get()
   @Authorize(Action.Read, Identity)
   async findAll(@Req() request: Request): Promise<IdentityResponseDto[]> {
-    const identities = await this.identityService.findAll(
-      {},
-      request.context
-    )
+    const identities = await this.identityService.findAll({}, request.context)
     return identities.map((identity) =>
       IdentityResponseDto.fromDomain(identity)
     )

@@ -9,7 +9,10 @@ import { UserScope } from '@users/user.types'
 export abstract class AuditLogRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<AuditLog | null>
   abstract save(auditLog: AuditLog, ctx: RequestContext): Promise<AuditLog>
-  abstract findAll(filter: AuditLogFilter, ctx: RequestContext): Promise<AuditLog[]>
+  abstract findAll(
+    filter: AuditLogFilter,
+    ctx: RequestContext
+  ): Promise<AuditLog[]>
 }
 
 export type AuditLogFilter = {
@@ -114,7 +117,9 @@ class AuditLogMapper {
     })
   }
 
-  static toPersistence(auditLog: AuditLog): Prisma.AuditLogUncheckedCreateInput {
+  static toPersistence(
+    auditLog: AuditLog
+  ): Prisma.AuditLogUncheckedCreateInput {
     const userId = auditLog.userId === 'system' ? null : auditLog.userId
     return {
       id: auditLog.id.value,

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { TenantMembershipRepository, TenantMembershipFilter } from '@tenant-memberships/tenant-membership.repository'
-import { TenantMembership, CreateTenantMembershipProps } from '@tenant-memberships/tenant-membership.entity'
+import {
+  TenantMembershipRepository,
+  TenantMembershipFilter
+} from '@tenant-memberships/tenant-membership.repository'
+import {
+  TenantMembership,
+  CreateTenantMembershipProps
+} from '@tenant-memberships/tenant-membership.entity'
 import { TenantMembershipNotFoundError } from '@tenant-memberships/tenant-membership.errors'
 import { RequestContext } from '@authorization/authorization.types'
 
@@ -8,12 +14,18 @@ import { RequestContext } from '@authorization/authorization.types'
 export class TenantMembershipService {
   constructor(private readonly repository: TenantMembershipRepository) {}
 
-  async create(props: CreateTenantMembershipProps, ctx: RequestContext): Promise<TenantMembership> {
+  async create(
+    props: CreateTenantMembershipProps,
+    ctx: RequestContext
+  ): Promise<TenantMembership> {
     const membership = TenantMembership.create(props)
     return this.repository.save(membership, ctx)
   }
 
-  async findAll(filter: TenantMembershipFilter, ctx: RequestContext): Promise<TenantMembership[]> {
+  async findAll(
+    filter: TenantMembershipFilter,
+    ctx: RequestContext
+  ): Promise<TenantMembership[]> {
     return this.repository.findAll(filter, ctx)
   }
 
@@ -25,7 +37,10 @@ export class TenantMembershipService {
     return membership
   }
 
-  async save(membership: TenantMembership, ctx: RequestContext): Promise<TenantMembership> {
+  async save(
+    membership: TenantMembership,
+    ctx: RequestContext
+  ): Promise<TenantMembership> {
     return this.repository.save(membership, ctx)
   }
 

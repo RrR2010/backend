@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsOptional, IsBoolean, IsUUID, IsEnum, IsNumberString, ValidateNested } from 'class-validator'
+import {
+  IsOptional,
+  IsBoolean,
+  IsUUID,
+  IsEnum,
+  IsNumberString,
+  ValidateNested
+} from 'class-validator'
 import { Type } from 'class-transformer'
 import { Ingredient } from '@ingredients/ingredient.entity'
 import { SystemState } from '@shared/behaviours/lockable'
@@ -28,7 +35,10 @@ export class CreateIngredientDto {
   @ApiProperty({ type: String, required: false, nullable: true })
   functionalGroupId?: string | null
 
-  @ApiProperty({ enum: IngredientFunctionType, enumName: 'IngredientFunctionType' })
+  @ApiProperty({
+    enum: IngredientFunctionType,
+    enumName: 'IngredientFunctionType'
+  })
   ingredientFunction!: IngredientFunctionType
 
   @ApiProperty({ type: String, required: false, nullable: true })
@@ -72,7 +82,10 @@ export class CreateIngredientResponseDto {
   @ApiProperty({ required: false, nullable: true })
   functionalGroupId!: string | null
 
-  @ApiProperty({ enum: IngredientFunctionType, enumName: 'IngredientFunctionType' })
+  @ApiProperty({
+    enum: IngredientFunctionType,
+    enumName: 'IngredientFunctionType'
+  })
   ingredientFunction!: IngredientFunctionType
 
   @ApiProperty({ required: false, nullable: true })
@@ -143,7 +156,11 @@ export class UpdateIngredientDto {
   @ApiProperty({ type: String, required: false, nullable: true })
   functionalGroupId?: string | null
 
-  @ApiProperty({ enum: IngredientFunctionType, enumName: 'IngredientFunctionType', required: false })
+  @ApiProperty({
+    enum: IngredientFunctionType,
+    enumName: 'IngredientFunctionType',
+    required: false
+  })
   ingredientFunction?: IngredientFunctionType
 
   @ApiProperty({ type: String, required: false, nullable: true })

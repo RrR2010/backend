@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext
-} from '@nestjs/common'
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 import { IS_PUBLIC_KEY } from '@shared/decorators/public.decorator'
@@ -15,8 +11,6 @@ import {
   InsufficientPermissionError
 } from './authorization.errors'
 import { AuthenticatedRequest } from '@authentication/jwt-auth.guard'
-
-
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
@@ -61,7 +55,7 @@ export class AuthorizationGuard implements CanActivate {
       ability = definePlatformAbility({
         userId: user.userId,
         scope: UserScope.PLATFORM,
-        roles: user.roles as PlatformRole[]
+        roles: user.roles
       })
     } else if (user.scope === UserScope.TENANT) {
       // TENANT scope: use tenant policy
@@ -79,7 +73,7 @@ export class AuthorizationGuard implements CanActivate {
       ability = defineTenantAbility({
         userId: user.userId,
         scope: UserScope.TENANT,
-        roles: user.roles as TenantRole[],
+        roles: user.roles,
         tenantId: user.tenantId,
         isOwner: request.tenantContext?.isOwner ?? false
       })

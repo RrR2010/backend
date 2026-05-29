@@ -51,8 +51,8 @@ import { SubscriptionService } from '@billing/subscription.service'
 import { PlanService } from '@billing/plan.service'
 import { BaseAllergenRepository } from '@ingredients/base-allergen.repository'
 import { BaseNutrientRepository } from '@ingredients/base-nutrient.repository'
-import { AllergenRepository } from '@ingredients/allergen.repository'
-import { NutrientRepository } from '@ingredients/nutrient.repository'
+import { TenantAllergenRepository } from '@ingredients/tenant-allergen.repository'
+import { TenantNutrientRepository } from '@ingredients/tenant-nutrient.repository'
 
 @Injectable()
 export class BootstrapService {
@@ -79,8 +79,8 @@ export class BootstrapService {
     private readonly sessionService: SessionService,
     private readonly baseAllergenRepo: BaseAllergenRepository,
     private readonly baseNutrientRepo: BaseNutrientRepository,
-    private readonly allergenRepo: AllergenRepository,
-    private readonly nutrientRepo: NutrientRepository
+    private readonly allergenRepo: TenantAllergenRepository,
+    private readonly nutrientRepo: TenantNutrientRepository
   ) {}
 
   async register(
@@ -207,7 +207,9 @@ export class BootstrapService {
     )
 
     let onboardingResult: Awaited<
-      ReturnType<typeof this.subscriptionService.createSubscriptionForOnboarding>
+      ReturnType<
+        typeof this.subscriptionService.createSubscriptionForOnboarding
+      >
     >
     try {
       onboardingResult =
@@ -237,7 +239,8 @@ export class BootstrapService {
     // If the save above throws, the provider subscription already exists but is not linked
     // to any registration. Log the provider ID for manual cleanup or implement automatic
     // cancellation as a compensating action.
-    const providerSubscriptionId = onboardingResult.providerResult.providerSubscriptionId
+    const providerSubscriptionId =
+      onboardingResult.providerResult.providerSubscriptionId
     this.logger.log(`Provider subscription created: ${providerSubscriptionId}`)
 
     // 9. Audit log
@@ -273,7 +276,6 @@ export class BootstrapService {
         userAgent: null,
         action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_CREATED,
         before: null,
-
 
         after: {
           state: RegistrationState.PENDING,
@@ -425,9 +427,12 @@ export class BootstrapService {
     ) {
       registration.markExpired()
       await this.registrationRepo.save(registration, ctx)
-      this.logger.warn('Registration expired before subscription authorization', {
-        registrationId: registration.id.value
-      })
+      this.logger.warn(
+        'Registration expired before subscription authorization',
+        {
+          registrationId: registration.id.value
+        }
+      )
       return
     }
 
@@ -610,15 +615,15 @@ export class BootstrapService {
             entityId: registration.id.value,
             ipAddress: null,
             userAgent: null,
-          action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_COMPLETED,
-          before: { state: RegistrationState.PROVISIONING },
-          after: {
-            state: RegistrationState.PROVISIONED,
-            ...provisioningResult
+            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_COMPLETED,
+            before: { state: RegistrationState.PROVISIONING },
+            after: {
+              state: RegistrationState.PROVISIONED,
+              ...provisioningResult
+            },
+            description: null
           },
-          description: null
-        },
-        ctx
+          ctx
         )
       } catch (error) {
         // Finding 3: Do NOT throw — keep registration in PROVISIONING for operator recovery
@@ -635,15 +640,15 @@ export class BootstrapService {
             entityId: registration.id.value,
             ipAddress: null,
             userAgent: null,
-          action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_FAILED,
-          before: { state: RegistrationState.PROVISIONING },
-          after: {
-            state: RegistrationState.PROVISIONING,
-            error: (error as Error).message
+            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_FAILED,
+            before: { state: RegistrationState.PROVISIONING },
+            after: {
+              state: RegistrationState.PROVISIONING,
+              error: (error as Error).message
+            },
+            description: null
           },
-          description: null
-        },
-        ctx
+          ctx
         )
       }
     })
@@ -900,17 +905,23 @@ export class BootstrapService {
 
   /**
    * Provisions ingredient catalogs for a new tenant by copying all active
-   * entries from BaseAllergen → Allergen and BaseNutrient → Nutrient.
+   * entries from BaseAllergen → TenantAllergen and BaseNutrient → TenantNutrient.
    * Called as part of the tenant provisioning flow.
    */
-  async provisionIngredientCatalogs(tenantId: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async provisionIngredientCatalogs(
+    tenantId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<void> {
     const prisma = tx ?? this.prismaService
     const now = new Date()
 
-    // Copy BaseAllergen → Allergen
-    const baseAllergens = await this.baseAllergenRepo.findAll({}, this.platformCtx)
+    // Copy BaseAllergen → TenantAllergen
+    const baseAllergens = await this.baseAllergenRepo.findAll(
+      {},
+      this.platformCtx
+    )
     for (const base of baseAllergens) {
-      await prisma.allergen.create({
+      await prisma.tenantAllergen.create({
         data: {
           id: crypto.randomUUID(),
           tenantId,
@@ -927,9 +938,12 @@ export class BootstrapService {
     }
 
     // Copy BaseNutrient → Nutrient
-    const baseNutrients = await this.baseNutrientRepo.findAll({}, this.platformCtx)
+    const baseNutrients = await this.baseNutrientRepo.findAll(
+      {},
+      this.platformCtx
+    )
     for (const base of baseNutrients) {
-      await prisma.nutrient.create({
+      await prisma.tenantNutrient.create({
         data: {
           id: crypto.randomUUID(),
           tenantId,
@@ -945,7 +959,9 @@ export class BootstrapService {
       })
     }
 
-    this.logger.log(`Ingredient catalogs provisioned for tenant ${tenantId}: ${baseAllergens.length} allergens, ${baseNutrients.length} nutrients`)
+    this.logger.log(
+      `Ingredient catalogs provisioned for tenant ${tenantId}: ${baseAllergens.length} allergens, ${baseNutrients.length} nutrients`
+    )
   }
 
   /**

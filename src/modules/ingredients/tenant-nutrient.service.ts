@@ -1,29 +1,32 @@
 import { Injectable } from '@nestjs/common'
 import {
-  NutrientRepository,
-  NutrientFilter
-} from '@ingredients/nutrient.repository'
-import { Nutrient, CreateNutrientProps } from '@ingredients/nutrient.entity'
+  TenantNutrientRepository,
+  TenantNutrientFilter
+} from '@ingredients/tenant-nutrient.repository'
 import {
-  NutrientNotFoundError,
-  NutrientAlreadyExistsError
-} from '@ingredients/nutrient.errors'
+  TenantNutrient,
+  CreateTenantNutrientProps
+} from '@ingredients/tenant-nutrient.entity'
+import {
+  TenantNutrientNotFoundError,
+  TenantNutrientAlreadyExistsError
+} from '@ingredients/tenant-nutrient.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
-export class NutrientService {
-  constructor(private readonly repository: NutrientRepository) {}
+export class TenantNutrientService {
+  constructor(private readonly repository: TenantNutrientRepository) {}
 
   async create(
-    props: CreateNutrientProps,
+    props: CreateTenantNutrientProps,
     ctx: RequestContext
-  ): Promise<Nutrient> {
+  ): Promise<TenantNutrient> {
     // TODO: zod validate input
     const tenantId =
       ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
-    const nutrient = Nutrient.create({ ...props, tenantId })
+    const nutrient = TenantNutrient.create({ ...props, tenantId })
     try {
       return await this.repository.save(nutrient, ctx)
     } catch (error: unknown) {
@@ -31,28 +34,31 @@ export class NutrientService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new NutrientAlreadyExistsError(props.name, tenantId)
+        throw new TenantNutrientAlreadyExistsError(props.name, tenantId)
       }
       throw error
     }
   }
 
   async findAll(
-    filter: NutrientFilter,
+    filter: TenantNutrientFilter,
     ctx: RequestContext
-  ): Promise<Nutrient[]> {
+  ): Promise<TenantNutrient[]> {
     return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, ctx: RequestContext): Promise<Nutrient> {
+  async findById(id: string, ctx: RequestContext): Promise<TenantNutrient> {
     const nutrient = await this.repository.findById(id, ctx)
     if (!nutrient) {
-      throw new NutrientNotFoundError(id)
+      throw new TenantNutrientNotFoundError(id)
     }
     return nutrient
   }
 
-  async save(nutrient: Nutrient, ctx: RequestContext): Promise<Nutrient> {
+  async save(
+    nutrient: TenantNutrient,
+    ctx: RequestContext
+  ): Promise<TenantNutrient> {
     return this.repository.save(nutrient, ctx)
   }
 
@@ -62,19 +68,19 @@ export class NutrientService {
     await this.repository.save(nutrient, ctx)
   }
 
-  async activate(id: string, ctx: RequestContext): Promise<Nutrient> {
+  async activate(id: string, ctx: RequestContext): Promise<TenantNutrient> {
     const nutrient = await this.findById(id, ctx)
     nutrient.activate()
     return this.repository.save(nutrient, ctx)
   }
 
-  async lock(id: string, ctx: RequestContext): Promise<Nutrient> {
+  async lock(id: string, ctx: RequestContext): Promise<TenantNutrient> {
     const nutrient = await this.findById(id, ctx)
     nutrient.lock()
     return this.repository.save(nutrient, ctx)
   }
 
-  async unlock(id: string, ctx: RequestContext): Promise<Nutrient> {
+  async unlock(id: string, ctx: RequestContext): Promise<TenantNutrient> {
     const nutrient = await this.findById(id, ctx)
     nutrient.unlock()
     return this.repository.save(nutrient, ctx)

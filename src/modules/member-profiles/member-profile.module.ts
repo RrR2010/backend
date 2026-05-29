@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common'
 
-import { MemberProfileRepository, PrismaMemberProfileRepository } from '@member-profiles/member-profile.repository'
+import {
+  MemberProfileRepository,
+  PrismaMemberProfileRepository
+} from '@member-profiles/member-profile.repository'
 import { MemberProfileService } from '@member-profiles/member-profile.service'
 import { MemberProfilesController } from '@member-profiles/member-profile.controller'
 

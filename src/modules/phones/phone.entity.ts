@@ -1,19 +1,24 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 import { OwnerType, PhoneType } from '@shared/enums'
 
-export type PhoneProps = AuditableProps & LockableProps & {
-  id: Id
-  ownerId: string
-  ownerType: OwnerType
-  type: PhoneType
-  countryCode: string
-  number: string
-  isWhatsapp: boolean
-  isDefault: boolean
-}
+export type PhoneProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    ownerId: string
+    ownerType: OwnerType
+    type: PhoneType
+    countryCode: string
+    number: string
+    isWhatsapp: boolean
+    isDefault: boolean
+  }
 
 export type CreatePhoneProps = Omit<
   PhoneProps,

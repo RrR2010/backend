@@ -1,31 +1,33 @@
 import { Injectable } from '@nestjs/common'
-import { IngredientAllergenRepository } from '@ingredients/ingredient-allergen.repository'
+import { IngredientTenantAllergenRepository } from '@ingredients/ingredient-tenant-allergen.repository'
 import {
-  IngredientAllergen,
-  CreateIngredientAllergenProps
-} from '@ingredients/ingredient-allergen.entity'
+  IngredientTenantAllergen,
+  CreateIngredientTenantAllergenProps
+} from '@ingredients/ingredient-tenant-allergen.entity'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
 @Injectable()
-export class IngredientAllergenService {
-  constructor(private readonly repository: IngredientAllergenRepository) {}
+export class IngredientTenantAllergenService {
+  constructor(
+    private readonly repository: IngredientTenantAllergenRepository
+  ) {}
 
   async create(
-    props: CreateIngredientAllergenProps,
+    props: CreateIngredientTenantAllergenProps,
     ctx: RequestContext
-  ): Promise<IngredientAllergen> {
+  ): Promise<IngredientTenantAllergen> {
     // TODO: zod validate input
     const tenantId =
       ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
-    const entry = IngredientAllergen.create({ ...props, tenantId })
+    const entry = IngredientTenantAllergen.create({ ...props, tenantId })
     return this.repository.add(entry, ctx)
   }
 
   async findByIngredientId(
     ingredientId: string,
     ctx: RequestContext
-  ): Promise<IngredientAllergen[]> {
+  ): Promise<IngredientTenantAllergen[]> {
     return this.repository.findByIngredientId(ingredientId, ctx)
   }
 

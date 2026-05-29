@@ -1,14 +1,28 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common'
-import { ApiBearerAuth, ApiConsumes, ApiProperty, ApiTags } from '@nestjs/swagger'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req
+} from '@nestjs/common'
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiProperty,
+  ApiTags
+} from '@nestjs/swagger'
 import type { Request } from 'express'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
 import { AllergenRelationType } from '@prisma/client'
-import { IngredientAllergenService } from '@ingredients/ingredient-allergen.service'
-import { IngredientAllergen } from '@ingredients/ingredient-allergen.entity'
+import { IngredientTenantAllergenService } from '@ingredients/ingredient-tenant-allergen.service'
+import { IngredientTenantAllergen } from '@ingredients/ingredient-tenant-allergen.entity'
 
 // TODO: zod validate dto
-export class CreateIngredientAllergenDto {
+export class CreateIngredientTenantAllergenDto {
   @ApiProperty({ type: String, required: false })
   tenantId?: string
 
@@ -22,7 +36,7 @@ export class CreateIngredientAllergenDto {
   relationType!: AllergenRelationType
 }
 
-export class IngredientAllergenResponseDto {
+export class IngredientTenantAllergenResponseDto {
   @ApiProperty()
   id!: string
 
@@ -44,7 +58,9 @@ export class IngredientAllergenResponseDto {
   @ApiProperty({ enum: AllergenRelationType, enumName: 'AllergenRelationType' })
   relationType!: AllergenRelationType
 
-  static fromDomain(entry: IngredientAllergen): IngredientAllergenResponseDto {
+  static fromDomain(
+    entry: IngredientTenantAllergen
+  ): IngredientTenantAllergenResponseDto {
     return {
       id: entry.id.value,
       createdAt: entry.createdAt,
@@ -57,19 +73,19 @@ export class IngredientAllergenResponseDto {
   }
 }
 
-@ApiTags('Ingredient Allergens')
+@ApiTags('Ingredient Tenant Allergens')
 @ApiBearerAuth('accessToken')
-@Controller('ingredient-allergens')
-export class IngredientAllergensController {
-  constructor(private readonly service: IngredientAllergenService) {}
+@Controller('ingredient-tenant-allergens')
+export class IngredientTenantAllergensController {
+  constructor(private readonly service: IngredientTenantAllergenService) {}
 
   @Post()
-  @Authorize(Action.Create, IngredientAllergen)
+  @Authorize(Action.Create, IngredientTenantAllergen)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateIngredientAllergenDto,
+    @Body() dto: CreateIngredientTenantAllergenDto,
     @Req() request: Request
-  ): Promise<IngredientAllergenResponseDto> {
+  ): Promise<IngredientTenantAllergenResponseDto> {
     const entry = await this.service.create(
       {
         tenantId: dto.tenantId ?? '',
@@ -79,21 +95,24 @@ export class IngredientAllergensController {
       },
       request.context
     )
-    return IngredientAllergenResponseDto.fromDomain(entry)
+    return IngredientTenantAllergenResponseDto.fromDomain(entry)
   }
 
   @Get('by-ingredient/:ingredientId')
-  @Authorize(Action.Read, IngredientAllergen)
+  @Authorize(Action.Read, IngredientTenantAllergen)
   async findByIngredientId(
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
-  ): Promise<IngredientAllergenResponseDto[]> {
-    const entries = await this.service.findByIngredientId(ingredientId, request.context)
-    return entries.map(IngredientAllergenResponseDto.fromDomain)
+  ): Promise<IngredientTenantAllergenResponseDto[]> {
+    const entries = await this.service.findByIngredientId(
+      ingredientId,
+      request.context
+    )
+    return entries.map(IngredientTenantAllergenResponseDto.fromDomain)
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, IngredientAllergen)
+  @Authorize(Action.Delete, IngredientTenantAllergen)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request

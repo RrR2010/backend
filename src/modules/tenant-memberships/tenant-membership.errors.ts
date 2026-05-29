@@ -4,7 +4,9 @@ export class TenantMembershipNotFoundError extends HttpException {
   constructor(id?: string) {
     super(
       {
-        message: id ? `Tenant membership with id ${id} not found` : 'Tenant membership not found',
+        message: id
+          ? `Tenant membership with id ${id} not found`
+          : 'Tenant membership not found',
         code: 'TENANT_MEMBERSHIP_NOT_FOUND'
       },
       HttpStatus.NOT_FOUND

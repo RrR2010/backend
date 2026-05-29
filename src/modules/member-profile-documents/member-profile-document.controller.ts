@@ -29,7 +29,6 @@ import { MemberProfileDocument } from '@member-profile-documents/member-profile-
 export class MemberProfileDocumentsController {
   constructor(private readonly service: MemberProfileDocumentService) {}
 
-
   @Post()
   @Authorize(Action.Create, 'MemberProfileDocument')
   @ApiConsumes('application/json')
@@ -54,7 +53,9 @@ export class MemberProfileDocumentsController {
 
   @Get()
   @Authorize(Action.Read, 'MemberProfileDocument')
-  async findAll(@Req() request: Request): Promise<MemberProfileDocumentResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<MemberProfileDocumentResponseDto[]> {
     const docs = await this.service.findAll({}, request.context)
     return docs.map(MemberProfileDocumentResponseDto.fromDomain)
   }

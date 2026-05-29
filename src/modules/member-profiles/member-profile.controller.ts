@@ -29,7 +29,6 @@ import { MemberProfile } from '@member-profiles/member-profile.entity'
 export class MemberProfilesController {
   constructor(private readonly service: MemberProfileService) {}
 
-
   @Post()
   @Authorize(Action.Create, MemberProfile)
   @ApiConsumes('application/json')
@@ -84,8 +83,10 @@ export class MemberProfilesController {
     const profile = await this.service.findById(id, request.context)
 
     if (dto.fullName) profile.changeFullName(dto.fullName)
-    if (dto.displayName !== undefined) profile.changeDisplayName(dto.displayName)
-    if (dto.dateOfBirth !== undefined) profile.changeDateOfBirth(dto.dateOfBirth)
+    if (dto.displayName !== undefined)
+      profile.changeDisplayName(dto.displayName)
+    if (dto.dateOfBirth !== undefined)
+      profile.changeDateOfBirth(dto.dateOfBirth)
     if (dto.gender !== undefined) profile.changeGender(dto.gender)
     if (dto.photoUrl !== undefined) profile.changePhotoUrl(dto.photoUrl)
     if (dto.locale) profile.changeLocale(dto.locale)

@@ -15,7 +15,13 @@ import {
 } from '@payments/payment.errors'
 
 // Requires `npm install mercadopago` in the backend directory.
-import { MercadoPagoConfig, Preference, Payment, MerchantOrder, PaymentRefund } from 'mercadopago'
+import {
+  MercadoPagoConfig,
+  Preference,
+  Payment,
+  MerchantOrder,
+  PaymentRefund
+} from 'mercadopago'
 
 @Injectable()
 export class MercadoPagoProvider extends PaymentService {
@@ -117,9 +123,10 @@ export class MercadoPagoProvider extends PaymentService {
     }
   }
 
-  async getMerchantOrder(
-    orderId: string
-  ): Promise<{ externalReference: string; payments: Array<{ status: string }> }> {
+  async getMerchantOrder(orderId: string): Promise<{
+    externalReference: string
+    payments: Array<{ status: string }>
+  }> {
     this.getClient()
     const order = this.merchantOrder!
     try {
@@ -142,7 +149,7 @@ export class MercadoPagoProvider extends PaymentService {
     try {
       const result = await pay.search({
         options: {
-          'external_reference': externalReference
+          external_reference: externalReference
         }
       })
       return (result.results ?? []).map((p) => ({
@@ -158,7 +165,9 @@ export class MercadoPagoProvider extends PaymentService {
     }
   }
 
-  async refundPayment(paymentId: string): Promise<{ refundId: string; status: string }> {
+  async refundPayment(
+    paymentId: string
+  ): Promise<{ refundId: string; status: string }> {
     this.getClient()
     const refund = this.paymentRefund!
     try {

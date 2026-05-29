@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common'
 
-import { PhoneRepository, PrismaPhoneRepository } from '@phones/phone.repository'
+import {
+  PhoneRepository,
+  PrismaPhoneRepository
+} from '@phones/phone.repository'
 import { PhoneService } from '@phones/phone.service'
 import { PhonesController } from '@phones/phone.controller'
 

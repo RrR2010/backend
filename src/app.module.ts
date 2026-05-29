@@ -85,4 +85,3 @@ import { IngredientModule } from '@ingredients/ingredient.module'
   ]
 })
 export class AppModule {}
-

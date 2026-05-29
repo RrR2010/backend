@@ -1,34 +1,44 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
 import { NutrientUnit, NutrientCategory } from '@prisma/client'
 
-export type NutrientProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  name: string
-  unit: NutrientUnit
-  category: NutrientCategory
-  sortOrder: number
-  isActive: boolean
-}
+export type TenantNutrientProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    name: string
+    unit: NutrientUnit
+    category: NutrientCategory
+    sortOrder: number
+    isActive: boolean
+  }
 
-export type CreateNutrientProps = Omit<NutrientProps, keyof AuditableProps | keyof LockableProps | 'id'>
+export type CreateTenantNutrientProps = Omit<
+  TenantNutrientProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export class Nutrient extends Lockable(Auditable(Base<NutrientProps>)) {
-  protected constructor(props: NutrientProps) {
+export class TenantNutrient extends Lockable(
+  Auditable(Base<TenantNutrientProps>)
+) {
+  protected constructor(props: TenantNutrientProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateNutrientProps): Nutrient {
+  static create(props: CreateTenantNutrientProps): TenantNutrient {
     // TODO: zod validate input
     const now = new Date()
 
-    return new Nutrient({
+    return new TenantNutrient({
       ...props,
       id: Id.generate(),
       createdAt: now,
@@ -37,8 +47,8 @@ export class Nutrient extends Lockable(Auditable(Base<NutrientProps>)) {
     })
   }
 
-  static rehydrate(props: NutrientProps): Nutrient {
-    return new Nutrient(props)
+  static rehydrate(props: TenantNutrientProps): TenantNutrient {
+    return new TenantNutrient(props)
   }
 
   // --------------- Getters ---------------
@@ -74,44 +84,44 @@ export class Nutrient extends Lockable(Auditable(Base<NutrientProps>)) {
   // --------------- Behaviors ---------------
 
   changeName(name: string): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     this._props.name = name
     this.touch()
   }
 
   changeUnit(unit: NutrientUnit): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     this._props.unit = unit
     this.touch()
   }
 
   changeCategory(category: NutrientCategory): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     this._props.category = category
     this.touch()
   }
 
   changeSortOrder(sortOrder: number): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     this._props.sortOrder = sortOrder
     this.touch()
   }
 
   toggleActive(): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     this._props.isActive = !this._props.isActive
     this.touch()
   }
 
   setActive(): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     if (this._props.isActive) return
     this._props.isActive = true
     this.touch()
   }
 
   setInactive(): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     if (!this._props.isActive) return
     this._props.isActive = false
     this.touch()
@@ -122,7 +132,7 @@ export class Nutrient extends Lockable(Auditable(Base<NutrientProps>)) {
   // Both are kept in sync: activate/lock/delete update both fields.
   // Locked entities cannot be reactivated — requires unlock first.
   activate(): void {
-    this.ensureActivated('Nutrient')
+    this.ensureActivated('TenantNutrient')
     this._props.isActive = true
     super.activate()
   }

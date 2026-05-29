@@ -12,29 +12,29 @@ import {
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
 import {
-  CreateAllergenDto,
-  CreateAllergenResponseDto,
-  AllergenResponseDto,
-  UpdateAllergenDto
-} from '@ingredients/allergen.dto'
-import { AllergenService } from '@ingredients/allergen.service'
+  CreateTenantAllergenDto,
+  CreateTenantAllergenResponseDto,
+  TenantAllergenResponseDto,
+  UpdateTenantAllergenDto
+} from '@ingredients/tenant-allergen.dto'
+import { TenantAllergenService } from '@ingredients/tenant-allergen.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import { Allergen } from '@ingredients/allergen.entity'
+import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
 
-@ApiTags('Allergens')
+@ApiTags('Tenant Allergens')
 @ApiBearerAuth('accessToken')
-@Controller('allergens')
-export class AllergensController {
-  constructor(private readonly service: AllergenService) {}
+@Controller('tenant-allergens')
+export class TenantAllergensController {
+  constructor(private readonly service: TenantAllergenService) {}
 
   @Post()
-  @Authorize(Action.Create, Allergen)
+  @Authorize(Action.Create, TenantAllergen)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateAllergenDto,
+    @Body() dto: CreateTenantAllergenDto,
     @Req() request: Request
-  ): Promise<CreateAllergenResponseDto> {
+  ): Promise<CreateTenantAllergenResponseDto> {
     const allergen = await this.service.create(
       {
         tenantId: dto.tenantId,
@@ -46,50 +46,51 @@ export class AllergensController {
       },
       request.context
     )
-    return CreateAllergenResponseDto.fromDomain(allergen)
+    return CreateTenantAllergenResponseDto.fromDomain(allergen)
   }
 
   @Get()
-  @Authorize(Action.Read, Allergen)
-  async findAll(@Req() request: Request): Promise<AllergenResponseDto[]> {
+  @Authorize(Action.Read, TenantAllergen)
+  async findAll(@Req() request: Request): Promise<TenantAllergenResponseDto[]> {
     const allergens = await this.service.findAll({}, request.context)
-    return allergens.map(AllergenResponseDto.fromDomain)
+    return allergens.map(TenantAllergenResponseDto.fromDomain)
   }
 
   @Get(':id')
-  @Authorize(Action.Read, Allergen)
+  @Authorize(Action.Read, TenantAllergen)
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<AllergenResponseDto> {
+  ): Promise<TenantAllergenResponseDto> {
     const allergen = await this.service.findById(id, request.context)
-    return AllergenResponseDto.fromDomain(allergen)
+    return TenantAllergenResponseDto.fromDomain(allergen)
   }
 
   @Patch(':id')
-  @Authorize(Action.Update, Allergen)
+  @Authorize(Action.Update, TenantAllergen)
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAllergenDto,
+    @Body() dto: UpdateTenantAllergenDto,
     @Req() request: Request
-  ): Promise<AllergenResponseDto> {
+  ): Promise<TenantAllergenResponseDto> {
     const allergen = await this.service.findById(id, request.context)
 
     if (dto.name) allergen.changeName(dto.name)
     if (dto.category !== undefined) allergen.changeCategory(dto.category)
-    if (dto.regulatoryRef !== undefined) allergen.changeRegulatoryRef(dto.regulatoryRef)
+    if (dto.regulatoryRef !== undefined)
+      allergen.changeRegulatoryRef(dto.regulatoryRef)
     if (dto.sortOrder !== undefined) allergen.changeSortOrder(dto.sortOrder)
     if (dto.isActive !== undefined) {
       dto.isActive ? allergen.setActive() : allergen.setInactive()
     }
 
     const saved = await this.service.save(allergen, request.context)
-    return AllergenResponseDto.fromDomain(saved)
+    return TenantAllergenResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, Allergen)
+  @Authorize(Action.Delete, TenantAllergen)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
@@ -98,33 +99,33 @@ export class AllergensController {
   }
 
   @Post(':id/activate')
-  @Authorize(Action.Update, Allergen)
+  @Authorize(Action.Update, TenantAllergen)
   async activate(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<AllergenResponseDto> {
+  ): Promise<TenantAllergenResponseDto> {
     const allergen = await this.service.activate(id, request.context)
-    return AllergenResponseDto.fromDomain(allergen)
+    return TenantAllergenResponseDto.fromDomain(allergen)
   }
 
   @Post(':id/lock')
-  @Authorize(Action.Update, Allergen)
+  @Authorize(Action.Update, TenantAllergen)
   async lock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<AllergenResponseDto> {
+  ): Promise<TenantAllergenResponseDto> {
     const allergen = await this.service.lock(id, request.context)
-    return AllergenResponseDto.fromDomain(allergen)
+    return TenantAllergenResponseDto.fromDomain(allergen)
   }
 
   @Post(':id/unlock')
-  @Authorize(Action.Unlock, Allergen)
+  @Authorize(Action.Unlock, TenantAllergen)
   @ApiConsumes('application/json')
   async unlock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<AllergenResponseDto> {
+  ): Promise<TenantAllergenResponseDto> {
     const allergen = await this.service.unlock(id, request.context)
-    return AllergenResponseDto.fromDomain(allergen)
+    return TenantAllergenResponseDto.fromDomain(allergen)
   }
 }

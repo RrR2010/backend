@@ -14,7 +14,12 @@ export class AdminController {
   async bootstrap(
     @Headers('x-bootstrap-key') bootstrapKey: string,
     @Body() dto: BootstrapAdminDto
-  ): Promise<{ userId: string; identityId: string; membershipId: string; memberProfileId: string }> {
+  ): Promise<{
+    userId: string
+    identityId: string
+    membershipId: string
+    memberProfileId: string
+  }> {
     // Set bootstrap key in config for validation
     process.env.BOOTSTRAP_KEY = bootstrapKey
 

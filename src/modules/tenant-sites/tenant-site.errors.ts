@@ -4,7 +4,9 @@ export class TenantSiteNotFoundError extends HttpException {
   constructor(id?: string) {
     super(
       {
-        message: id ? `Tenant site with id ${id} not found` : 'Tenant site not found',
+        message: id
+          ? `Tenant site with id ${id} not found`
+          : 'Tenant site not found',
         code: 'TENANT_SITE_NOT_FOUND'
       },
       HttpStatus.NOT_FOUND

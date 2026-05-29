@@ -15,10 +15,7 @@ export class IdentityService {
     private readonly passwordHasher: PasswordHasher
   ) {}
 
-  async create(
-    dto: CreateIdentityDto,
-    ctx: RequestContext
-  ): Promise<Identity> {
+  async create(dto: CreateIdentityDto, ctx: RequestContext): Promise<Identity> {
     const secretHash = dto.secret
       ? await this.passwordHasher.hash(dto.secret)
       : null
@@ -40,10 +37,7 @@ export class IdentityService {
     return this.identityRepository.findAll(filter, ctx)
   }
 
-  async findById(
-    id: string,
-    ctx: RequestContext
-  ): Promise<Identity | null> {
+  async findById(id: string, ctx: RequestContext): Promise<Identity | null> {
     return this.identityRepository.findById(id, ctx)
   }
 

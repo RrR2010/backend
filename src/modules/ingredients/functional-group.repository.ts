@@ -3,7 +3,10 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
-import { FunctionalGroup as PrismaFunctionalGroup, Prisma } from '@prisma/client'
+import {
+  FunctionalGroup as PrismaFunctionalGroup,
+  Prisma
+} from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
@@ -15,9 +18,18 @@ export type FunctionalGroupFilter = {
 }
 
 export abstract class FunctionalGroupRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<FunctionalGroup | null>
-  abstract findAll(filter: FunctionalGroupFilter, ctx: RequestContext): Promise<FunctionalGroup[]>
-  abstract save(group: FunctionalGroup, ctx: RequestContext): Promise<FunctionalGroup>
+  abstract findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<FunctionalGroup | null>
+  abstract findAll(
+    filter: FunctionalGroupFilter,
+    ctx: RequestContext
+  ): Promise<FunctionalGroup[]>
+  abstract save(
+    group: FunctionalGroup,
+    ctx: RequestContext
+  ): Promise<FunctionalGroup>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
@@ -25,23 +37,37 @@ export abstract class FunctionalGroupRepository {
 export class PrismaFunctionalGroupRepository implements FunctionalGroupRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<FunctionalGroup | null> {
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<FunctionalGroup | null> {
     const where: Prisma.FunctionalGroupWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
     const prismaGroup = await this.prisma.functionalGroup.findUnique({ where })
     if (!prismaGroup) return null
-    if (prismaGroup && ctx.scope === UserScope.TENANT && prismaGroup.systemState === SystemState.HIDDEN) {
+    if (
+      prismaGroup &&
+      ctx.scope === UserScope.TENANT &&
+      prismaGroup.systemState === SystemState.HIDDEN
+    ) {
       return null
     }
     return PrismaFunctionalGroupMapper.toDomain(prismaGroup)
   }
 
-  async findAll(filter: FunctionalGroupFilter, ctx: RequestContext): Promise<FunctionalGroup[]> {
+  async findAll(
+    filter: FunctionalGroupFilter,
+    ctx: RequestContext
+  ): Promise<FunctionalGroup[]> {
     const where: Prisma.FunctionalGroupWhereInput = {
-      ...(filter.name && { name: { contains: filter.name, mode: 'insensitive' } }),
-      ...(filter.code && { code: { contains: filter.code, mode: 'insensitive' } }),
+      ...(filter.name && {
+        name: { contains: filter.name, mode: 'insensitive' }
+      }),
+      ...(filter.code && {
+        code: { contains: filter.code, mode: 'insensitive' }
+      }),
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
@@ -55,10 +81,15 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
       where,
       orderBy: { sortOrder: 'asc' }
     })
-    return prismaGroups.map((group) => PrismaFunctionalGroupMapper.toDomain(group))
+    return prismaGroups.map((group) =>
+      PrismaFunctionalGroupMapper.toDomain(group)
+    )
   }
 
-  async save(group: FunctionalGroup, ctx: RequestContext): Promise<FunctionalGroup> {
+  async save(
+    group: FunctionalGroup,
+    ctx: RequestContext
+  ): Promise<FunctionalGroup> {
     if (ctx.scope === UserScope.TENANT && group.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
@@ -86,7 +117,8 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
 
 class PrismaFunctionalGroupMapper {
   static toDomain(prismaGroup: PrismaFunctionalGroup): FunctionalGroup {
-    const systemState = SystemState[prismaGroup.systemState as keyof typeof SystemState]
+    const systemState =
+      SystemState[prismaGroup.systemState as keyof typeof SystemState]
     if (!systemState) {
       throw new Error(`Invalid systemState value: ${prismaGroup.systemState}`)
     }
@@ -103,7 +135,9 @@ class PrismaFunctionalGroupMapper {
     })
   }
 
-  static toPersistence(group: FunctionalGroup): Prisma.FunctionalGroupUncheckedCreateInput {
+  static toPersistence(
+    group: FunctionalGroup
+  ): Prisma.FunctionalGroupUncheckedCreateInput {
     return {
       id: group.id.value,
       createdAt: group.createdAt,

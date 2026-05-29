@@ -31,7 +31,9 @@ export class MemberProfileDocument extends Lockable(
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateMemberProfileDocumentProps): MemberProfileDocument {
+  static create(
+    props: CreateMemberProfileDocumentProps
+  ): MemberProfileDocument {
     const now = new Date()
     return new MemberProfileDocument({
       ...props,

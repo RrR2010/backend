@@ -55,7 +55,9 @@ export class MercadopagoSubscriptionProvider implements SubscriptionProvider {
     // TODO: zod validate input
     const { preApproval } = this.getPreApproval()
 
-    this.logger.log(`createSubscription called with payerEmail: ${input.payerEmail}, planType: ${input.planType}`)
+    this.logger.log(
+      `createSubscription called with payerEmail: ${input.payerEmail}, planType: ${input.planType}`
+    )
 
     try {
       const body: Record<string, unknown> = {

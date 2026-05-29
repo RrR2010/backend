@@ -4,7 +4,11 @@ import { PlatformMembership } from '@platform-memberships/platform-membership.en
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/behaviours/lockable'
 import { PlatformRole, UserScope } from '@users/user.types'
-import { PlatformMembership as PrismaPlatformMembership, PlatformRole as PrismaPlatformRole, Prisma } from '@prisma/client'
+import {
+  PlatformMembership as PrismaPlatformMembership,
+  PlatformRole as PrismaPlatformRole,
+  Prisma
+} from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
 export type PlatformMembershipFilter = {
@@ -13,19 +17,29 @@ export type PlatformMembershipFilter = {
 }
 
 export abstract class PlatformMembershipRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<PlatformMembership | null>
-  abstract findAll(filter: PlatformMembershipFilter, ctx: RequestContext): Promise<PlatformMembership[]>
-  abstract save(membership: PlatformMembership, ctx: RequestContext): Promise<PlatformMembership>
+  abstract findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<PlatformMembership | null>
+  abstract findAll(
+    filter: PlatformMembershipFilter,
+    ctx: RequestContext
+  ): Promise<PlatformMembership[]>
+  abstract save(
+    membership: PlatformMembership,
+    ctx: RequestContext
+  ): Promise<PlatformMembership>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 @Injectable()
-export class PrismaPlatformMembershipRepository
-  implements PlatformMembershipRepository
-{
+export class PrismaPlatformMembershipRepository implements PlatformMembershipRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<PlatformMembership | null> {
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<PlatformMembership | null> {
     const where: Prisma.PlatformMembershipWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.userId = ctx.userId
@@ -35,7 +49,10 @@ export class PrismaPlatformMembershipRepository
     return PrismaPlatformMembershipMapper.toDomain(pm)
   }
 
-  async findAll(filter: PlatformMembershipFilter, ctx: RequestContext): Promise<PlatformMembership[]> {
+  async findAll(
+    filter: PlatformMembershipFilter,
+    ctx: RequestContext
+  ): Promise<PlatformMembership[]> {
     const where: Prisma.PlatformMembershipWhereInput = {}
 
     if (filter.userId) {
@@ -48,15 +65,22 @@ export class PrismaPlatformMembershipRepository
       where.userId = ctx.userId
     }
 
-    const prismaMemberships = await this.prisma.platformMembership.findMany({ where })
+    const prismaMemberships = await this.prisma.platformMembership.findMany({
+      where
+    })
     return prismaMemberships.map((pm) =>
       PrismaPlatformMembershipMapper.toDomain(pm)
     )
   }
 
-  async save(membership: PlatformMembership, ctx: RequestContext): Promise<PlatformMembership> {
+  async save(
+    membership: PlatformMembership,
+    ctx: RequestContext
+  ): Promise<PlatformMembership> {
     if (ctx.scope === UserScope.TENANT && membership.userId !== ctx.userId) {
-      throw new ForbiddenException('Cannot modify platform membership outside your own account')
+      throw new ForbiddenException(
+        'Cannot modify platform membership outside your own account'
+      )
     }
     const data = PrismaPlatformMembershipMapper.toPersistence(membership)
     await this.prisma.platformMembership.upsert({
@@ -77,7 +101,9 @@ export class PrismaPlatformMembershipRepository
 }
 
 class PrismaPlatformMembershipMapper {
-  static toDomain(prismaMembership: PrismaPlatformMembership): PlatformMembership {
+  static toDomain(
+    prismaMembership: PrismaPlatformMembership
+  ): PlatformMembership {
     return PlatformMembership.rehydrate({
       id: Id.from(prismaMembership.id),
       createdAt: prismaMembership.createdAt,
@@ -89,7 +115,9 @@ class PrismaPlatformMembershipMapper {
     })
   }
 
-  static toPersistence(membership: PlatformMembership): PrismaPlatformMembership {
+  static toPersistence(
+    membership: PlatformMembership
+  ): PrismaPlatformMembership {
     return {
       id: membership.id.value,
       createdAt: membership.createdAt,

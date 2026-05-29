@@ -12,29 +12,29 @@ import {
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
 import {
-  CreateNutrientDto,
-  CreateNutrientResponseDto,
-  NutrientResponseDto,
-  UpdateNutrientDto
-} from '@ingredients/nutrient.dto'
-import { NutrientService } from '@ingredients/nutrient.service'
+  CreateTenantNutrientDto,
+  CreateTenantNutrientResponseDto,
+  TenantNutrientResponseDto,
+  UpdateTenantNutrientDto
+} from '@ingredients/tenant-nutrient.dto'
+import { TenantNutrientService } from '@ingredients/tenant-nutrient.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import { Nutrient } from '@ingredients/nutrient.entity'
+import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
 
-@ApiTags('Nutrients')
+@ApiTags('Tenant Nutrients')
 @ApiBearerAuth('accessToken')
-@Controller('nutrients')
-export class NutrientsController {
-  constructor(private readonly service: NutrientService) {}
+@Controller('tenant-nutrients')
+export class TenantNutrientsController {
+  constructor(private readonly service: TenantNutrientService) {}
 
   @Post()
-  @Authorize(Action.Create, Nutrient)
+  @Authorize(Action.Create, TenantNutrient)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateNutrientDto,
+    @Body() dto: CreateTenantNutrientDto,
     @Req() request: Request
-  ): Promise<CreateNutrientResponseDto> {
+  ): Promise<CreateTenantNutrientResponseDto> {
     const nutrient = await this.service.create(
       {
         tenantId: dto.tenantId,
@@ -46,34 +46,34 @@ export class NutrientsController {
       },
       request.context
     )
-    return CreateNutrientResponseDto.fromDomain(nutrient)
+    return CreateTenantNutrientResponseDto.fromDomain(nutrient)
   }
 
   @Get()
-  @Authorize(Action.Read, Nutrient)
-  async findAll(@Req() request: Request): Promise<NutrientResponseDto[]> {
+  @Authorize(Action.Read, TenantNutrient)
+  async findAll(@Req() request: Request): Promise<TenantNutrientResponseDto[]> {
     const nutrients = await this.service.findAll({}, request.context)
-    return nutrients.map(NutrientResponseDto.fromDomain)
+    return nutrients.map(TenantNutrientResponseDto.fromDomain)
   }
 
   @Get(':id')
-  @Authorize(Action.Read, Nutrient)
+  @Authorize(Action.Read, TenantNutrient)
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<NutrientResponseDto> {
+  ): Promise<TenantNutrientResponseDto> {
     const nutrient = await this.service.findById(id, request.context)
-    return NutrientResponseDto.fromDomain(nutrient)
+    return TenantNutrientResponseDto.fromDomain(nutrient)
   }
 
   @Patch(':id')
-  @Authorize(Action.Update, Nutrient)
+  @Authorize(Action.Update, TenantNutrient)
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateNutrientDto,
+    @Body() dto: UpdateTenantNutrientDto,
     @Req() request: Request
-  ): Promise<NutrientResponseDto> {
+  ): Promise<TenantNutrientResponseDto> {
     const nutrient = await this.service.findById(id, request.context)
 
     if (dto.name) nutrient.changeName(dto.name)
@@ -85,11 +85,11 @@ export class NutrientsController {
     }
 
     const saved = await this.service.save(nutrient, request.context)
-    return NutrientResponseDto.fromDomain(saved)
+    return TenantNutrientResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, Nutrient)
+  @Authorize(Action.Delete, TenantNutrient)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
@@ -98,32 +98,32 @@ export class NutrientsController {
   }
 
   @Post(':id/activate')
-  @Authorize(Action.Update, Nutrient)
+  @Authorize(Action.Update, TenantNutrient)
   async activate(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<NutrientResponseDto> {
+  ): Promise<TenantNutrientResponseDto> {
     const nutrient = await this.service.activate(id, request.context)
-    return NutrientResponseDto.fromDomain(nutrient)
+    return TenantNutrientResponseDto.fromDomain(nutrient)
   }
 
   @Post(':id/lock')
-  @Authorize(Action.Update, Nutrient)
+  @Authorize(Action.Update, TenantNutrient)
   async lock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<NutrientResponseDto> {
+  ): Promise<TenantNutrientResponseDto> {
     const nutrient = await this.service.lock(id, request.context)
-    return NutrientResponseDto.fromDomain(nutrient)
+    return TenantNutrientResponseDto.fromDomain(nutrient)
   }
 
   @Post(':id/unlock')
-  @Authorize(Action.Unlock, Nutrient)
+  @Authorize(Action.Unlock, TenantNutrient)
   async unlock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<NutrientResponseDto> {
+  ): Promise<TenantNutrientResponseDto> {
     const nutrient = await this.service.unlock(id, request.context)
-    return NutrientResponseDto.fromDomain(nutrient)
+    return TenantNutrientResponseDto.fromDomain(nutrient)
   }
 }

@@ -39,7 +39,8 @@ export class BootstrapController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Initiate tenant registration and create subscription for onboarding'
+    summary:
+      'Initiate tenant registration and create subscription for onboarding'
   })
   @ApiResponse({
     status: 201,

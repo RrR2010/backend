@@ -29,7 +29,6 @@ import { TenantSite } from '@tenant-sites/tenant-site.entity'
 export class TenantSitesController {
   constructor(private readonly service: TenantSiteService) {}
 
-
   @Post()
   @Authorize(Action.Create, TenantSite)
   @ApiConsumes('application/json')

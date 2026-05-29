@@ -1,28 +1,36 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 import { IngredientFunctionType } from '@prisma/client'
 import { EntityLockedError } from '@shared/errors/entity-state.errors'
 
-export type IngredientProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  code: string
-  internalName: string
-  commercialName: string | null
-  saleDenomination: string | null
-  functionalGroupId: string | null
-  ingredientFunction: IngredientFunctionType
-  notes: string | null
-  manufacturerId: string | null
-  supplierId: string | null
-  technicalSourceId: string | null
-  usageIndication: string | null
-  ingredientsListDesc: string | null
-}
+export type IngredientProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    code: string
+    internalName: string
+    commercialName: string | null
+    saleDenomination: string | null
+    functionalGroupId: string | null
+    ingredientFunction: IngredientFunctionType
+    notes: string | null
+    manufacturerId: string | null
+    supplierId: string | null
+    technicalSourceId: string | null
+    usageIndication: string | null
+    ingredientsListDesc: string | null
+  }
 
-export type CreateIngredientProps = Omit<IngredientProps, keyof AuditableProps | keyof LockableProps | 'id'>
+export type CreateIngredientProps = Omit<
+  IngredientProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
 export class Ingredient extends Lockable(Auditable(Base<IngredientProps>)) {
   protected constructor(props: IngredientProps) {

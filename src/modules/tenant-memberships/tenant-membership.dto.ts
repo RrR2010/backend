@@ -41,7 +41,9 @@ export class CreateTenantMembershipResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(membership: TenantMembership): CreateTenantMembershipResponseDto {
+  static fromDomain(
+    membership: TenantMembership
+  ): CreateTenantMembershipResponseDto {
     return {
       id: membership.id.value,
       userId: membership.userId,

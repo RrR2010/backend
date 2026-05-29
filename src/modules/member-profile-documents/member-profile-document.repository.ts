@@ -73,7 +73,9 @@ export class PrismaMemberProfileDocumentRepository implements MemberProfileDocum
     ctx: RequestContext
   ): Promise<MemberProfileDocument> {
     const data = PrismaMemberProfileDocumentMapper.toPersistence(document)
-    const where: Prisma.MemberProfileDocumentWhereUniqueInput = { id: document.id.value }
+    const where: Prisma.MemberProfileDocumentWhereUniqueInput = {
+      id: document.id.value
+    }
     if (ctx.scope === UserScope.TENANT) {
       where.memberProfile = { tenantMembership: { tenantId: ctx.tenantId } }
     }

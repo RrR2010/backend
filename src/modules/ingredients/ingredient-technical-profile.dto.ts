@@ -54,7 +54,9 @@ export class CreateIngredientTechnicalProfileResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(profile: IngredientTechnicalProfile): CreateIngredientTechnicalProfileResponseDto {
+  static fromDomain(
+    profile: IngredientTechnicalProfile
+  ): CreateIngredientTechnicalProfileResponseDto {
     return {
       id: profile.id.value,
       tenantId: profile.tenantId,

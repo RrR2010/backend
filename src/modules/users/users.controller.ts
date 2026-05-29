@@ -31,9 +31,6 @@ import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 export class UsersController {
   constructor(private readonly userService: UserService) {}
 
-
-
-
   @Post()
   @Authorize(Action.Create, User)
   @ApiConsumes('application/json')

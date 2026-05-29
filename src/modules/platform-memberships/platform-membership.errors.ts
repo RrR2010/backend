@@ -4,7 +4,9 @@ export class PlatformMembershipNotFoundError extends HttpException {
   constructor(id?: string) {
     super(
       {
-        message: id ? `Platform membership with id ${id} not found` : 'Platform membership not found',
+        message: id
+          ? `Platform membership with id ${id} not found`
+          : 'Platform membership not found',
         code: 'PLATFORM_MEMBERSHIP_NOT_FOUND'
       },
       HttpStatus.NOT_FOUND

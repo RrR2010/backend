@@ -3,6 +3,6 @@ import { AuthorizationGuard } from './authorization.guard'
 
 @Module({
   providers: [AuthorizationGuard],
-  exports: [AuthorizationGuard],
+  exports: [AuthorizationGuard]
 })
 export class AuthorizationModule {}

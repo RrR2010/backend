@@ -37,7 +37,10 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',')
-      : (origin: string | undefined, callback: (err: Error | null, origin?: unknown) => void) => {
+      : (
+          origin: string | undefined,
+          callback: (err: Error | null, origin?: unknown) => void
+        ) => {
           // Allow any origin in development (ngrok, LAN IPs, etc.)
           callback(null, origin ?? true)
         },

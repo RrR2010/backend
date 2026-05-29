@@ -1,47 +1,72 @@
 import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
-import { Allergen } from '@ingredients/allergen.entity'
+import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
-import { Allergen as PrismaAllergen, Prisma } from '@prisma/client'
+import { TenantAllergen as PrismaTenantAllergen, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
-export type AllergenFilter = {
+export type TenantAllergenFilter = {
   name?: string
   category?: string
   isActive?: boolean
   systemState?: SystemState
 }
 
-export abstract class AllergenRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<Allergen | null>
-  abstract findAll(filter: AllergenFilter, ctx: RequestContext): Promise<Allergen[]>
-  abstract save(allergen: Allergen, ctx: RequestContext): Promise<Allergen>
+export abstract class TenantAllergenRepository {
+  abstract findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<TenantAllergen | null>
+  abstract findAll(
+    filter: TenantAllergenFilter,
+    ctx: RequestContext
+  ): Promise<TenantAllergen[]>
+  abstract save(
+    allergen: TenantAllergen,
+    ctx: RequestContext
+  ): Promise<TenantAllergen>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 @Injectable()
-export class PrismaAllergenRepository implements AllergenRepository {
+export class PrismaTenantAllergenRepository implements TenantAllergenRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<Allergen | null> {
-    const where: Prisma.AllergenWhereUniqueInput = { id }
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<TenantAllergen | null> {
+    const where: Prisma.TenantAllergenWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    const prismaAllergen = await this.prisma.allergen.findUnique({ where })
+    const prismaAllergen = await this.prisma.tenantAllergen.findUnique({
+      where
+    })
     if (!prismaAllergen) return null
-    if (prismaAllergen && ctx.scope === UserScope.TENANT && prismaAllergen.systemState === SystemState.HIDDEN) {
+    if (
+      prismaAllergen &&
+      ctx.scope === UserScope.TENANT &&
+      prismaAllergen.systemState === SystemState.HIDDEN
+    ) {
       return null
     }
-    return PrismaAllergenMapper.toDomain(prismaAllergen)
+    return PrismaTenantAllergenMapper.toDomain(prismaAllergen)
   }
 
-  async findAll(filter: AllergenFilter, ctx: RequestContext): Promise<Allergen[]> {
-    const where: Prisma.AllergenWhereInput = {
-      ...(filter.name && { name: { contains: filter.name, mode: 'insensitive' } }),
-      ...(filter.category && { category: { contains: filter.category, mode: 'insensitive' } }),
+  async findAll(
+    filter: TenantAllergenFilter,
+    ctx: RequestContext
+  ): Promise<TenantAllergen[]> {
+    const where: Prisma.TenantAllergenWhereInput = {
+      ...(filter.name && {
+        name: { contains: filter.name, mode: 'insensitive' }
+      }),
+      ...(filter.category && {
+        category: { contains: filter.category, mode: 'insensitive' }
+      }),
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
@@ -51,20 +76,25 @@ export class PrismaAllergenRepository implements AllergenRepository {
     if (ctx.scope === UserScope.TENANT) {
       where.systemState = { not: SystemState.HIDDEN }
     }
-    const prismaAllergens = await this.prisma.allergen.findMany({
+    const prismaAllergens = await this.prisma.tenantAllergen.findMany({
       where,
       orderBy: { sortOrder: 'asc' }
     })
-    return prismaAllergens.map((allergen) => PrismaAllergenMapper.toDomain(allergen))
+    return prismaAllergens.map((allergen) =>
+      PrismaTenantAllergenMapper.toDomain(allergen)
+    )
   }
 
-  async save(allergen: Allergen, ctx: RequestContext): Promise<Allergen> {
+  async save(
+    allergen: TenantAllergen,
+    ctx: RequestContext
+  ): Promise<TenantAllergen> {
     if (ctx.scope === UserScope.TENANT && allergen.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = allergen.id.value
-    const prismaAllergen = PrismaAllergenMapper.toPersistence(allergen)
-    await this.prisma.allergen.upsert({
+    const prismaAllergen = PrismaTenantAllergenMapper.toPersistence(allergen)
+    await this.prisma.tenantAllergen.upsert({
       where: { id },
       update: prismaAllergen,
       create: prismaAllergen
@@ -73,24 +103,27 @@ export class PrismaAllergenRepository implements AllergenRepository {
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.AllergenWhereUniqueInput = { id }
+    const where: Prisma.TenantAllergenWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    await this.prisma.allergen.update({
+    await this.prisma.tenantAllergen.update({
       where,
       data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaAllergenMapper {
-  static toDomain(prismaAllergen: PrismaAllergen): Allergen {
-    const systemState = SystemState[prismaAllergen.systemState as keyof typeof SystemState]
+class PrismaTenantAllergenMapper {
+  static toDomain(prismaAllergen: PrismaTenantAllergen): TenantAllergen {
+    const systemState =
+      SystemState[prismaAllergen.systemState as keyof typeof SystemState]
     if (!systemState) {
-      throw new Error(`Invalid systemState value: ${prismaAllergen.systemState}`)
+      throw new Error(
+        `Invalid systemState value: ${prismaAllergen.systemState}`
+      )
     }
-    return Allergen.rehydrate({
+    return TenantAllergen.rehydrate({
       id: Id.from(prismaAllergen.id),
       createdAt: prismaAllergen.createdAt,
       updatedAt: prismaAllergen.updatedAt,
@@ -104,7 +137,9 @@ class PrismaAllergenMapper {
     })
   }
 
-  static toPersistence(allergen: Allergen): Prisma.AllergenUncheckedCreateInput {
+  static toPersistence(
+    allergen: TenantAllergen
+  ): Prisma.TenantAllergenUncheckedCreateInput {
     return {
       id: allergen.id.value,
       createdAt: allergen.createdAt,

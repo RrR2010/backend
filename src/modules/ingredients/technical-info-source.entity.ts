@@ -1,22 +1,32 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
 import { TechnicalInfoSourceType } from '@prisma/client'
 
-export type TechnicalInfoSourceProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  sourceType: TechnicalInfoSourceType
-  referenceName: string
-  url: string | null
-  documentRef: string | null
-}
+export type TechnicalInfoSourceProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    sourceType: TechnicalInfoSourceType
+    referenceName: string
+    url: string | null
+    documentRef: string | null
+  }
 
-export type CreateTechnicalInfoSourceProps = Omit<TechnicalInfoSourceProps, keyof AuditableProps | keyof LockableProps | 'id'>
+export type CreateTechnicalInfoSourceProps = Omit<
+  TechnicalInfoSourceProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export class TechnicalInfoSource extends Lockable(Auditable(Base<TechnicalInfoSourceProps>)) {
+export class TechnicalInfoSource extends Lockable(
+  Auditable(Base<TechnicalInfoSourceProps>)
+) {
   protected constructor(props: TechnicalInfoSourceProps) {
     super(props)
   }

@@ -59,7 +59,9 @@ export class IngredientRegulatoryProfilesController {
 
   @Get()
   @Authorize(Action.Read, IngredientRegulatoryProfile)
-  async findAll(@Req() request: Request): Promise<IngredientRegulatoryProfileResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<IngredientRegulatoryProfileResponseDto[]> {
     const profiles = await this.service.findAll({}, request.context)
     return profiles.map(IngredientRegulatoryProfileResponseDto.fromDomain)
   }
@@ -70,7 +72,10 @@ export class IngredientRegulatoryProfilesController {
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
   ): Promise<IngredientRegulatoryProfileResponseDto | null> {
-    const profile = await this.service.findByIngredientId(ingredientId, request.context)
+    const profile = await this.service.findByIngredientId(
+      ingredientId,
+      request.context
+    )
     if (!profile) return null
     return IngredientRegulatoryProfileResponseDto.fromDomain(profile)
   }
@@ -97,16 +102,26 @@ export class IngredientRegulatoryProfilesController {
 
     if (dto.hasRtiq !== undefined) profile.changeHasRtiq(dto.hasRtiq)
     if (dto.isGmo !== undefined) profile.changeIsGmo(dto.isGmo)
-    if (dto.gmoIngredient !== undefined) profile.changeGmoIngredient(dto.gmoIngredient)
-    if (dto.gmoDonorSpecies !== undefined) profile.changeGmoDonorSpecies(dto.gmoDonorSpecies)
-    if (dto.gmoPercentage !== undefined) profile.changeGmoPercentage(dto.gmoPercentage)
-    if (dto.isIrradiated !== undefined) profile.changeIsIrradiated(dto.isIrradiated)
-    if (dto.irradiatedIngredient !== undefined) profile.changeIrradiatedIngredient(dto.irradiatedIngredient)
-    if (dto.containsLactose !== undefined) profile.changeContainsLactose(dto.containsLactose)
-    if (dto.containsGluten !== undefined) profile.changeContainsGluten(dto.containsGluten)
-    if (dto.containsAspartame !== undefined) profile.changeContainsAspartame(dto.containsAspartame)
-    if (dto.flavorOriginType !== undefined) profile.changeFlavorOriginType(dto.flavorOriginType)
-    if (dto.colorantOriginType !== undefined) profile.changeColorantOriginType(dto.colorantOriginType)
+    if (dto.gmoIngredient !== undefined)
+      profile.changeGmoIngredient(dto.gmoIngredient)
+    if (dto.gmoDonorSpecies !== undefined)
+      profile.changeGmoDonorSpecies(dto.gmoDonorSpecies)
+    if (dto.gmoPercentage !== undefined)
+      profile.changeGmoPercentage(dto.gmoPercentage)
+    if (dto.isIrradiated !== undefined)
+      profile.changeIsIrradiated(dto.isIrradiated)
+    if (dto.irradiatedIngredient !== undefined)
+      profile.changeIrradiatedIngredient(dto.irradiatedIngredient)
+    if (dto.containsLactose !== undefined)
+      profile.changeContainsLactose(dto.containsLactose)
+    if (dto.containsGluten !== undefined)
+      profile.changeContainsGluten(dto.containsGluten)
+    if (dto.containsAspartame !== undefined)
+      profile.changeContainsAspartame(dto.containsAspartame)
+    if (dto.flavorOriginType !== undefined)
+      profile.changeFlavorOriginType(dto.flavorOriginType)
+    if (dto.colorantOriginType !== undefined)
+      profile.changeColorantOriginType(dto.colorantOriginType)
 
     const saved = await this.service.save(profile, request.context)
     return IngredientRegulatoryProfileResponseDto.fromDomain(saved)

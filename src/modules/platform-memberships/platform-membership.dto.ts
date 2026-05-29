@@ -6,7 +6,11 @@ export class CreatePlatformMembershipDto {
   @ApiProperty({ type: String })
   userId!: string
 
-  @ApiProperty({ enum: PlatformRole, isArray: true, default: [PlatformRole.USER] })
+  @ApiProperty({
+    enum: PlatformRole,
+    isArray: true,
+    default: [PlatformRole.USER]
+  })
   roles!: PlatformRole[]
 }
 
@@ -29,7 +33,9 @@ export class CreatePlatformMembershipResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(membership: PlatformMembership): CreatePlatformMembershipResponseDto {
+  static fromDomain(
+    membership: PlatformMembership
+  ): CreatePlatformMembershipResponseDto {
     return {
       id: membership.id.value,
       userId: membership.userId,

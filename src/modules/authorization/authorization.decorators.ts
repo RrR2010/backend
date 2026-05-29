@@ -8,9 +8,8 @@ export interface AuthorizeMetadata {
   subject: Subjects
 }
 
-export const Authorize = (
-  action: Action,
-  subject: Subjects,
-) => (target: object, key: string | symbol, descriptor: PropertyDescriptor) => {
-  SetMetadata(AUTHORIZE_KEY, { action, subject })(target, key, descriptor)
-}
+export const Authorize =
+  (action: Action, subject: Subjects) =>
+  (target: object, key: string | symbol, descriptor: PropertyDescriptor) => {
+    SetMetadata(AUTHORIZE_KEY, { action, subject })(target, key, descriptor)
+  }

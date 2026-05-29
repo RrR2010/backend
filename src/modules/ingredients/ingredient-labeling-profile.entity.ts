@@ -1,33 +1,44 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
+export type IngredientLabelingProfileProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    ingredientId: string
+    containsAddedSugars: boolean
+    containsIngredientWithAddedSugars: boolean
+    containsNaturallyOccurringSugarSubstitutes: boolean
+    usesProcessingThatIncreasesSugars: boolean
+    containsAddedFatsOrOils: boolean
+    containsButterOrMargarine: boolean
+    containsDairyCream: boolean
+    containsIngredientsWithFatsOrCream: boolean
+  }
 
-export type IngredientLabelingProfileProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  ingredientId: string
-  containsAddedSugars: boolean
-  containsIngredientWithAddedSugars: boolean
-  containsNaturallyOccurringSugarSubstitutes: boolean
-  usesProcessingThatIncreasesSugars: boolean
-  containsAddedFatsOrOils: boolean
-  containsButterOrMargarine: boolean
-  containsDairyCream: boolean
-  containsIngredientsWithFatsOrCream: boolean
-}
+export type CreateIngredientLabelingProfileProps = Omit<
+  IngredientLabelingProfileProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export type CreateIngredientLabelingProfileProps = Omit<IngredientLabelingProfileProps, keyof AuditableProps | keyof LockableProps | 'id'>
-
-export class IngredientLabelingProfile extends Lockable(Auditable(Base<IngredientLabelingProfileProps>)) {
+export class IngredientLabelingProfile extends Lockable(
+  Auditable(Base<IngredientLabelingProfileProps>)
+) {
   protected constructor(props: IngredientLabelingProfileProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateIngredientLabelingProfileProps): IngredientLabelingProfile {
+  static create(
+    props: CreateIngredientLabelingProfileProps
+  ): IngredientLabelingProfile {
     // TODO: zod validate input
     const now = new Date()
     return new IngredientLabelingProfile({
@@ -39,7 +50,9 @@ export class IngredientLabelingProfile extends Lockable(Auditable(Base<Ingredien
     })
   }
 
-  static rehydrate(props: IngredientLabelingProfileProps): IngredientLabelingProfile {
+  static rehydrate(
+    props: IngredientLabelingProfileProps
+  ): IngredientLabelingProfile {
     return new IngredientLabelingProfile(props)
   }
 
@@ -97,21 +110,30 @@ export class IngredientLabelingProfile extends Lockable(Auditable(Base<Ingredien
     this.touch()
   }
 
-  changeContainsIngredientWithAddedSugars(containsIngredientWithAddedSugars: boolean): void {
+  changeContainsIngredientWithAddedSugars(
+    containsIngredientWithAddedSugars: boolean
+  ): void {
     this.ensureActivated('IngredientLabelingProfile')
-    this._props.containsIngredientWithAddedSugars = containsIngredientWithAddedSugars
+    this._props.containsIngredientWithAddedSugars =
+      containsIngredientWithAddedSugars
     this.touch()
   }
 
-  changeContainsNaturallyOccurringSugarSubstitutes(containsNaturallyOccurringSugarSubstitutes: boolean): void {
+  changeContainsNaturallyOccurringSugarSubstitutes(
+    containsNaturallyOccurringSugarSubstitutes: boolean
+  ): void {
     this.ensureActivated('IngredientLabelingProfile')
-    this._props.containsNaturallyOccurringSugarSubstitutes = containsNaturallyOccurringSugarSubstitutes
+    this._props.containsNaturallyOccurringSugarSubstitutes =
+      containsNaturallyOccurringSugarSubstitutes
     this.touch()
   }
 
-  changeUsesProcessingThatIncreasesSugars(usesProcessingThatIncreasesSugars: boolean): void {
+  changeUsesProcessingThatIncreasesSugars(
+    usesProcessingThatIncreasesSugars: boolean
+  ): void {
     this.ensureActivated('IngredientLabelingProfile')
-    this._props.usesProcessingThatIncreasesSugars = usesProcessingThatIncreasesSugars
+    this._props.usesProcessingThatIncreasesSugars =
+      usesProcessingThatIncreasesSugars
     this.touch()
   }
 
@@ -133,9 +155,12 @@ export class IngredientLabelingProfile extends Lockable(Auditable(Base<Ingredien
     this.touch()
   }
 
-  changeContainsIngredientsWithFatsOrCream(containsIngredientsWithFatsOrCream: boolean): void {
+  changeContainsIngredientsWithFatsOrCream(
+    containsIngredientsWithFatsOrCream: boolean
+  ): void {
     this.ensureActivated('IngredientLabelingProfile')
-    this._props.containsIngredientsWithFatsOrCream = containsIngredientsWithFatsOrCream
+    this._props.containsIngredientsWithFatsOrCream =
+      containsIngredientsWithFatsOrCream
     this.touch()
   }
 

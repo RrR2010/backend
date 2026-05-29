@@ -1,8 +1,8 @@
 import { MongoQuery, MongoAbility, InferSubjects } from '@casl/ability'
 import { Identity } from '@identities/identity.entity'
 import { Ingredient } from '@ingredients/ingredient.entity'
-import { Allergen } from '@ingredients/allergen.entity'
-import { Nutrient } from '@ingredients/nutrient.entity'
+import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
+import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
 import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { Company } from '@ingredients/company.entity'
 import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
@@ -41,8 +41,8 @@ export type Subjects =
       | typeof User
       | typeof Tenant
       | typeof Ingredient
-      | typeof Allergen
-      | typeof Nutrient
+      | typeof TenantAllergen
+      | typeof TenantNutrient
       | typeof FunctionalGroup
       | typeof Company
       | typeof TechnicalInfoSource

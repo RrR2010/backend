@@ -1,13 +1,18 @@
 import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
-import { Nutrient } from '@ingredients/nutrient.entity'
+import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
-import { Nutrient as PrismaNutrient, Prisma, NutrientUnit, NutrientCategory } from '@prisma/client'
+import {
+  TenantNutrient as PrismaTenantNutrient,
+  Prisma,
+  NutrientUnit,
+  NutrientCategory
+} from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
-export type NutrientFilter = {
+export type TenantNutrientFilter = {
   name?: string
   unit?: NutrientUnit
   category?: NutrientCategory
@@ -15,33 +20,56 @@ export type NutrientFilter = {
   systemState?: SystemState
 }
 
-export abstract class NutrientRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<Nutrient | null>
-  abstract findAll(filter: NutrientFilter, ctx: RequestContext): Promise<Nutrient[]>
-  abstract save(nutrient: Nutrient, ctx: RequestContext): Promise<Nutrient>
+export abstract class TenantNutrientRepository {
+  abstract findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<TenantNutrient | null>
+  abstract findAll(
+    filter: TenantNutrientFilter,
+    ctx: RequestContext
+  ): Promise<TenantNutrient[]>
+  abstract save(
+    nutrient: TenantNutrient,
+    ctx: RequestContext
+  ): Promise<TenantNutrient>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 @Injectable()
-export class PrismaNutrientRepository implements NutrientRepository {
+export class PrismaTenantNutrientRepository implements TenantNutrientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<Nutrient | null> {
-    const where: Prisma.NutrientWhereUniqueInput = { id }
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<TenantNutrient | null> {
+    const where: Prisma.TenantNutrientWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    const prismaNutrient = await this.prisma.nutrient.findUnique({ where })
+    const prismaNutrient = await this.prisma.tenantNutrient.findUnique({
+      where
+    })
     if (!prismaNutrient) return null
-    if (prismaNutrient && ctx.scope === UserScope.TENANT && prismaNutrient.systemState === SystemState.HIDDEN) {
+    if (
+      prismaNutrient &&
+      ctx.scope === UserScope.TENANT &&
+      prismaNutrient.systemState === SystemState.HIDDEN
+    ) {
       return null
     }
-    return PrismaNutrientMapper.toDomain(prismaNutrient)
+    return PrismaTenantNutrientMapper.toDomain(prismaNutrient)
   }
 
-  async findAll(filter: NutrientFilter, ctx: RequestContext): Promise<Nutrient[]> {
-    const where: Prisma.NutrientWhereInput = {
-      ...(filter.name && { name: { contains: filter.name, mode: 'insensitive' } }),
+  async findAll(
+    filter: TenantNutrientFilter,
+    ctx: RequestContext
+  ): Promise<TenantNutrient[]> {
+    const where: Prisma.TenantNutrientWhereInput = {
+      ...(filter.name && {
+        name: { contains: filter.name, mode: 'insensitive' }
+      }),
       ...(filter.unit && { unit: filter.unit }),
       ...(filter.category && { category: filter.category }),
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
@@ -53,20 +81,25 @@ export class PrismaNutrientRepository implements NutrientRepository {
     if (ctx.scope === UserScope.TENANT) {
       where.systemState = { not: SystemState.HIDDEN }
     }
-    const prismaNutrients = await this.prisma.nutrient.findMany({
+    const prismaNutrients = await this.prisma.tenantNutrient.findMany({
       where,
       orderBy: { sortOrder: 'asc' }
     })
-    return prismaNutrients.map((nutrient) => PrismaNutrientMapper.toDomain(nutrient))
+    return prismaNutrients.map((nutrient) =>
+      PrismaTenantNutrientMapper.toDomain(nutrient)
+    )
   }
 
-  async save(nutrient: Nutrient, ctx: RequestContext): Promise<Nutrient> {
+  async save(
+    nutrient: TenantNutrient,
+    ctx: RequestContext
+  ): Promise<TenantNutrient> {
     if (ctx.scope === UserScope.TENANT && nutrient.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = nutrient.id.value
-    const prismaNutrient = PrismaNutrientMapper.toPersistence(nutrient)
-    await this.prisma.nutrient.upsert({
+    const prismaNutrient = PrismaTenantNutrientMapper.toPersistence(nutrient)
+    await this.prisma.tenantNutrient.upsert({
       where: { id },
       update: prismaNutrient,
       create: prismaNutrient
@@ -75,24 +108,27 @@ export class PrismaNutrientRepository implements NutrientRepository {
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.NutrientWhereUniqueInput = { id }
+    const where: Prisma.TenantNutrientWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    await this.prisma.nutrient.update({
+    await this.prisma.tenantNutrient.update({
       where,
       data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaNutrientMapper {
-  static toDomain(prismaNutrient: PrismaNutrient): Nutrient {
-    const systemState = SystemState[prismaNutrient.systemState as keyof typeof SystemState]
+class PrismaTenantNutrientMapper {
+  static toDomain(prismaNutrient: PrismaTenantNutrient): TenantNutrient {
+    const systemState =
+      SystemState[prismaNutrient.systemState as keyof typeof SystemState]
     if (!systemState) {
-      throw new Error(`Invalid systemState value: ${prismaNutrient.systemState}`)
+      throw new Error(
+        `Invalid systemState value: ${prismaNutrient.systemState}`
+      )
     }
-    return Nutrient.rehydrate({
+    return TenantNutrient.rehydrate({
       id: Id.from(prismaNutrient.id),
       createdAt: prismaNutrient.createdAt,
       updatedAt: prismaNutrient.updatedAt,
@@ -106,7 +142,9 @@ class PrismaNutrientMapper {
     })
   }
 
-  static toPersistence(nutrient: Nutrient): Prisma.NutrientUncheckedCreateInput {
+  static toPersistence(
+    nutrient: TenantNutrient
+  ): Prisma.TenantNutrientUncheckedCreateInput {
     return {
       id: nutrient.id.value,
       createdAt: nutrient.createdAt,

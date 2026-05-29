@@ -8,7 +8,10 @@ import { UserScope } from '@users/user.types'
 
 export abstract class SessionRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Session | null>
-  abstract findAll(filter: SessionFilter, ctx: RequestContext): Promise<Session[]>
+  abstract findAll(
+    filter: SessionFilter,
+    ctx: RequestContext
+  ): Promise<Session[]>
   abstract save(session: Session, ctx: RequestContext): Promise<Session>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
@@ -36,7 +39,10 @@ export class PrismaSessionRepository implements SessionRepository {
     if (!session) return null
     return PrismaSessionMapper.toDomain(session)
   }
-  async findAll(filter: SessionFilter, ctx: RequestContext): Promise<Session[]> {
+  async findAll(
+    filter: SessionFilter,
+    ctx: RequestContext
+  ): Promise<Session[]> {
     const where: Prisma.SessionWhereInput = {}
     if (filter.id) where.id = filter.id
     if (filter.userId) where.userId = filter.userId
@@ -59,10 +65,7 @@ export class PrismaSessionRepository implements SessionRepository {
     return sessions
   }
   async save(session: Session, ctx: RequestContext): Promise<Session> {
-    if (
-      ctx.scope === UserScope.TENANT &&
-      session.tenantId !== ctx.tenantId
-    ) {
+    if (ctx.scope === UserScope.TENANT && session.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaSession = PrismaSessionMapper.toPersistence(session)

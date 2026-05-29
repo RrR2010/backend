@@ -9,7 +9,10 @@ import { RequestContext } from '@authorization/authorization.types'
 
 export abstract class AddressRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Address | null>
-  abstract findAll(filter: AddressFilter, ctx: RequestContext): Promise<Address[]>
+  abstract findAll(
+    filter: AddressFilter,
+    ctx: RequestContext
+  ): Promise<Address[]>
   abstract save(address: Address, ctx: RequestContext): Promise<Address>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
@@ -33,7 +36,10 @@ export class PrismaAddressRepository implements AddressRepository {
     return PrismaAddressMapper.toDomain(prismaAddress)
   }
 
-  async findAll(filter: AddressFilter, ctx: RequestContext): Promise<Address[]> {
+  async findAll(
+    filter: AddressFilter,
+    ctx: RequestContext
+  ): Promise<Address[]> {
     const where: Prisma.AddressWhereInput = {}
 
     if (filter.ownerId) {

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { PlatformMembershipRepository, PlatformMembershipFilter } from '@platform-memberships/platform-membership.repository'
-import { PlatformMembership, CreatePlatformMembershipProps } from '@platform-memberships/platform-membership.entity'
+import {
+  PlatformMembershipRepository,
+  PlatformMembershipFilter
+} from '@platform-memberships/platform-membership.repository'
+import {
+  PlatformMembership,
+  CreatePlatformMembershipProps
+} from '@platform-memberships/platform-membership.entity'
 import { PlatformMembershipNotFoundError } from '@platform-memberships/platform-membership.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { SystemState } from '@shared/behaviours/lockable'
@@ -9,12 +15,18 @@ import { SystemState } from '@shared/behaviours/lockable'
 export class PlatformMembershipService {
   constructor(private readonly repository: PlatformMembershipRepository) {}
 
-  async create(props: CreatePlatformMembershipProps, ctx: RequestContext): Promise<PlatformMembership> {
+  async create(
+    props: CreatePlatformMembershipProps,
+    ctx: RequestContext
+  ): Promise<PlatformMembership> {
     const membership = PlatformMembership.create(props)
     return this.repository.save(membership, ctx)
   }
 
-  async findAll(filter: PlatformMembershipFilter, ctx: RequestContext): Promise<PlatformMembership[]> {
+  async findAll(
+    filter: PlatformMembershipFilter,
+    ctx: RequestContext
+  ): Promise<PlatformMembership[]> {
     return this.repository.findAll(filter, ctx)
   }
 
@@ -26,7 +38,10 @@ export class PlatformMembershipService {
     return membership
   }
 
-  async save(membership: PlatformMembership, ctx: RequestContext): Promise<PlatformMembership> {
+  async save(
+    membership: PlatformMembership,
+    ctx: RequestContext
+  ): Promise<PlatformMembership> {
     return this.repository.save(membership, ctx)
   }
 

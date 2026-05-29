@@ -1,21 +1,30 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
+export type FunctionalGroupProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    name: string
+    code: string | null
+    sortOrder: number
+    isActive: boolean
+  }
 
-export type FunctionalGroupProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  name: string
-  code: string | null
-  sortOrder: number
-  isActive: boolean
-}
+export type CreateFunctionalGroupProps = Omit<
+  FunctionalGroupProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export type CreateFunctionalGroupProps = Omit<FunctionalGroupProps, keyof AuditableProps | keyof LockableProps | 'id'>
-
-export class FunctionalGroup extends Lockable(Auditable(Base<FunctionalGroupProps>)) {
+export class FunctionalGroup extends Lockable(
+  Auditable(Base<FunctionalGroupProps>)
+) {
   protected constructor(props: FunctionalGroupProps) {
     super(props)
   }

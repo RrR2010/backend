@@ -74,7 +74,10 @@ export class AuthenticationController {
 
     if (user.scope === UserScope.TENANT) {
       const tenantMemberships =
-        await this.tenantMembershipRepository.findByUserId(payload.userId, platformCtx)
+        await this.tenantMembershipRepository.findByUserId(
+          payload.userId,
+          platformCtx
+        )
 
       if (tenantMemberships.length === 0 || !tenantMemberships[0]) {
         throw new InvalidCredentialsError()
@@ -203,7 +206,7 @@ export class AuthenticationController {
   ): Promise<void> {
     const accessToken = req.cookies['accessToken'] as string
     let ctx: RequestContext | undefined = undefined
-    
+
     if (accessToken) {
       const payload = this.tokenService.verify<AuthTokenPayload>(accessToken)
       if (payload) {
@@ -211,19 +214,19 @@ export class AuthenticationController {
           ctx = {
             userId: payload.userId,
             scope: UserScope.PLATFORM,
-            roles: payload.roles as PlatformRole[]
+            roles: payload.roles
           }
         } else if (payload.scope === UserScope.TENANT && payload.tenantId) {
           ctx = {
             userId: payload.userId,
             scope: UserScope.TENANT,
             tenantId: payload.tenantId,
-            roles: payload.roles as TenantRole[]
+            roles: payload.roles
           }
         }
       }
     }
-    
+
     // Revoke current session in DB
     await this.sessionService.revokeCurrentSession(req, ctx!)
     // Clear cookies

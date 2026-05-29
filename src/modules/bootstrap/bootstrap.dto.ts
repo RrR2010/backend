@@ -7,7 +7,12 @@ import {
   IsDateString,
   MinLength
 } from 'class-validator'
-import { TenantSiteType, Gender, RegistrationState, PlanType } from '@shared/enums'
+import {
+  TenantSiteType,
+  Gender,
+  RegistrationState,
+  PlanType
+} from '@shared/enums'
 import { UserResponseDto } from '@users/user.dto'
 import { TenantResponseDto } from '@tenants/tenant.dto'
 import { User } from '@users/user.entity'

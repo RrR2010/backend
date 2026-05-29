@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { Allergen } from '@ingredients/allergen.entity'
+import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
-export class CreateAllergenDto {
+export class CreateTenantAllergenDto {
   @ApiProperty({ type: String })
   tenantId!: string
 
@@ -23,7 +23,7 @@ export class CreateAllergenDto {
   isActive?: boolean
 }
 
-export class CreateAllergenResponseDto {
+export class CreateTenantAllergenResponseDto {
   @ApiProperty()
   id!: string
 
@@ -54,7 +54,7 @@ export class CreateAllergenResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(allergen: Allergen): CreateAllergenResponseDto {
+  static fromDomain(allergen: TenantAllergen): CreateTenantAllergenResponseDto {
     return {
       id: allergen.id.value,
       tenantId: allergen.tenantId,
@@ -70,9 +70,9 @@ export class CreateAllergenResponseDto {
   }
 }
 
-export class AllergenResponseDto extends CreateAllergenResponseDto {}
+export class TenantAllergenResponseDto extends CreateTenantAllergenResponseDto {}
 
-export class UpdateAllergenDto {
+export class UpdateTenantAllergenDto {
   @ApiProperty({ type: String, required: false })
   name?: string
 

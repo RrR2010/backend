@@ -8,12 +8,18 @@ import { RequestContext } from '@authorization/authorization.types'
 export class AddressService {
   constructor(private readonly repository: AddressRepository) {}
 
-  async create(props: CreateAddressProps, ctx: RequestContext): Promise<Address> {
+  async create(
+    props: CreateAddressProps,
+    ctx: RequestContext
+  ): Promise<Address> {
     const address = Address.create(props)
     return this.repository.save(address, ctx)
   }
 
-  async findAll(filter: AddressFilter, ctx: RequestContext): Promise<Address[]> {
+  async findAll(
+    filter: AddressFilter,
+    ctx: RequestContext
+  ): Promise<Address[]> {
     return this.repository.findAll(filter, ctx)
   }
 

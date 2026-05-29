@@ -49,7 +49,9 @@ export class CreateTechnicalInfoSourceResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(source: TechnicalInfoSource): CreateTechnicalInfoSourceResponseDto {
+  static fromDomain(
+    source: TechnicalInfoSource
+  ): CreateTechnicalInfoSourceResponseDto {
     return {
       id: source.id.value,
       tenantId: source.tenantId,

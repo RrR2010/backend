@@ -24,14 +24,13 @@ import { AuditLog } from '@audit-logs/audit-log.entity'
 export class AuditLogsController {
   constructor(private readonly service: AuditLogService) {}
 
-
   @Get()
   @Authorize(Action.Read, 'AuditLog')
   async findAll(
     @Query() filter?: AuditLogFilterDto,
     @Req() request?: Request
   ): Promise<AuditLogResponseDto[]> {
-        const logs = await this.service.findAll(filter ?? {}, request!.context)
+    const logs = await this.service.findAll(filter ?? {}, request!.context)
     return logs.map(AuditLogResponseDto.fromDomain)
   }
 
@@ -41,7 +40,7 @@ export class AuditLogsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
   ): Promise<AuditLogResponseDto> {
-        const log = await this.service.findById(id, request.context)
+    const log = await this.service.findById(id, request.context)
     return AuditLogResponseDto.fromDomain(log)
   }
 }

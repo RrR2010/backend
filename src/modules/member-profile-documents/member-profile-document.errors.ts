@@ -4,7 +4,9 @@ export class MemberProfileDocumentNotFoundError extends HttpException {
   constructor(id?: string) {
     super(
       {
-        message: id ? `Member profile document with id ${id} not found` : 'Member profile document not found',
+        message: id
+          ? `Member profile document with id ${id} not found`
+          : 'Member profile document not found',
         code: 'MEMBER_PROFILE_DOCUMENT_NOT_FOUND'
       },
       HttpStatus.NOT_FOUND

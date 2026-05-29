@@ -181,14 +181,14 @@ model Tenant {
   subscription Subscription?
 
   // Ingredient domain
-  allergens           Allergen[]
-  nutrients           Nutrient[]
+  tenantAllergens     TenantAllergen[]
+  tenantNutrients     TenantNutrient[]
   functionalGroups    FunctionalGroup[]
   companies           Company[]
   technicalInfoSources TechnicalInfoSource[]
   ingredients         Ingredient[]
-  ingredientAllergens IngredientAllergen[]
-  ingredientNutrients IngredientNutrient[]
+  ingredientAllergens IngredientTenantAllergen[]
+  ingredientNutrients IngredientTenantNutrient[]
   ingredientRegulatoryProfiles IngredientRegulatoryProfile[]
   ingredientLabelingProfiles   IngredientLabelingProfile[]
   ingredientTechnicalProfiles  IngredientTechnicalProfile[]
@@ -572,7 +572,7 @@ model BaseNutrient {
 
 // ============== INGREDIENT DOMAIN ==============
 
-model Allergen {
+model TenantAllergen {
   id            String   @id @unique @default(uuid())
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)
@@ -585,13 +585,13 @@ model Allergen {
   sortOrder     Int      @default(0)
   isActive      Boolean  @default(true)
 
-  ingredients   IngredientAllergen[]
+  ingredients   IngredientTenantAllergen[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
 }
 
-model Nutrient {
+model TenantNutrient {
   id            String          @id @unique @default(uuid())
   createdAt     DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
@@ -604,7 +604,7 @@ model Nutrient {
   sortOrder     Int             @default(0)
   isActive      Boolean         @default(true)
 
-  ingredients   IngredientNutrient[]
+  ingredients   IngredientTenantNutrient[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -688,8 +688,8 @@ model Ingredient {
   usageIndication   String?
   ingredientsListDesc String?
 
-  allergens         IngredientAllergen[]
-  nutrients         IngredientNutrient[]
+  tenantAllergens   IngredientTenantAllergen[]
+  tenantNutrients   IngredientTenantNutrient[]
   regulatoryProfile IngredientRegulatoryProfile?
   labelingProfile   IngredientLabelingProfile?
   technicalProfile  IngredientTechnicalProfile?
@@ -702,7 +702,7 @@ model Ingredient {
   @@index([technicalSourceId])
 }
 
-model IngredientAllergen {
+model IngredientTenantAllergen {
   id            String               @id @unique @default(uuid())
   createdAt     DateTime             @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
@@ -711,7 +711,7 @@ model IngredientAllergen {
   ingredientId  String
   ingredient    Ingredient           @relation(fields: [ingredientId], references: [id])
   allergenId    String
-  allergen      Allergen             @relation(fields: [allergenId], references: [id])
+  allergen      TenantAllergen       @relation(fields: [allergenId], references: [id])
   relationType  AllergenRelationType
 
   @@unique([tenantId, ingredientId, allergenId, relationType])
@@ -720,7 +720,7 @@ model IngredientAllergen {
   @@index([allergenId])
 }
 
-model IngredientNutrient {
+model IngredientTenantNutrient {
   id            String   @id @unique @default(uuid())
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)
@@ -729,7 +729,7 @@ model IngredientNutrient {
   ingredientId  String
   ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
   nutrientId    String
-  nutrient      Nutrient   @relation(fields: [nutrientId], references: [id])
+  nutrient      TenantNutrient @relation(fields: [nutrientId], references: [id])
   value         Decimal?
 
   @@unique([tenantId, ingredientId, nutrientId])

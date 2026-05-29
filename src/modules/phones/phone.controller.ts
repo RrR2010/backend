@@ -29,9 +29,7 @@ export class PhonesController {
   @Post()
   @Authorize(Action.Create, Phone)
   @ApiConsumes('application/json')
-  async create(
-    @Body() dto: CreatePhoneDto
-  ): Promise<CreatePhoneResponseDto> {
+  async create(@Body() dto: CreatePhoneDto): Promise<CreatePhoneResponseDto> {
     const phone = await this.service.create(
       {
         ownerId: dto.ownerId,

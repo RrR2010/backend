@@ -1,29 +1,40 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
+export type IngredientTechnicalProfileProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    ingredientId: string
+    pac: number | null
+    pod: number | null
+    totalSolids: number | null
+    ashContent: number | null
+  }
 
-export type IngredientTechnicalProfileProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  ingredientId: string
-  pac: number | null
-  pod: number | null
-  totalSolids: number | null
-  ashContent: number | null
-}
+export type CreateIngredientTechnicalProfileProps = Omit<
+  IngredientTechnicalProfileProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export type CreateIngredientTechnicalProfileProps = Omit<IngredientTechnicalProfileProps, keyof AuditableProps | keyof LockableProps | 'id'>
-
-export class IngredientTechnicalProfile extends Lockable(Auditable(Base<IngredientTechnicalProfileProps>)) {
+export class IngredientTechnicalProfile extends Lockable(
+  Auditable(Base<IngredientTechnicalProfileProps>)
+) {
   protected constructor(props: IngredientTechnicalProfileProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateIngredientTechnicalProfileProps): IngredientTechnicalProfile {
+  static create(
+    props: CreateIngredientTechnicalProfileProps
+  ): IngredientTechnicalProfile {
     // TODO: zod validate input
     const now = new Date()
     return new IngredientTechnicalProfile({
@@ -35,7 +46,9 @@ export class IngredientTechnicalProfile extends Lockable(Auditable(Base<Ingredie
     })
   }
 
-  static rehydrate(props: IngredientTechnicalProfileProps): IngredientTechnicalProfile {
+  static rehydrate(
+    props: IngredientTechnicalProfileProps
+  ): IngredientTechnicalProfile {
     return new IngredientTechnicalProfile(props)
   }
 

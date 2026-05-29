@@ -40,13 +40,17 @@ export class IngredientLabelingProfilesController {
         tenantId: dto.tenantId,
         ingredientId: dto.ingredientId,
         containsAddedSugars: dto.containsAddedSugars ?? false,
-        containsIngredientWithAddedSugars: dto.containsIngredientWithAddedSugars ?? false,
-        containsNaturallyOccurringSugarSubstitutes: dto.containsNaturallyOccurringSugarSubstitutes ?? false,
-        usesProcessingThatIncreasesSugars: dto.usesProcessingThatIncreasesSugars ?? false,
+        containsIngredientWithAddedSugars:
+          dto.containsIngredientWithAddedSugars ?? false,
+        containsNaturallyOccurringSugarSubstitutes:
+          dto.containsNaturallyOccurringSugarSubstitutes ?? false,
+        usesProcessingThatIncreasesSugars:
+          dto.usesProcessingThatIncreasesSugars ?? false,
         containsAddedFatsOrOils: dto.containsAddedFatsOrOils ?? false,
         containsButterOrMargarine: dto.containsButterOrMargarine ?? false,
         containsDairyCream: dto.containsDairyCream ?? false,
-        containsIngredientsWithFatsOrCream: dto.containsIngredientsWithFatsOrCream ?? false
+        containsIngredientsWithFatsOrCream:
+          dto.containsIngredientsWithFatsOrCream ?? false
       },
       request.context
     )
@@ -55,7 +59,9 @@ export class IngredientLabelingProfilesController {
 
   @Get()
   @Authorize(Action.Read, IngredientLabelingProfile)
-  async findAll(@Req() request: Request): Promise<IngredientLabelingProfileResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<IngredientLabelingProfileResponseDto[]> {
     const profiles = await this.service.findAll({}, request.context)
     return profiles.map(IngredientLabelingProfileResponseDto.fromDomain)
   }
@@ -66,7 +72,10 @@ export class IngredientLabelingProfilesController {
     @Param('ingredientId', ParseUUIDPipe) ingredientId: string,
     @Req() request: Request
   ): Promise<IngredientLabelingProfileResponseDto | null> {
-    const profile = await this.service.findByIngredientId(ingredientId, request.context)
+    const profile = await this.service.findByIngredientId(
+      ingredientId,
+      request.context
+    )
     if (!profile) return null
     return IngredientLabelingProfileResponseDto.fromDomain(profile)
   }
@@ -91,14 +100,30 @@ export class IngredientLabelingProfilesController {
   ): Promise<IngredientLabelingProfileResponseDto> {
     const profile = await this.service.findById(id, request.context)
 
-    if (dto.containsAddedSugars !== undefined) profile.changeContainsAddedSugars(dto.containsAddedSugars)
-    if (dto.containsIngredientWithAddedSugars !== undefined) profile.changeContainsIngredientWithAddedSugars(dto.containsIngredientWithAddedSugars)
-    if (dto.containsNaturallyOccurringSugarSubstitutes !== undefined) profile.changeContainsNaturallyOccurringSugarSubstitutes(dto.containsNaturallyOccurringSugarSubstitutes)
-    if (dto.usesProcessingThatIncreasesSugars !== undefined) profile.changeUsesProcessingThatIncreasesSugars(dto.usesProcessingThatIncreasesSugars)
-    if (dto.containsAddedFatsOrOils !== undefined) profile.changeContainsAddedFatsOrOils(dto.containsAddedFatsOrOils)
-    if (dto.containsButterOrMargarine !== undefined) profile.changeContainsButterOrMargarine(dto.containsButterOrMargarine)
-    if (dto.containsDairyCream !== undefined) profile.changeContainsDairyCream(dto.containsDairyCream)
-    if (dto.containsIngredientsWithFatsOrCream !== undefined) profile.changeContainsIngredientsWithFatsOrCream(dto.containsIngredientsWithFatsOrCream)
+    if (dto.containsAddedSugars !== undefined)
+      profile.changeContainsAddedSugars(dto.containsAddedSugars)
+    if (dto.containsIngredientWithAddedSugars !== undefined)
+      profile.changeContainsIngredientWithAddedSugars(
+        dto.containsIngredientWithAddedSugars
+      )
+    if (dto.containsNaturallyOccurringSugarSubstitutes !== undefined)
+      profile.changeContainsNaturallyOccurringSugarSubstitutes(
+        dto.containsNaturallyOccurringSugarSubstitutes
+      )
+    if (dto.usesProcessingThatIncreasesSugars !== undefined)
+      profile.changeUsesProcessingThatIncreasesSugars(
+        dto.usesProcessingThatIncreasesSugars
+      )
+    if (dto.containsAddedFatsOrOils !== undefined)
+      profile.changeContainsAddedFatsOrOils(dto.containsAddedFatsOrOils)
+    if (dto.containsButterOrMargarine !== undefined)
+      profile.changeContainsButterOrMargarine(dto.containsButterOrMargarine)
+    if (dto.containsDairyCream !== undefined)
+      profile.changeContainsDairyCream(dto.containsDairyCream)
+    if (dto.containsIngredientsWithFatsOrCream !== undefined)
+      profile.changeContainsIngredientsWithFatsOrCream(
+        dto.containsIngredientsWithFatsOrCream
+      )
 
     const saved = await this.service.save(profile, request.context)
     return IngredientLabelingProfileResponseDto.fromDomain(saved)

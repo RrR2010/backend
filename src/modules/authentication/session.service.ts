@@ -86,7 +86,10 @@ export class SessionService {
         scope: UserScope.PLATFORM,
         roles: []
       }
-      const session = await this.sessionRepository.save(tempSession, platformCtx)
+      const session = await this.sessionRepository.save(
+        tempSession,
+        platformCtx
+      )
 
       this.setAuthCookie(res, token)
       this.setRefreshCookie(res, refreshToken)
@@ -167,10 +170,13 @@ export class SessionService {
         tenantId: lastSession.tenantId!,
         roles: []
       }
-      const memberships = await this.tenantMembershipRepository.findAll({
-        userId: lastSession.userId,
-        tenantId: lastSession.tenantId!
-      }, tenantCtx)
+      const memberships = await this.tenantMembershipRepository.findAll(
+        {
+          userId: lastSession.userId,
+          tenantId: lastSession.tenantId!
+        },
+        tenantCtx
+      )
 
       if (memberships.length === 0 || !memberships[0]) {
         throw new SessionNotFoundError()
@@ -179,9 +185,12 @@ export class SessionService {
       const membership = memberships[0]
       roles = membership.roles
     } else {
-      const memberships = await this.platformMembershipRepository.findAll({
-        userId: lastSession.userId
-      }, platformCtx)
+      const memberships = await this.platformMembershipRepository.findAll(
+        {
+          userId: lastSession.userId
+        },
+        platformCtx
+      )
 
       if (memberships.length === 0 || !memberships[0]) {
         throw new SessionNotFoundError()

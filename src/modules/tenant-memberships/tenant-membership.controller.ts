@@ -30,7 +30,6 @@ import { TenantRole } from '@users/user.types'
 export class TenantMembershipsController {
   constructor(private readonly service: TenantMembershipService) {}
 
-
   @Post()
   @Authorize(Action.Create, TenantMembership)
   @ApiConsumes('application/json')
@@ -52,7 +51,9 @@ export class TenantMembershipsController {
 
   @Get()
   @Authorize(Action.Read, TenantMembership)
-  async findAll(@Req() request: Request): Promise<TenantMembershipResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<TenantMembershipResponseDto[]> {
     const memberships = await this.service.findAll({}, request.context)
     return memberships.map(TenantMembershipResponseDto.fromDomain)
   }

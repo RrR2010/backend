@@ -50,7 +50,9 @@ export class FunctionalGroupsController {
 
   @Get()
   @Authorize(Action.Read, FunctionalGroup)
-  async findAll(@Req() request: Request): Promise<FunctionalGroupResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<FunctionalGroupResponseDto[]> {
     const groups = await this.service.findAll({}, request.context)
     return groups.map(FunctionalGroupResponseDto.fromDomain)
   }

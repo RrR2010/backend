@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { Nutrient } from '@ingredients/nutrient.entity'
+import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
 import { NutrientUnit, NutrientCategory } from '@prisma/client'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
-export class CreateNutrientDto {
+export class CreateTenantNutrientDto {
   @ApiProperty({ type: String })
   tenantId!: string
 
@@ -24,7 +24,7 @@ export class CreateNutrientDto {
   isActive?: boolean
 }
 
-export class CreateNutrientResponseDto {
+export class CreateTenantNutrientResponseDto {
   @ApiProperty()
   id!: string
 
@@ -55,7 +55,7 @@ export class CreateNutrientResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(nutrient: Nutrient): CreateNutrientResponseDto {
+  static fromDomain(nutrient: TenantNutrient): CreateTenantNutrientResponseDto {
     return {
       id: nutrient.id.value,
       tenantId: nutrient.tenantId,
@@ -71,9 +71,9 @@ export class CreateNutrientResponseDto {
   }
 }
 
-export class NutrientResponseDto extends CreateNutrientResponseDto {}
+export class TenantNutrientResponseDto extends CreateTenantNutrientResponseDto {}
 
-export class UpdateNutrientDto {
+export class UpdateTenantNutrientDto {
   @ApiProperty({ type: String, required: false })
   name?: string
 

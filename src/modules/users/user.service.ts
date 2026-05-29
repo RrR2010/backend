@@ -17,10 +17,7 @@ export class UserService {
     return user
   }
 
-  async findAll(
-    filter: UserFilter,
-    ctx: RequestContext
-  ): Promise<User[]> {
+  async findAll(filter: UserFilter, ctx: RequestContext): Promise<User[]> {
     return this.userRepository.findAll(filter, ctx)
   }
 

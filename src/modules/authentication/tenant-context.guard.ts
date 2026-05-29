@@ -64,15 +64,18 @@ export class TenantContextGuard implements CanActivate {
     const jwtRoles = request.user.roles as string[]
 
     // DB lookup only to verify membership existence and isOwner status
-    const membership = await this.tenantMembershipRepository.findAll({
-      userId: request.userId,
-      tenantId: tenantId
-    }, {
-      userId: request.userId,
-      scope: UserScope.TENANT,
-      tenantId: tenantId,
-      roles: jwtRoles as TenantRole[]
-    })
+    const membership = await this.tenantMembershipRepository.findAll(
+      {
+        userId: request.userId,
+        tenantId: tenantId
+      },
+      {
+        userId: request.userId,
+        scope: UserScope.TENANT,
+        tenantId: tenantId,
+        roles: jwtRoles as TenantRole[]
+      }
+    )
 
     if (!membership || membership.length === 0) {
       throw new ForbiddenException('Access denied to this tenant')

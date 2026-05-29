@@ -41,10 +41,20 @@ export class CreateIngredientRegulatoryProfileDto {
   @ApiProperty({ type: Boolean, required: false, default: false })
   containsAspartame?: boolean
 
-  @ApiProperty({ enum: FlavorOriginType, enumName: 'FlavorOriginType', required: false, nullable: true })
+  @ApiProperty({
+    enum: FlavorOriginType,
+    enumName: 'FlavorOriginType',
+    required: false,
+    nullable: true
+  })
   flavorOriginType?: FlavorOriginType | null
 
-  @ApiProperty({ enum: ColorantOriginType, enumName: 'ColorantOriginType', required: false, nullable: true })
+  @ApiProperty({
+    enum: ColorantOriginType,
+    enumName: 'ColorantOriginType',
+    required: false,
+    nullable: true
+  })
   colorantOriginType?: ColorantOriginType | null
 }
 
@@ -88,10 +98,20 @@ export class CreateIngredientRegulatoryProfileResponseDto {
   @ApiProperty()
   containsAspartame!: boolean
 
-  @ApiProperty({ enum: FlavorOriginType, enumName: 'FlavorOriginType', required: false, nullable: true })
+  @ApiProperty({
+    enum: FlavorOriginType,
+    enumName: 'FlavorOriginType',
+    required: false,
+    nullable: true
+  })
   flavorOriginType!: FlavorOriginType | null
 
-  @ApiProperty({ enum: ColorantOriginType, enumName: 'ColorantOriginType', required: false, nullable: true })
+  @ApiProperty({
+    enum: ColorantOriginType,
+    enumName: 'ColorantOriginType',
+    required: false,
+    nullable: true
+  })
   colorantOriginType!: ColorantOriginType | null
 
   @ApiProperty()
@@ -103,7 +123,9 @@ export class CreateIngredientRegulatoryProfileResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(profile: IngredientRegulatoryProfile): CreateIngredientRegulatoryProfileResponseDto {
+  static fromDomain(
+    profile: IngredientRegulatoryProfile
+  ): CreateIngredientRegulatoryProfileResponseDto {
     return {
       id: profile.id.value,
       tenantId: profile.tenantId,
@@ -160,9 +182,19 @@ export class UpdateIngredientRegulatoryProfileDto {
   @ApiProperty({ type: Boolean, required: false })
   containsAspartame?: boolean
 
-  @ApiProperty({ enum: FlavorOriginType, enumName: 'FlavorOriginType', required: false, nullable: true })
+  @ApiProperty({
+    enum: FlavorOriginType,
+    enumName: 'FlavorOriginType',
+    required: false,
+    nullable: true
+  })
   flavorOriginType?: FlavorOriginType | null
 
-  @ApiProperty({ enum: ColorantOriginType, enumName: 'ColorantOriginType', required: false, nullable: true })
+  @ApiProperty({
+    enum: ColorantOriginType,
+    enumName: 'ColorantOriginType',
+    required: false,
+    nullable: true
+  })
   colorantOriginType?: ColorantOriginType | null
 }

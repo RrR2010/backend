@@ -3,7 +3,10 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { IngredientLabelingProfile } from '@ingredients/ingredient-labeling-profile.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
-import { IngredientLabelingProfile as PrismaIngredientLabelingProfile, Prisma } from '@prisma/client'
+import {
+  IngredientLabelingProfile as PrismaIngredientLabelingProfile,
+  Prisma
+} from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
@@ -16,10 +19,22 @@ export type IngredientLabelingProfileFilter = {
 }
 
 export abstract class IngredientLabelingProfileRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<IngredientLabelingProfile | null>
-  abstract findByIngredientId(ingredientId: string, ctx: RequestContext): Promise<IngredientLabelingProfile | null>
-  abstract findAll(filter: IngredientLabelingProfileFilter, ctx: RequestContext): Promise<IngredientLabelingProfile[]>
-  abstract save(profile: IngredientLabelingProfile, ctx: RequestContext): Promise<IngredientLabelingProfile>
+  abstract findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile | null>
+  abstract findByIngredientId(
+    ingredientId: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile | null>
+  abstract findAll(
+    filter: IngredientLabelingProfileFilter,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile[]>
+  abstract save(
+    profile: IngredientLabelingProfile,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
@@ -27,39 +42,67 @@ export abstract class IngredientLabelingProfileRepository {
 export class PrismaIngredientLabelingProfileRepository implements IngredientLabelingProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<IngredientLabelingProfile | null> {
+  async findById(
+    id: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile | null> {
     const where: Prisma.IngredientLabelingProfileWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    const prismaProfile = await this.prisma.ingredientLabelingProfile.findUnique({ where })
+    const prismaProfile =
+      await this.prisma.ingredientLabelingProfile.findUnique({ where })
     if (!prismaProfile) return null
-    if (prismaProfile && ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+    if (
+      prismaProfile &&
+      ctx.scope === UserScope.TENANT &&
+      prismaProfile.systemState === SystemState.HIDDEN
+    ) {
       return null
     }
     return PrismaIngredientLabelingProfileMapper.toDomain(prismaProfile)
   }
 
-  async findByIngredientId(ingredientId: string, ctx: RequestContext): Promise<IngredientLabelingProfile | null> {
-    const where: Prisma.IngredientLabelingProfileWhereUniqueInput = { ingredientId }
+  async findByIngredientId(
+    ingredientId: string,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile | null> {
+    const where: Prisma.IngredientLabelingProfileWhereUniqueInput = {
+      ingredientId
+    }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    const prismaProfile = await this.prisma.ingredientLabelingProfile.findUnique({ where })
+    const prismaProfile =
+      await this.prisma.ingredientLabelingProfile.findUnique({ where })
     if (!prismaProfile) return null
-    if (ctx.scope === UserScope.TENANT && prismaProfile.systemState === SystemState.HIDDEN) {
+    if (
+      ctx.scope === UserScope.TENANT &&
+      prismaProfile.systemState === SystemState.HIDDEN
+    ) {
       return null
     }
     return PrismaIngredientLabelingProfileMapper.toDomain(prismaProfile)
   }
 
-  async findAll(filter: IngredientLabelingProfileFilter, ctx: RequestContext): Promise<IngredientLabelingProfile[]> {
+  async findAll(
+    filter: IngredientLabelingProfileFilter,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile[]> {
     const where: Prisma.IngredientLabelingProfileWhereInput = {
       ...(filter.systemState && { systemState: filter.systemState }),
-      ...(filter.containsAddedSugars !== undefined && { containsAddedSugars: filter.containsAddedSugars }),
-      ...(filter.containsAddedFatsOrOils !== undefined && { containsAddedFatsOrOils: filter.containsAddedFatsOrOils }),
-      ...(filter.containsButterOrMargarine !== undefined && { containsButterOrMargarine: filter.containsButterOrMargarine }),
-      ...(filter.containsDairyCream !== undefined && { containsDairyCream: filter.containsDairyCream })
+      ...(filter.containsAddedSugars !== undefined && {
+        containsAddedSugars: filter.containsAddedSugars
+      }),
+      ...(filter.containsAddedFatsOrOils !== undefined && {
+        containsAddedFatsOrOils: filter.containsAddedFatsOrOils
+      }),
+      ...(filter.containsButterOrMargarine !== undefined && {
+        containsButterOrMargarine: filter.containsButterOrMargarine
+      }),
+      ...(filter.containsDairyCream !== undefined && {
+        containsDairyCream: filter.containsDairyCream
+      })
     }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
@@ -67,16 +110,24 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     if (ctx.scope === UserScope.TENANT) {
       where.systemState = { not: SystemState.HIDDEN }
     }
-    const prismaProfiles = await this.prisma.ingredientLabelingProfile.findMany({ where })
-    return prismaProfiles.map((p) => PrismaIngredientLabelingProfileMapper.toDomain(p))
+    const prismaProfiles = await this.prisma.ingredientLabelingProfile.findMany(
+      { where }
+    )
+    return prismaProfiles.map((p) =>
+      PrismaIngredientLabelingProfileMapper.toDomain(p)
+    )
   }
 
-  async save(profile: IngredientLabelingProfile, ctx: RequestContext): Promise<IngredientLabelingProfile> {
+  async save(
+    profile: IngredientLabelingProfile,
+    ctx: RequestContext
+  ): Promise<IngredientLabelingProfile> {
     if (ctx.scope === UserScope.TENANT && profile.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = profile.id.value
-    const prismaProfile = PrismaIngredientLabelingProfileMapper.toPersistence(profile)
+    const prismaProfile =
+      PrismaIngredientLabelingProfileMapper.toPersistence(profile)
     await this.prisma.ingredientLabelingProfile.upsert({
       where: { id },
       update: prismaProfile,
@@ -98,7 +149,9 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
 }
 
 class PrismaIngredientLabelingProfileMapper {
-  static toDomain(p: PrismaIngredientLabelingProfile): IngredientLabelingProfile {
+  static toDomain(
+    p: PrismaIngredientLabelingProfile
+  ): IngredientLabelingProfile {
     const systemState = SystemState[p.systemState as keyof typeof SystemState]
     if (!systemState) {
       throw new Error(`Invalid systemState value: ${p.systemState}`)
@@ -112,7 +165,8 @@ class PrismaIngredientLabelingProfileMapper {
       ingredientId: p.ingredientId,
       containsAddedSugars: p.containsAddedSugars,
       containsIngredientWithAddedSugars: p.containsIngredientWithAddedSugars,
-      containsNaturallyOccurringSugarSubstitutes: p.containsNaturallyOccurringSugarSubstitutes,
+      containsNaturallyOccurringSugarSubstitutes:
+        p.containsNaturallyOccurringSugarSubstitutes,
       usesProcessingThatIncreasesSugars: p.usesProcessingThatIncreasesSugars,
       containsAddedFatsOrOils: p.containsAddedFatsOrOils,
       containsButterOrMargarine: p.containsButterOrMargarine,
@@ -121,7 +175,9 @@ class PrismaIngredientLabelingProfileMapper {
     })
   }
 
-  static toPersistence(profile: IngredientLabelingProfile): Prisma.IngredientLabelingProfileUncheckedCreateInput {
+  static toPersistence(
+    profile: IngredientLabelingProfile
+  ): Prisma.IngredientLabelingProfileUncheckedCreateInput {
     return {
       id: profile.id.value,
       createdAt: profile.createdAt,
@@ -130,13 +186,17 @@ class PrismaIngredientLabelingProfileMapper {
       tenantId: profile.tenantId,
       ingredientId: profile.ingredientId,
       containsAddedSugars: profile.containsAddedSugars,
-      containsIngredientWithAddedSugars: profile.containsIngredientWithAddedSugars,
-      containsNaturallyOccurringSugarSubstitutes: profile.containsNaturallyOccurringSugarSubstitutes,
-      usesProcessingThatIncreasesSugars: profile.usesProcessingThatIncreasesSugars,
+      containsIngredientWithAddedSugars:
+        profile.containsIngredientWithAddedSugars,
+      containsNaturallyOccurringSugarSubstitutes:
+        profile.containsNaturallyOccurringSugarSubstitutes,
+      usesProcessingThatIncreasesSugars:
+        profile.usesProcessingThatIncreasesSugars,
       containsAddedFatsOrOils: profile.containsAddedFatsOrOils,
       containsButterOrMargarine: profile.containsButterOrMargarine,
       containsDairyCream: profile.containsDairyCream,
-      containsIngredientsWithFatsOrCream: profile.containsIngredientsWithFatsOrCream
+      containsIngredientsWithFatsOrCream:
+        profile.containsIngredientsWithFatsOrCream
     }
   }
 }

@@ -50,7 +50,9 @@ export class TechnicalInfoSourcesController {
 
   @Get()
   @Authorize(Action.Read, TechnicalInfoSource)
-  async findAll(@Req() request: Request): Promise<TechnicalInfoSourceResponseDto[]> {
+  async findAll(
+    @Req() request: Request
+  ): Promise<TechnicalInfoSourceResponseDto[]> {
     const sources = await this.service.findAll({}, request.context)
     return sources.map(TechnicalInfoSourceResponseDto.fromDomain)
   }

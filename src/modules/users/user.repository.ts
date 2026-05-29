@@ -23,10 +23,7 @@ export type UserFilter = {
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findById(
-    id: string,
-    ctx: RequestContext
-  ): Promise<User | null> {
+  async findById(id: string, ctx: RequestContext): Promise<User | null> {
     const where: Prisma.UserWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantMemberships = { some: { tenantId: ctx.tenantId } }
@@ -39,10 +36,7 @@ export class PrismaUserRepository implements UserRepository {
     return user
   }
 
-  async findAll(
-    filter: UserFilter,
-    ctx: RequestContext
-  ): Promise<User[]> {
+  async findAll(filter: UserFilter, ctx: RequestContext): Promise<User[]> {
     const where: Prisma.UserWhereInput = {}
 
     if (filter.scope) {

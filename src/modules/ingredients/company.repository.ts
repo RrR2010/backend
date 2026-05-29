@@ -16,7 +16,10 @@ export type CompanyFilter = {
 
 export abstract class CompanyRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Company | null>
-  abstract findAll(filter: CompanyFilter, ctx: RequestContext): Promise<Company[]>
+  abstract findAll(
+    filter: CompanyFilter,
+    ctx: RequestContext
+  ): Promise<Company[]>
   abstract save(company: Company, ctx: RequestContext): Promise<Company>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
@@ -32,16 +35,27 @@ export class PrismaCompanyRepository implements CompanyRepository {
     }
     const prismaCompany = await this.prisma.company.findUnique({ where })
     if (!prismaCompany) return null
-    if (prismaCompany && ctx.scope === UserScope.TENANT && prismaCompany.systemState === SystemState.HIDDEN) {
+    if (
+      prismaCompany &&
+      ctx.scope === UserScope.TENANT &&
+      prismaCompany.systemState === SystemState.HIDDEN
+    ) {
       return null
     }
     return PrismaCompanyMapper.toDomain(prismaCompany)
   }
 
-  async findAll(filter: CompanyFilter, ctx: RequestContext): Promise<Company[]> {
+  async findAll(
+    filter: CompanyFilter,
+    ctx: RequestContext
+  ): Promise<Company[]> {
     const where: Prisma.CompanyWhereInput = {
-      ...(filter.name && { name: { contains: filter.name, mode: 'insensitive' } }),
-      ...(filter.type && { type: { contains: filter.type, mode: 'insensitive' } }),
+      ...(filter.name && {
+        name: { contains: filter.name, mode: 'insensitive' }
+      }),
+      ...(filter.type && {
+        type: { contains: filter.type, mode: 'insensitive' }
+      }),
       ...(filter.taxId && { taxId: filter.taxId }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
@@ -55,7 +69,9 @@ export class PrismaCompanyRepository implements CompanyRepository {
       where,
       orderBy: { name: 'asc' }
     })
-    return prismaCompanies.map((company) => PrismaCompanyMapper.toDomain(company))
+    return prismaCompanies.map((company) =>
+      PrismaCompanyMapper.toDomain(company)
+    )
   }
 
   async save(company: Company, ctx: RequestContext): Promise<Company> {
@@ -86,7 +102,8 @@ export class PrismaCompanyRepository implements CompanyRepository {
 
 class PrismaCompanyMapper {
   static toDomain(prismaCompany: PrismaCompany): Company {
-    const systemState = SystemState[prismaCompany.systemState as keyof typeof SystemState]
+    const systemState =
+      SystemState[prismaCompany.systemState as keyof typeof SystemState]
     if (!systemState) {
       throw new Error(`Invalid systemState value: ${prismaCompany.systemState}`)
     }

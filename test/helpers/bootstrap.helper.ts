@@ -20,7 +20,12 @@ export function createTestRegistrationDto(
     tenantSiteName: overrides?.tenantSiteName ?? `Test Site ${unique}`,
     tenantSiteLegalName:
       overrides?.tenantSiteLegalName ?? `Test Legal ${unique} LTDA`,
-    tenantSiteTaxId: overrides?.tenantSiteTaxId ?? `${unique}000190`.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5'), // Always 14 digits: 8 unique + 000190
+    tenantSiteTaxId:
+      overrides?.tenantSiteTaxId ??
+      `${unique}000190`.replace(
+        /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+        '$1.$2.$3/$4-$5'
+      ), // Always 14 digits: 8 unique + 000190
     fullName: overrides?.fullName ?? `Test User ${unique}`,
     email: overrides?.email ?? `test-${unique}@example.com`,
     password: overrides?.password ?? 'StrongP@ss123'

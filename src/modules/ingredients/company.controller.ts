@@ -77,7 +77,8 @@ export class CompaniesController {
 
     if (dto.name) company.changeName(dto.name)
     if (dto.type) company.changeType(dto.type)
-    if (dto.contactInfo !== undefined) company.changeContactInfo(dto.contactInfo)
+    if (dto.contactInfo !== undefined)
+      company.changeContactInfo(dto.contactInfo)
     if (dto.taxId !== undefined) company.changeTaxId(dto.taxId)
 
     const saved = await this.service.save(company, request.context)

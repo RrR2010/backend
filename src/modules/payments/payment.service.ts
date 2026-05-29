@@ -15,5 +15,7 @@ export abstract class PaymentService {
     body: unknown,
     queryParams?: Record<string, unknown>
   ): boolean
-  abstract refundPayment(paymentId: string): Promise<{ refundId: string; status: string }>
+  abstract refundPayment(
+    paymentId: string
+  ): Promise<{ refundId: string; status: string }>
 }

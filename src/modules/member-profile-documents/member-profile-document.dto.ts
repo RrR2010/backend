@@ -38,7 +38,9 @@ export class CreateMemberProfileDocumentResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(doc: MemberProfileDocument): CreateMemberProfileDocumentResponseDto {
+  static fromDomain(
+    doc: MemberProfileDocument
+  ): CreateMemberProfileDocumentResponseDto {
     return {
       id: doc.id.value,
       memberProfileId: doc.memberProfileId,

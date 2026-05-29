@@ -3,7 +3,7 @@ import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 import { AllergenRelationType } from '@prisma/client'
 
-export type IngredientAllergenProps = AuditableProps & {
+export type IngredientTenantAllergenProps = AuditableProps & {
   id: Id
   tenantId: string
   ingredientId: string
@@ -11,19 +11,26 @@ export type IngredientAllergenProps = AuditableProps & {
   relationType: AllergenRelationType
 }
 
-export type CreateIngredientAllergenProps = Omit<IngredientAllergenProps, keyof AuditableProps | 'id'>
+export type CreateIngredientTenantAllergenProps = Omit<
+  IngredientTenantAllergenProps,
+  keyof AuditableProps | 'id'
+>
 
-export class IngredientAllergen extends Auditable(Base<IngredientAllergenProps>) {
-  protected constructor(props: IngredientAllergenProps) {
+export class IngredientTenantAllergen extends Auditable(
+  Base<IngredientTenantAllergenProps>
+) {
+  protected constructor(props: IngredientTenantAllergenProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateIngredientAllergenProps): IngredientAllergen {
+  static create(
+    props: CreateIngredientTenantAllergenProps
+  ): IngredientTenantAllergen {
     // TODO: zod validate input
     const now = new Date()
-    return new IngredientAllergen({
+    return new IngredientTenantAllergen({
       ...props,
       id: Id.generate(),
       createdAt: now,
@@ -31,8 +38,10 @@ export class IngredientAllergen extends Auditable(Base<IngredientAllergenProps>)
     })
   }
 
-  static rehydrate(props: IngredientAllergenProps): IngredientAllergen {
-    return new IngredientAllergen(props)
+  static rehydrate(
+    props: IngredientTenantAllergenProps
+  ): IngredientTenantAllergen {
+    return new IngredientTenantAllergen(props)
   }
 
   // --------------- Getters ---------------

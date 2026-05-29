@@ -80,7 +80,9 @@ export class FakePaymentProvider extends PaymentService {
     return true
   }
 
-  async refundPayment(paymentId: string): Promise<{ refundId: string; status: string }> {
+  async refundPayment(
+    paymentId: string
+  ): Promise<{ refundId: string; status: string }> {
     return { refundId: `fake-refund-${paymentId}`, status: 'approved' }
   }
 

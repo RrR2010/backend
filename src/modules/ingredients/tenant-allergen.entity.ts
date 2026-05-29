@@ -1,33 +1,42 @@
 import { Id } from '@shared/value-objects'
 import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
-import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
+import {
+  SystemState,
+  Lockable,
+  type LockableProps
+} from '@shared/behaviours/lockable'
 
+export type TenantAllergenProps = AuditableProps &
+  LockableProps & {
+    id: Id
+    tenantId: string
+    name: string
+    category: string | null
+    regulatoryRef: string | null
+    sortOrder: number
+    isActive: boolean
+  }
 
-export type AllergenProps = AuditableProps & LockableProps & {
-  id: Id
-  tenantId: string
-  name: string
-  category: string | null
-  regulatoryRef: string | null
-  sortOrder: number
-  isActive: boolean
-}
+export type CreateTenantAllergenProps = Omit<
+  TenantAllergenProps,
+  keyof AuditableProps | keyof LockableProps | 'id'
+>
 
-export type CreateAllergenProps = Omit<AllergenProps, keyof AuditableProps | keyof LockableProps | 'id'>
-
-export class Allergen extends Lockable(Auditable(Base<AllergenProps>)) {
-  protected constructor(props: AllergenProps) {
+export class TenantAllergen extends Lockable(
+  Auditable(Base<TenantAllergenProps>)
+) {
+  protected constructor(props: TenantAllergenProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateAllergenProps): Allergen {
+  static create(props: CreateTenantAllergenProps): TenantAllergen {
     // TODO: zod validate input
     const now = new Date()
 
-    return new Allergen({
+    return new TenantAllergen({
       ...props,
       id: Id.generate(),
       createdAt: now,
@@ -36,8 +45,8 @@ export class Allergen extends Lockable(Auditable(Base<AllergenProps>)) {
     })
   }
 
-  static rehydrate(props: AllergenProps): Allergen {
-    return new Allergen(props)
+  static rehydrate(props: TenantAllergenProps): TenantAllergen {
+    return new TenantAllergen(props)
   }
 
   // --------------- Getters ---------------
@@ -73,44 +82,44 @@ export class Allergen extends Lockable(Auditable(Base<AllergenProps>)) {
   // --------------- Behaviors ---------------
 
   changeName(name: string): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     this._props.name = name
     this.touch()
   }
 
   changeCategory(category: string | null): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     this._props.category = category
     this.touch()
   }
 
   changeRegulatoryRef(regulatoryRef: string | null): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     this._props.regulatoryRef = regulatoryRef
     this.touch()
   }
 
   changeSortOrder(sortOrder: number): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     this._props.sortOrder = sortOrder
     this.touch()
   }
 
   toggleActive(): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     this._props.isActive = !this._props.isActive
     this.touch()
   }
 
   setActive(): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     if (this._props.isActive) return
     this._props.isActive = true
     this.touch()
   }
 
   setInactive(): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     if (!this._props.isActive) return
     this._props.isActive = false
     this.touch()
@@ -121,7 +130,7 @@ export class Allergen extends Lockable(Auditable(Base<AllergenProps>)) {
   // Both are kept in sync: activate/lock/delete update both fields.
   // Locked entities cannot be reactivated — requires unlock first.
   activate(): void {
-    this.ensureActivated('Allergen')
+    this.ensureActivated('TenantAllergen')
     this._props.isActive = true
     super.activate()
   }
