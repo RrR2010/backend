@@ -26,10 +26,11 @@ export class TenantNutrientService {
     ctx: RequestContext
   ): Promise<TenantNutrient> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     if (!tenantId) {
       throw new TenantNutrientMissingTenantIdError()
     }

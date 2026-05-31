@@ -21,10 +21,11 @@ export class TechnicalInfoSourceService {
     ctx: RequestContext
   ): Promise<TechnicalInfoSource> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const source = TechnicalInfoSource.create({ ...props, tenantId })
     return this.repository.save(source, ctx)
   }

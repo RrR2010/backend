@@ -25,10 +25,11 @@ export class FunctionalGroupService {
     ctx: RequestContext
   ): Promise<FunctionalGroup> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const group = FunctionalGroup.create({ ...props, tenantId })
     try {
       return await this.repository.save(group, ctx)

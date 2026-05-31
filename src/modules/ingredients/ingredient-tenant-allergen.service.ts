@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { IngredientTenantAllergenRepository } from '@ingredients/ingredient-tenant-allergen.repository'
 import {
   IngredientTenantAllergen,
@@ -19,10 +20,11 @@ export class IngredientTenantAllergenService {
     ctx: RequestContext
   ): Promise<IngredientTenantAllergen> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const entry = IngredientTenantAllergen.create({ ...props, tenantId })
     return this.repository.add(entry, ctx)
   }
@@ -35,7 +37,17 @@ export class IngredientTenantAllergenService {
   }
 
   async remove(id: string, ctx: RequestContext): Promise<void> {
-    await this.repository.remove(id, ctx)
+    try {
+      await this.repository.remove(id, ctx)
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Resource not found or access denied')
+      }
+      throw error
+    }
   }
 
   async removeAllForIngredient(

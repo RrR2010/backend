@@ -36,10 +36,11 @@ export class IngredientService {
     ctx: RequestContext
   ): Promise<Ingredient> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const ingredient = Ingredient.create({ ...props, tenantId })
 
     const saved = await this.repository.save(ingredient, ctx)

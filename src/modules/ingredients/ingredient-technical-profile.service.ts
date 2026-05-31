@@ -29,10 +29,11 @@ export class IngredientTechnicalProfileService {
     ctx: RequestContext
   ): Promise<IngredientTechnicalProfile> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const profile = IngredientTechnicalProfile.create({ ...props, tenantId })
     try {
       return await this.repository.save(profile, ctx)

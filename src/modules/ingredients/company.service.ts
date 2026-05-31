@@ -22,10 +22,11 @@ export class CompanyService {
     ctx: RequestContext
   ): Promise<Company> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const company = Company.create({ ...props, tenantId })
     try {
       return await this.repository.save(company, ctx)

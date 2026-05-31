@@ -25,10 +25,11 @@ export class TenantAllergenService {
     ctx: RequestContext
   ): Promise<TenantAllergen> {
     // TODO: zod validate input
+    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId ?? getEffectiveTenantId(ctx))
+        : (props.tenantId || effectiveTenantId)
     const allergen = TenantAllergen.create({ ...props, tenantId })
     try {
       return await this.repository.save(allergen, ctx)
