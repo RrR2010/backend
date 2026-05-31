@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class TenantAllergenNotFoundError extends HttpException {
-  constructor(id: string) {
+  constructor(_id?: string) {
     super(
       {
-        message: `TenantAllergen with id ${id} not found`,
-        code: 'TENANT_ALLERGEN_NOT_FOUND'
+        message: 'Resource not found or access denied',
+        code: 'NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
     )

@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class IngredientNotFoundError extends HttpException {
-  constructor(id: string) {
+  constructor(_id?: string) {
     super(
       {
-        message: `Ingredient with id ${id} not found`,
-        code: 'INGREDIENT_NOT_FOUND'
+        message: 'Resource not found or access denied',
+        code: 'NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
     )

@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class FunctionalGroupNotFoundError extends HttpException {
-  constructor(id: string) {
+  constructor(_id?: string) {
     super(
       {
-        message: `FunctionalGroup with id ${id} not found`,
-        code: 'FUNCTIONAL_GROUP_NOT_FOUND'
+        message: 'Resource not found or access denied',
+        code: 'NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
     )

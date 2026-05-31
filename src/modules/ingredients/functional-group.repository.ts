@@ -9,6 +9,7 @@ import {
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type FunctionalGroupFilter = {
   name?: string
@@ -42,14 +43,15 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     ctx: RequestContext
   ): Promise<FunctionalGroup | null> {
     const where: Prisma.FunctionalGroupWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaGroup = await this.prisma.functionalGroup.findUnique({ where })
     if (!prismaGroup) return null
     if (
       prismaGroup &&
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaGroup.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -71,10 +73,11 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
-    if (ctx.scope === UserScope.TENANT) {
+    if (effectiveTenantId) {
       where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaGroups = await this.prisma.functionalGroup.findMany({
@@ -105,8 +108,9 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.FunctionalGroupWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.functionalGroup.update({
       where,

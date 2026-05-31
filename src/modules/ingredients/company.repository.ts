@@ -6,6 +6,7 @@ import { Id } from '@shared/value-objects'
 import { Company as PrismaCompany, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type CompanyFilter = {
   name?: string
@@ -30,14 +31,15 @@ export class PrismaCompanyRepository implements CompanyRepository {
 
   async findById(id: string, ctx: RequestContext): Promise<Company | null> {
     const where: Prisma.CompanyWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaCompany = await this.prisma.company.findUnique({ where })
     if (!prismaCompany) return null
     if (
       prismaCompany &&
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaCompany.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -59,10 +61,11 @@ export class PrismaCompanyRepository implements CompanyRepository {
       ...(filter.taxId && { taxId: filter.taxId }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
-    if (ctx.scope === UserScope.TENANT) {
+    if (effectiveTenantId) {
       where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaCompanies = await this.prisma.company.findMany({
@@ -90,8 +93,9 @@ export class PrismaCompanyRepository implements CompanyRepository {
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.CompanyWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.company.update({
       where,

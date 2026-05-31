@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class TenantNutrientNotFoundError extends HttpException {
-  constructor(id: string) {
+  constructor(_id?: string) {
     super(
       {
-        message: `TenantNutrient with id ${id} not found`,
-        code: 'TENANT_NUTRIENT_NOT_FOUND'
+        message: 'Resource not found or access denied',
+        code: 'NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
     )
