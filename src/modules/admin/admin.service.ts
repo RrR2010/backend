@@ -42,7 +42,8 @@ export class AdminService {
     const platformCtx: RequestContext = {
       userId: 'system',
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const existingUsers = await this.userRepository.findAll({}, platformCtx)
     if (existingUsers.length > 0) {

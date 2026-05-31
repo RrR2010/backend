@@ -10,7 +10,7 @@ import {
   NutrientCategory
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type TenantNutrientFilter = {
   name?: string
@@ -45,8 +45,9 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
     ctx: RequestContext
   ): Promise<TenantNutrient | null> {
     const where: Prisma.TenantNutrientWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaNutrient = await this.prisma.tenantNutrient.findUnique({
       where
@@ -54,7 +55,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
     if (!prismaNutrient) return null
     if (
       prismaNutrient &&
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaNutrient.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -75,10 +76,11 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
-    if (ctx.scope === UserScope.TENANT) {
+    if (effectiveTenantId) {
       where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaNutrients = await this.prisma.tenantNutrient.findMany({
@@ -94,7 +96,8 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
     nutrient: TenantNutrient,
     ctx: RequestContext
   ): Promise<TenantNutrient> {
-    if (ctx.scope === UserScope.TENANT && nutrient.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && nutrient.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = nutrient.id.value
@@ -109,8 +112,9 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.TenantNutrientWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.tenantNutrient.update({
       where,

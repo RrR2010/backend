@@ -9,7 +9,7 @@ import {
   IngredientFunctionType
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type IngredientFilter = {
   code?: string
@@ -43,14 +43,15 @@ export class PrismaIngredientRepository implements IngredientRepository {
 
   async findById(id: string, ctx: RequestContext): Promise<Ingredient | null> {
     const where: Prisma.IngredientWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaIngredient = await this.prisma.ingredient.findUnique({ where })
     if (!prismaIngredient) return null
     if (
       prismaIngredient &&
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaIngredient.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -91,10 +92,11 @@ export class PrismaIngredientRepository implements IngredientRepository {
       }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
-    if (ctx.scope === UserScope.TENANT) {
+    if (effectiveTenantId) {
       where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaIngredients = await this.prisma.ingredient.findMany({
@@ -107,10 +109,8 @@ export class PrismaIngredientRepository implements IngredientRepository {
   }
 
   async save(ingredient: Ingredient, ctx: RequestContext): Promise<Ingredient> {
-    if (
-      ctx.scope === UserScope.TENANT &&
-      ingredient.tenantId !== ctx.tenantId
-    ) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && ingredient.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = ingredient.id.value
@@ -125,8 +125,9 @@ export class PrismaIngredientRepository implements IngredientRepository {
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.IngredientWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredient.update({
       where,

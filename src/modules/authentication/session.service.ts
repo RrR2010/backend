@@ -84,7 +84,8 @@ export class SessionService {
       const platformCtx: RequestContext = {
         userId: tempSession.userId,
         scope: UserScope.PLATFORM,
-        roles: []
+        roles: [],
+        impersonatedTenantId: null
       }
       const session = await this.sessionRepository.save(
         tempSession,
@@ -124,7 +125,8 @@ export class SessionService {
     const platformCtx: RequestContext = {
       userId: tokenPayload.userId,
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const sessions = await this.sessionRepository.findAll(
       {
@@ -154,7 +156,8 @@ export class SessionService {
     const userCtx: RequestContext = {
       userId: lastSession.userId,
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const user = await this.userRepository.findById(lastSession.userId, userCtx)
     if (!user) {

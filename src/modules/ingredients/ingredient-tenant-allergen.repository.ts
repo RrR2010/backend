@@ -7,7 +7,7 @@ import {
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export abstract class IngredientTenantAllergenRepository {
   abstract findByIngredientId(
@@ -34,8 +34,9 @@ export class PrismaIngredientTenantAllergenRepository implements IngredientTenan
     ctx: RequestContext
   ): Promise<IngredientTenantAllergen[]> {
     const where: Prisma.IngredientTenantAllergenWhereInput = { ingredientId }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const entries = await this.prisma.ingredientTenantAllergen.findMany({
       where
@@ -47,7 +48,8 @@ export class PrismaIngredientTenantAllergenRepository implements IngredientTenan
     entry: IngredientTenantAllergen,
     ctx: RequestContext
   ): Promise<IngredientTenantAllergen> {
-    if (ctx.scope === UserScope.TENANT && entry.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && entry.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     entry.touch()
@@ -62,8 +64,9 @@ export class PrismaIngredientTenantAllergenRepository implements IngredientTenan
 
   async remove(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.IngredientTenantAllergenWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientTenantAllergen.delete({ where })
   }
@@ -73,8 +76,9 @@ export class PrismaIngredientTenantAllergenRepository implements IngredientTenan
     ctx: RequestContext
   ): Promise<void> {
     const where: Prisma.IngredientTenantAllergenWhereInput = { ingredientId }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientTenantAllergen.deleteMany({ where })
   }

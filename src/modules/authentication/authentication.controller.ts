@@ -63,7 +63,8 @@ export class AuthenticationController {
     const platformCtx: RequestContext = {
       userId: payload.userId,
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const user = await this.userRepository.findById(payload.userId, platformCtx)
     if (!user) {
@@ -214,7 +215,8 @@ export class AuthenticationController {
           ctx = {
             userId: payload.userId,
             scope: UserScope.PLATFORM,
-            roles: payload.roles
+            roles: payload.roles,
+            impersonatedTenantId: null
           }
         } else if (payload.scope === UserScope.TENANT && payload.tenantId) {
           ctx = {

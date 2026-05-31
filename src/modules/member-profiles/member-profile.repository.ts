@@ -6,7 +6,7 @@ import { Id } from '@shared/value-objects'
 import { Gender } from '@shared/enums'
 import { SystemState } from '@shared/behaviours/lockable'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export interface MemberProfileFilter {
   platformMembershipId?: string
@@ -41,8 +41,9 @@ export class PrismaMemberProfileRepository implements MemberProfileRepository {
     ctx: RequestContext
   ): Promise<MemberProfile | null> {
     const where: Prisma.MemberProfileWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantMembership = { tenantId: ctx.tenantId }
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantMembership = { tenantId: effectiveTenantId }
     }
     const profile = await this.prisma.memberProfile.findUnique({
       where
@@ -63,8 +64,9 @@ export class PrismaMemberProfileRepository implements MemberProfileRepository {
     if (filter.gender) where.gender = filter.gender
     if (filter.locale) where.locale = filter.locale
     if (filter.timezone) where.timezone = filter.timezone
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantMembership = { tenantId: ctx.tenantId }
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantMembership = { tenantId: effectiveTenantId }
     }
 
     const profiles = await this.prisma.memberProfile.findMany({ where })
@@ -79,8 +81,19 @@ export class PrismaMemberProfileRepository implements MemberProfileRepository {
   ): Promise<MemberProfile> {
     const data = PrismaMemberProfileMapper.toPersistence(profile)
     const where: Prisma.MemberProfileWhereUniqueInput = { id: profile.id.value }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantMembership = { tenantId: ctx.tenantId }
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantMembership = { tenantId: effectiveTenantId }
+    }
+    // Validate that the referenced TenantMembership belongs to the effective tenant
+    if (effectiveTenantId && profile.tenantMembershipId) {
+      const membership = await this.prisma.tenantMembership.findUnique({
+        where: { id: profile.tenantMembershipId },
+        select: { tenantId: true }
+      })
+      if (!membership || membership.tenantId !== effectiveTenantId) {
+        throw new ForbiddenException('TenantMembership does not belong to the effective tenant')
+      }
     }
     try {
       await this.prisma.memberProfile.upsert({
@@ -103,8 +116,9 @@ export class PrismaMemberProfileRepository implements MemberProfileRepository {
         create: data
       })
     } catch (error) {
+      const effectiveTenantId = getEffectiveTenantId(ctx)
       if (
-        ctx.scope === UserScope.TENANT &&
+        effectiveTenantId &&
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
@@ -119,8 +133,9 @@ export class PrismaMemberProfileRepository implements MemberProfileRepository {
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.MemberProfileWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantMembership = { tenantId: ctx.tenantId }
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantMembership = { tenantId: effectiveTenantId }
     }
     await this.prisma.memberProfile.delete({ where })
   }

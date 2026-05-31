@@ -7,6 +7,9 @@ import { Id } from '@shared/value-objects'
 import { Phone as PrismaPhone, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
+// EXCEÇÃO: Phone é polimórfico (pode pertencer a tenant ou a entidade global).
+// TODO: desenvolver abordagem de segurança cross-tenant para entidades polimórficas.
+
 export abstract class PhoneRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Phone | null>
   abstract findAll(filter: PhoneFilter, ctx: RequestContext): Promise<Phone[]>

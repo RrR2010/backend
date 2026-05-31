@@ -31,7 +31,8 @@ export class EmailAuthenticationProvider extends AuthenticationProvider<AuthProv
     const ctx: RequestContext = {
       userId: '',
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const identities = await this.identityRepository.findAll(
       {
@@ -82,7 +83,8 @@ export class CpfAuthenticationProvider extends AuthenticationProvider<AuthProvid
     const ctx: RequestContext = {
       userId: '',
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const identities = await this.identityRepository.findAll(
       {

@@ -79,6 +79,7 @@ export type RequestContext =
       userId: string
       scope: UserScope.PLATFORM
       roles: PlatformRole[]
+      impersonatedTenantId: string | null
     }
   | {
       userId: string

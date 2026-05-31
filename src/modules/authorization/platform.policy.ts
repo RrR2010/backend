@@ -7,6 +7,8 @@ import {
   RequestContext
 } from '@authorization/authorization.types'
 import { User } from '@users/user.entity'
+import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
+import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
 
 type PlatformContext = Extract<RequestContext, { scope: UserScope.PLATFORM }>
 
@@ -29,8 +31,16 @@ export function definePlatformAbility(ctx: PlatformContext): AppAbility {
     } as AppConditions)
     cannot(Action.Delete, User)
 
-    // Platform USER should NOT have access to tenant-specific resources
-    // (ingredients, identities, tenants) - these are managed by tenant policies
+    // If impersonating, add tenant-scoped permissions
+    // The actual tenantId filtering happens at the repository level
+    // via getEffectiveTenantId(), not in CASL conditions
+    if (ctx.impersonatedTenantId) {
+      // Allow reading tenant-scoped entities when impersonating
+      can(Action.Read, TenantNutrient)
+      can(Action.Read, TenantAllergen)
+      // Additional tenant-scoped permissions can be added here
+      // as needed for the PLATFORM USER role
+    }
 
     return build()
   }

@@ -131,7 +131,8 @@ export class SubscriptionController {
     const ctx: RequestContext = {
       userId: 'system',
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
 
     // Calculate price using PlanService (backend is source of truth)

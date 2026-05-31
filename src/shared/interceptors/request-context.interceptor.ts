@@ -54,10 +54,14 @@ export class RequestContextInterceptor implements NestInterceptor {
           roles: user.roles as TenantRole[]
         }
       } else {
+        // PLATFORM scope: read impersonation header
+        const impersonatedTenantIdHeader = request.header('X-Tenant-Id')
+
         requestContext = {
           userId: user.userId,
           scope: user.scope as UserScope.PLATFORM,
-          roles: user.roles as PlatformRole[]
+          roles: user.roles as PlatformRole[],
+          impersonatedTenantId: impersonatedTenantIdHeader ?? null
         }
       }
       request.context = requestContext

@@ -6,6 +6,10 @@ import { SystemState } from '@shared/behaviours/lockable'
 import { BaseAllergen as PrismaBaseAllergen, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
+// EXCEÇÃO: BaseAllergen é entidade platform-scoped (sem tenantId).
+// Permanece acessível globalmente por usuários PLATFORM durante impersonação.
+// Regra de Negócio #11 do EPIC_010.
+
 export type BaseAllergenFilter = {
   category?: string
   systemState?: SystemState

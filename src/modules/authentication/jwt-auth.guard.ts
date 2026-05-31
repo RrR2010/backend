@@ -18,7 +18,8 @@ export interface AuthenticatedRequest extends Request {
   user: AuthTokenPayload
   userId: string
   authScope: UserScope
-  tenantId?: string
+  tenantId: string | null
+  impersonatedTenantId: string | null
   tenantContext?: TenantContext
   ability?: AppAbility
   context: RequestContext
@@ -59,6 +60,8 @@ export class JwtAuthGuard implements CanActivate {
     request.user = payload
     request.userId = payload.userId
     request.authScope = payload.scope
+    request.impersonatedTenantId = null
+    request.tenantId = null
 
     // Attach tenantId for tenant-scoped tokens
     if (payload.scope === UserScope.TENANT) {

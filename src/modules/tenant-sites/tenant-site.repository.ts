@@ -6,7 +6,7 @@ import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import { TenantSite as PrismaTenantSite, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export interface TenantSiteFilter {
   tenantId?: string
@@ -34,8 +34,9 @@ export class PrismaTenantSiteRepository implements TenantSiteRepository {
 
   async findById(id: string, ctx: RequestContext): Promise<TenantSite | null> {
     const where: Prisma.TenantSiteWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaTenantSite = await this.prisma.tenantSite.findUnique({
       where
@@ -56,8 +57,9 @@ export class PrismaTenantSiteRepository implements TenantSiteRepository {
       }),
       ...(filter.taxId && { taxId: filter.taxId })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaTenantSites = await this.prisma.tenantSite.findMany({
       where
@@ -68,10 +70,8 @@ export class PrismaTenantSiteRepository implements TenantSiteRepository {
   }
 
   async save(tenantSite: TenantSite, ctx: RequestContext): Promise<TenantSite> {
-    if (
-      ctx.scope === UserScope.TENANT &&
-      tenantSite.tenantId !== ctx.tenantId
-    ) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && tenantSite.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaTenantSite = PrismaTenantSiteMapper.toPersistence(tenantSite)
@@ -85,8 +85,9 @@ export class PrismaTenantSiteRepository implements TenantSiteRepository {
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.TenantSiteWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.tenantSite.delete({ where })
   }

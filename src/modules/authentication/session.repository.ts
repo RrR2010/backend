@@ -4,7 +4,7 @@ import { Session } from '@authentication/session.entity'
 import { Prisma, Session as PrismaSession } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export abstract class SessionRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Session | null>
@@ -32,8 +32,9 @@ export class PrismaSessionRepository implements SessionRepository {
   constructor(private readonly prismaService: PrismaService) {}
   async findById(id: string, ctx: RequestContext): Promise<Session | null> {
     const where: Prisma.SessionWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const session = await this.prismaService.session.findUnique({ where })
     if (!session) return null
@@ -54,8 +55,9 @@ export class PrismaSessionRepository implements SessionRepository {
     if (filter.expiresAt) where.expiresAt = filter.expiresAt
     if (filter.revokedAt) where.revokedAt = filter.revokedAt
 
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
 
     const prismaSessions = await this.prismaService.session.findMany({ where })
@@ -65,7 +67,8 @@ export class PrismaSessionRepository implements SessionRepository {
     return sessions
   }
   async save(session: Session, ctx: RequestContext): Promise<Session> {
-    if (ctx.scope === UserScope.TENANT && session.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && session.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaSession = PrismaSessionMapper.toPersistence(session)
@@ -78,8 +81,9 @@ export class PrismaSessionRepository implements SessionRepository {
   }
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.SessionWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prismaService.session.delete({ where })
   }

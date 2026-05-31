@@ -7,7 +7,7 @@ import {
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export abstract class IngredientBaseAllergenRepository {
   abstract findByIngredientId(
@@ -38,8 +38,9 @@ export class PrismaIngredientBaseAllergenRepository implements IngredientBaseAll
     ctx: RequestContext
   ): Promise<IngredientBaseAllergen[]> {
     const where: Prisma.IngredientBaseAllergenWhereInput = { ingredientId }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const entries = await this.prisma.ingredientBaseAllergen.findMany({
       where
@@ -51,7 +52,8 @@ export class PrismaIngredientBaseAllergenRepository implements IngredientBaseAll
     entry: IngredientBaseAllergen,
     ctx: RequestContext
   ): Promise<IngredientBaseAllergen> {
-    if (ctx.scope === UserScope.TENANT && entry.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && entry.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     entry.touch()
@@ -68,8 +70,9 @@ export class PrismaIngredientBaseAllergenRepository implements IngredientBaseAll
   ): Promise<IngredientBaseAllergen[]> {
     if (entries.length === 0) return []
     // Verify all entries belong to the tenant
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     for (const entry of entries) {
-      if (ctx.scope === UserScope.TENANT && entry.tenantId !== ctx.tenantId) {
+      if (effectiveTenantId && entry.tenantId !== effectiveTenantId) {
         throw new ForbiddenException(
           'Cannot modify resource outside your tenant'
         )
@@ -87,8 +90,9 @@ export class PrismaIngredientBaseAllergenRepository implements IngredientBaseAll
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.IngredientBaseAllergenWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientBaseAllergen.delete({ where })
   }
@@ -100,8 +104,9 @@ export class PrismaIngredientBaseAllergenRepository implements IngredientBaseAll
     const where: Prisma.IngredientBaseAllergenWhereInput = {
       ingredientId
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientBaseAllergen.deleteMany({ where })
   }

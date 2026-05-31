@@ -52,10 +52,13 @@ export class AuthorizationGuard implements CanActivate {
 
     if (user.scope === UserScope.PLATFORM) {
       // PLATFORM scope: use platform policy
+      const impersonatedTenantId = request.impersonatedTenantId ?? null
+
       ability = definePlatformAbility({
         userId: user.userId,
         scope: UserScope.PLATFORM,
-        roles: user.roles
+        roles: user.roles,
+        impersonatedTenantId
       })
     } else if (user.scope === UserScope.TENANT) {
       // TENANT scope: use tenant policy

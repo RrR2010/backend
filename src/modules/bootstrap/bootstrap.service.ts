@@ -57,7 +57,8 @@ export class BootstrapService {
   private readonly platformCtx: RequestContext = {
     userId: 'system',
     scope: UserScope.PLATFORM,
-    roles: []
+    roles: [],
+    impersonatedTenantId: null
   }
 
   constructor(

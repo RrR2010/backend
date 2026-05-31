@@ -5,7 +5,7 @@ import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import { TenantAllergen as PrismaTenantAllergen, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type TenantAllergenFilter = {
   name?: string
@@ -39,8 +39,9 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     ctx: RequestContext
   ): Promise<TenantAllergen | null> {
     const where: Prisma.TenantAllergenWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaAllergen = await this.prisma.tenantAllergen.findUnique({
       where
@@ -48,7 +49,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     if (!prismaAllergen) return null
     if (
       prismaAllergen &&
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaAllergen.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -70,10 +71,11 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
       ...(filter.systemState && { systemState: filter.systemState })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
-    if (ctx.scope === UserScope.TENANT) {
+    if (effectiveTenantId) {
       where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaAllergens = await this.prisma.tenantAllergen.findMany({
@@ -89,7 +91,8 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     allergen: TenantAllergen,
     ctx: RequestContext
   ): Promise<TenantAllergen> {
-    if (ctx.scope === UserScope.TENANT && allergen.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && allergen.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = allergen.id.value
@@ -104,8 +107,9 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.TenantAllergenWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.tenantAllergen.update({
       where,

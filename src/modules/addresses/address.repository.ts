@@ -7,6 +7,9 @@ import { Address as PrismaAddress, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { RequestContext } from '@authorization/authorization.types'
 
+// EXCEÇÃO: Address é polimórfico (pode pertencer a tenant ou a entidade global).
+// TODO: desenvolver abordagem de segurança cross-tenant para entidades polimórficas.
+
 export abstract class AddressRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Address | null>
   abstract findAll(

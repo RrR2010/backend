@@ -10,7 +10,7 @@ import {
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type TenantMembershipFilter = {
   userId?: string
@@ -48,8 +48,9 @@ export class PrismaTenantMembershipRepository implements TenantMembershipReposit
     ctx: RequestContext
   ): Promise<TenantMembership | null> {
     const where: Prisma.TenantMembershipWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const membership = await this.prisma.tenantMembership.findUnique({
       where
@@ -63,8 +64,9 @@ export class PrismaTenantMembershipRepository implements TenantMembershipReposit
     ctx: RequestContext
   ): Promise<TenantMembership[]> {
     const where: Prisma.TenantMembershipWhereInput = { userId }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const memberships = await this.prisma.tenantMembership.findMany({
       where
@@ -85,8 +87,9 @@ export class PrismaTenantMembershipRepository implements TenantMembershipReposit
       const role = filter.roles[0]
       if (role) where.roles = { has: role as PrismaTenantRole }
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
 
     const memberships = await this.prisma.tenantMembership.findMany({ where })
@@ -97,10 +100,8 @@ export class PrismaTenantMembershipRepository implements TenantMembershipReposit
     membership: TenantMembership,
     ctx: RequestContext
   ): Promise<TenantMembership> {
-    if (
-      ctx.scope === UserScope.TENANT &&
-      membership.tenantId !== ctx.tenantId
-    ) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && membership.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaData = PrismaTenantMembershipMapper.toPersistence(membership)
@@ -116,8 +117,9 @@ export class PrismaTenantMembershipRepository implements TenantMembershipReposit
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.TenantMembershipWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.tenantMembership.delete({ where })
   }

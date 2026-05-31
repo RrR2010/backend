@@ -245,7 +245,8 @@ export class SubscriptionService {
     const platformCtx: RequestContext = {
       userId: 'system',
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
 
     // Get plan and calculate price (backend is source of truth for pricing)
@@ -1102,7 +1103,8 @@ export class SubscriptionService {
     const ctx: RequestContext = {
       userId: 'system',
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
 
     // Step 5: Deduplicate by providerEventId.

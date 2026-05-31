@@ -7,7 +7,7 @@ import {
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export abstract class IngredientBaseNutrientRepository {
   abstract findByIngredientId(
@@ -40,8 +40,9 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
     const where: Prisma.IngredientBaseNutrientWhereInput = {
       ingredientId
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const entries = await this.prisma.ingredientBaseNutrient.findMany({
       where
@@ -53,7 +54,8 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
     entry: IngredientBaseNutrient,
     ctx: RequestContext
   ): Promise<IngredientBaseNutrient> {
-    if (ctx.scope === UserScope.TENANT && entry.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && entry.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     entry.touch()
@@ -69,8 +71,9 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
     ctx: RequestContext
   ): Promise<IngredientBaseNutrient[]> {
     if (entries.length === 0) return []
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     for (const entry of entries) {
-      if (ctx.scope === UserScope.TENANT && entry.tenantId !== ctx.tenantId) {
+      if (effectiveTenantId && entry.tenantId !== effectiveTenantId) {
         throw new ForbiddenException(
           'Cannot modify resource outside your tenant'
         )
@@ -88,8 +91,9 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.IngredientBaseNutrientWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientBaseNutrient.delete({ where })
   }
@@ -101,8 +105,9 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
     const where: Prisma.IngredientBaseNutrientWhereInput = {
       ingredientId
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientBaseNutrient.deleteMany({ where })
   }

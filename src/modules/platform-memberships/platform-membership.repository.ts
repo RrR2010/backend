@@ -11,6 +11,10 @@ import {
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
+// EXCEÇÃO: Repositório de platform-membership não tem tenantId — filtra por userId.
+// Impersonação não se aplica porque a membership é sempre do usuário logado,
+// independente do tenant impersonado.
+
 export type PlatformMembershipFilter = {
   userId?: string
   roles?: PlatformRole[]

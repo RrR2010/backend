@@ -11,6 +11,10 @@ import {
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
+// EXCEÇÃO: BaseNutrient é entidade platform-scoped (sem tenantId).
+// Permanece acessível globalmente por usuários PLATFORM durante impersonação.
+// Regra de Negócio #11 do EPIC_010.
+
 export type BaseNutrientFilter = {
   unit?: string
   category?: string

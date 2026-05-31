@@ -4,7 +4,7 @@ import { AuditLog } from '@audit-logs/audit-log.entity'
 import { AuditLog as PrismaAuditLog, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export abstract class AuditLogRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<AuditLog | null>
@@ -31,8 +31,12 @@ export class PrismaAuditLogRepository implements AuditLogRepository {
 
   async findById(id: string, ctx: RequestContext): Promise<AuditLog | null> {
     const where: Prisma.AuditLogWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    // Note: effectiveTenantId (from TENANT scope or impersonation) takes precedence
+    // over any explicitly provided filter.tenantId to enforce tenant isolation.
+    // If caller-provided filter.tenantId differs, it is intentionally overridden.
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaAuditLog = await this.prisma.auditLog.findUnique({
       where
@@ -42,7 +46,8 @@ export class PrismaAuditLogRepository implements AuditLogRepository {
   }
 
   async save(auditLog: AuditLog, ctx: RequestContext): Promise<AuditLog> {
-    if (ctx.scope === UserScope.TENANT && auditLog.tenantId !== ctx.tenantId) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && auditLog.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaAuditLog = AuditLogMapper.toPersistence(auditLog)
@@ -84,8 +89,12 @@ export class PrismaAuditLogRepository implements AuditLogRepository {
         where.createdAt.lte = filter.createdBefore
       }
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    // Note: effectiveTenantId (from TENANT scope or impersonation) takes precedence
+    // over any explicitly provided filter.tenantId to enforce tenant isolation.
+    // If caller-provided filter.tenantId differs, it is intentionally overridden.
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
 
     const prismaAuditLogs = await this.prisma.auditLog.findMany({

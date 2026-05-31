@@ -57,7 +57,8 @@ export class AuthenticationService {
     const user = await this.userRepository.findById(result.userId, {
       userId: result.userId,
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     })
     if (!user) {
       throw new UserNotFoundAfterAuthenticationError()
@@ -73,7 +74,8 @@ export class AuthenticationService {
           {
             userId: user.id.value,
             scope: UserScope.PLATFORM,
-            roles: []
+            roles: [],
+            impersonatedTenantId: null
           }
         )
       if (platformMembership.length === 0 || !platformMembership[0]) {
@@ -100,7 +102,8 @@ export class AuthenticationService {
       const tenantCtx: RequestContext = {
         userId: user.id.value,
         scope: UserScope.PLATFORM,
-        roles: []
+        roles: [],
+        impersonatedTenantId: null
       }
       const memberships = await this.tenantMembershipRepository
         .findAll(
@@ -159,7 +162,8 @@ export class AuthenticationService {
     const user = await this.userRepository.findById(selectTenantInput.userId, {
       userId: selectTenantInput.userId,
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     })
     if (!user) {
       throw new InvalidCredentialsError()
@@ -172,7 +176,8 @@ export class AuthenticationService {
     const tenantCtx: RequestContext = {
       userId: user.id.value,
       scope: UserScope.PLATFORM,
-      roles: []
+      roles: [],
+      impersonatedTenantId: null
     }
     const memberships = await this.tenantMembershipRepository.findAll(
       {
