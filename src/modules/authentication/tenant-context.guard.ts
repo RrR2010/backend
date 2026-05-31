@@ -13,6 +13,7 @@ import { TenantMembershipRepository } from '@tenant-memberships/tenant-membershi
 import { IS_PUBLIC_KEY } from '@shared/decorators/public.decorator'
 import { RequestContext } from '@authorization/authorization.types'
 import { PrismaService } from '@shared/prisma/prisma.service'
+import { AuditLogService } from '@audit-logs/audit-log.service'
 
 export type TenantContext = {
   tenantId: string
@@ -28,7 +29,8 @@ export class TenantContextGuard implements CanActivate {
     private readonly reflector: Reflector,
     @Inject(TenantMembershipRepository)
     private readonly tenantMembershipRepository: TenantMembershipRepository,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -109,6 +111,40 @@ export class TenantContextGuard implements CanActivate {
             request.context as Record<string, unknown>
           ).impersonatedTenantId = impersonatedTenantId
         }
+
+        // Log impersonation audit event (non-blocking — failure must not break impersonation)
+        if (request.impersonatedTenantId) {
+          const auditCtx: RequestContext = {
+            userId: request.userId,
+            scope: UserScope.PLATFORM,
+            roles: request.user.roles as PlatformRole[],
+            impersonatedTenantId: request.impersonatedTenantId,
+          }
+          this.auditLogService
+            .create(
+              {
+                action: 'IMPERSONATION_STARTED',
+                entityName: 'Impersonation',
+                entityId: request.impersonatedTenantId,
+                tenantId: request.impersonatedTenantId,
+                userId: request.userId,
+                ipAddress: request.ip ?? null,
+                userAgent: (request.headers?.['user-agent'] as string) ?? null,
+                description:
+                  'Platform ADMIN started impersonating tenant',
+                before: null,
+                after: null,
+              },
+              auditCtx,
+            )
+            .catch(() => {
+              // Non-blocking: audit failure should not break impersonation
+            })
+        }
+
+        // TODO: IMPERSONATION_ENDED is triggered on the frontend via
+        // sessionStorage clear. A backend endpoint (POST /impersonation/stop)
+        // can be added in a future phase to log the end event server-side.
       }
 
       return true
