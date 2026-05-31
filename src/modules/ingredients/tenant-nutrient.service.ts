@@ -9,7 +9,8 @@ import {
 } from '@ingredients/tenant-nutrient.entity'
 import {
   TenantNutrientNotFoundError,
-  TenantNutrientAlreadyExistsError
+  TenantNutrientAlreadyExistsError,
+  TenantNutrientMissingTenantIdError
 } from '@ingredients/tenant-nutrient.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
@@ -26,6 +27,9 @@ export class TenantNutrientService {
     // TODO: zod validate input
     const tenantId =
       ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+    if (!tenantId) {
+      throw new TenantNutrientMissingTenantIdError()
+    }
     const nutrient = TenantNutrient.create({ ...props, tenantId })
     try {
       return await this.repository.save(nutrient, ctx)

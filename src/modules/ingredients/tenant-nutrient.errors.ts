@@ -23,3 +23,15 @@ export class TenantNutrientAlreadyExistsError extends HttpException {
     )
   }
 }
+
+export class TenantNutrientMissingTenantIdError extends HttpException {
+  constructor() {
+    super(
+      {
+        message: 'Tenant ID é obrigatório para criar um nutriente. Selecione um tenant primeiro.',
+        code: 'TENANT_NUTRIENT_MISSING_TENANT_ID'
+      },
+      HttpStatus.BAD_REQUEST
+    )
+  }
+}
