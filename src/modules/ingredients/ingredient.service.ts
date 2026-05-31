@@ -16,6 +16,7 @@ import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { Prisma } from '@prisma/client'
 import { PrismaService } from '@shared/prisma/prisma.service'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 import { Id } from '@shared/value-objects'
 import { SaveAllIngredientDto } from '@ingredients/ingredient.dto'
 import { AuditLogService } from '@audit-logs/audit-log.service'
@@ -36,7 +37,9 @@ export class IngredientService {
   ): Promise<Ingredient> {
     // TODO: zod validate input
     const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+      ctx.scope === UserScope.TENANT
+        ? ctx.tenantId
+        : (props.tenantId ?? getEffectiveTenantId(ctx))
     const ingredient = Ingredient.create({ ...props, tenantId })
 
     const saved = await this.repository.save(ingredient, ctx)

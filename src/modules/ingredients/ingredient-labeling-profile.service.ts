@@ -15,6 +15,7 @@ import {
 } from '@ingredients/ingredient-labeling-profile.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 @Injectable()
 export class IngredientLabelingProfileService {
@@ -29,7 +30,9 @@ export class IngredientLabelingProfileService {
   ): Promise<IngredientLabelingProfile> {
     // TODO: zod validate input
     const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+      ctx.scope === UserScope.TENANT
+        ? ctx.tenantId
+        : (props.tenantId ?? getEffectiveTenantId(ctx))
     const profile = IngredientLabelingProfile.create({ ...props, tenantId })
     try {
       return await this.repository.save(profile, ctx)

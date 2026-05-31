@@ -34,6 +34,7 @@ import {
 } from '@billing/billing.errors'
 import { SubscriptionStatus, PlanType } from '@shared/enums'
 import type { Json } from '@shared/types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
@@ -88,7 +89,9 @@ export class SubscriptionService {
     // source). Platform-scoped users may create subscriptions for any tenant,
     // so input.tenantId is used in that case.
     const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : input.tenantId
+      ctx.scope === UserScope.TENANT
+        ? ctx.tenantId
+        : (input.tenantId ?? getEffectiveTenantId(ctx))
 
     // Idempotency: check if subscription already exists
     const existing = await this.subscriptionRepository.findByTenantId(

@@ -6,6 +6,7 @@ import {
 } from '@ingredients/ingredient-tenant-allergen.entity'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 @Injectable()
 export class IngredientTenantAllergenService {
@@ -19,7 +20,9 @@ export class IngredientTenantAllergenService {
   ): Promise<IngredientTenantAllergen> {
     // TODO: zod validate input
     const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+      ctx.scope === UserScope.TENANT
+        ? ctx.tenantId
+        : (props.tenantId ?? getEffectiveTenantId(ctx))
     const entry = IngredientTenantAllergen.create({ ...props, tenantId })
     return this.repository.add(entry, ctx)
   }

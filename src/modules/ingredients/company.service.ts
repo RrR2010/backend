@@ -10,6 +10,7 @@ import {
 } from '@ingredients/company.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
@@ -22,7 +23,9 @@ export class CompanyService {
   ): Promise<Company> {
     // TODO: zod validate input
     const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+      ctx.scope === UserScope.TENANT
+        ? ctx.tenantId
+        : (props.tenantId ?? getEffectiveTenantId(ctx))
     const company = Company.create({ ...props, tenantId })
     try {
       return await this.repository.save(company, ctx)

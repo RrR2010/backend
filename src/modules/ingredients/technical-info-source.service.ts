@@ -10,6 +10,7 @@ import {
 import { TechnicalInfoSourceNotFoundError } from '@ingredients/technical-info-source.errors'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 @Injectable()
 export class TechnicalInfoSourceService {
@@ -21,7 +22,9 @@ export class TechnicalInfoSourceService {
   ): Promise<TechnicalInfoSource> {
     // TODO: zod validate input
     const tenantId =
-      ctx.scope === UserScope.TENANT ? ctx.tenantId : props.tenantId
+      ctx.scope === UserScope.TENANT
+        ? ctx.tenantId
+        : (props.tenantId ?? getEffectiveTenantId(ctx))
     const source = TechnicalInfoSource.create({ ...props, tenantId })
     return this.repository.save(source, ctx)
   }
