@@ -390,7 +390,8 @@ model AuditLog {
   action      String
   before      Json?
   after       Json?
-  description String?
+  description               String?
+  tenantImpersonationId     String?   @map("tenant_impersonation_id")
 
   @@index([tenantId])
   @@index([userId])

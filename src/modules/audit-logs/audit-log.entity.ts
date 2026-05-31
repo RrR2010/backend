@@ -6,6 +6,7 @@ export type AuditLogProps = AuditableProps & {
   id: Id
   userId: string | null
   tenantId: string | null
+  tenantImpersonationId: string | null
   entityName: string
   entityId: string
   ipAddress: string | null
@@ -18,7 +19,7 @@ export type AuditLogProps = AuditableProps & {
 
 export type CreateAuditLogProps = Omit<
   AuditLogProps,
-  keyof AuditableProps | 'id'
+  keyof AuditableProps | 'id' | 'tenantImpersonationId'
 >
 
 export class AuditLog extends Auditable(Base<AuditLogProps>) {
@@ -28,13 +29,17 @@ export class AuditLog extends Auditable(Base<AuditLogProps>) {
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateAuditLogProps): AuditLog {
+  static create(
+    props: CreateAuditLogProps,
+    tenantImpersonationId?: string | null
+  ): AuditLog {
     const now = new Date()
     return new AuditLog({
       ...props,
       id: Id.generate(),
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      tenantImpersonationId: tenantImpersonationId ?? null
     })
   }
 
@@ -54,6 +59,10 @@ export class AuditLog extends Auditable(Base<AuditLogProps>) {
 
   get tenantId(): string | null {
     return this._props.tenantId
+  }
+
+  get tenantImpersonationId(): string | null {
+    return this._props.tenantImpersonationId
   }
 
   get entityName(): string {

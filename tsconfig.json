@@ -43,7 +43,8 @@
       "@addresses/*": ["src/modules/addresses/*"],
       "@bootstrap/*": ["src/modules/bootstrap/*"],
       "@payments/*": ["src/modules/payments/*"],
-      "@billing/*": ["src/modules/billing/*"]
+      "@billing/*": ["src/modules/billing/*"],
+      "@impersonation/*": ["src/modules/impersonation/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/@types"]
   }

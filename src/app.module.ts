@@ -26,6 +26,7 @@ import { BootstrapModule } from '@bootstrap/bootstrap.module'
 import { PaymentModule } from '@payments/payment.module'
 import { BillingModule } from '@billing/billing.module'
 import { IngredientModule } from '@ingredients/ingredient.module'
+import { ImpersonationModule } from '@impersonation/impersonation.module'
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { IngredientModule } from '@ingredients/ingredient.module'
     BootstrapModule,
     PaymentModule,
     BillingModule,
-    IngredientModule
+    IngredientModule,
+    ImpersonationModule
     // CaslModule.forRoot({
     //   superuserRole: PlatformRole.ADMIN,
     //   getUserFromRequest: (request) => request.user
