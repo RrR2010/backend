@@ -42,10 +42,7 @@ export class IngredientTechnicalProfileService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new IngredientTechnicalProfileAlreadyExistsError(
-          props.ingredientId,
-          tenantId
-        )
+        throw new IngredientTechnicalProfileAlreadyExistsError()
       }
       throw error
     }
@@ -64,7 +61,7 @@ export class IngredientTechnicalProfileService {
   ): Promise<IngredientTechnicalProfile> {
     const profile = await this.repository.findById(id, ctx)
     if (!profile) {
-      throw new IngredientTechnicalProfileNotFoundError(id)
+      throw new IngredientTechnicalProfileNotFoundError()
     }
     return profile
   }

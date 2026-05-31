@@ -8,7 +8,7 @@ import {
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
-import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 export type IngredientTechnicalProfileFilter = {
   systemState?: SystemState
@@ -43,15 +43,15 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
     ctx: RequestContext
   ): Promise<IngredientTechnicalProfile | null> {
     const where: Prisma.IngredientTechnicalProfileWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaProfile =
       await this.prisma.ingredientTechnicalProfile.findUnique({ where })
     if (!prismaProfile) return null
     if (
-      prismaProfile &&
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaProfile.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -66,14 +66,15 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
     const where: Prisma.IngredientTechnicalProfileWhereUniqueInput = {
       ingredientId
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     const prismaProfile =
       await this.prisma.ingredientTechnicalProfile.findUnique({ where })
     if (!prismaProfile) return null
     if (
-      ctx.scope === UserScope.TENANT &&
+      effectiveTenantId &&
       prismaProfile.systemState === SystemState.HIDDEN
     ) {
       return null
@@ -88,10 +89,9 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
     const where: Prisma.IngredientTechnicalProfileWhereInput = {
       ...(filter.systemState && { systemState: filter.systemState })
     }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
-    }
-    if (ctx.scope === UserScope.TENANT) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
       where.systemState = { not: SystemState.HIDDEN }
     }
     const prismaProfiles =
@@ -105,8 +105,9 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
     profile: IngredientTechnicalProfile,
     ctx: RequestContext
   ): Promise<IngredientTechnicalProfile> {
-    if (ctx.scope === UserScope.TENANT && profile.tenantId !== ctx.tenantId) {
-      throw new ForbiddenException('Cannot modify resource outside your tenant')
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId && profile.tenantId !== effectiveTenantId) {
+      throw new ForbiddenException('Insufficient permission to perform this action')
     }
     const id = profile.id.value
     const prismaProfile =
@@ -121,8 +122,9 @@ export class PrismaIngredientTechnicalProfileRepository implements IngredientTec
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.IngredientTechnicalProfileWhereUniqueInput = { id }
-    if (ctx.scope === UserScope.TENANT) {
-      where.tenantId = ctx.tenantId
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
+      where.tenantId = effectiveTenantId
     }
     await this.prisma.ingredientTechnicalProfile.update({
       where,
