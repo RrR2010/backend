@@ -43,10 +43,7 @@ export class FakeSubscriptionProvider implements SubscriptionProvider {
 
     const record: FakeSubscriptionRecord = {
       providerSubscriptionId,
-      status:
-        input.trialDays !== null && input.trialDays > 0
-          ? SubscriptionStatus.TRIALING
-          : SubscriptionStatus.ACTIVE,
+      status: SubscriptionStatus.PENDING,
       amount: input.amount,
       currency: input.currency,
       currentPeriodStart: now,
@@ -63,9 +60,8 @@ export class FakeSubscriptionProvider implements SubscriptionProvider {
 
     return {
       providerSubscriptionId,
-      providerPreapprovalId: null,
       providerCustomerId: null,
-      paymentUrl: `http://localhost:3001/billing/fake-approve/${providerSubscriptionId}`,
+      paymentUrl: `http://localhost:3000/bootstrap/fake-pagamento?providerSubscriptionId=${providerSubscriptionId}`,
       status: record.status
     }
   }

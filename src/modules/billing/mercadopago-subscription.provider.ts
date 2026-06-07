@@ -60,24 +60,25 @@ export class MercadopagoSubscriptionProvider implements SubscriptionProvider {
     )
 
     try {
+      const endDate = new Date()
+      endDate.setFullYear(endDate.getFullYear() + 5)
+
       const body: Record<string, unknown> = {
-        reason: `ViverSorvete - ${input.planType} plan subscription`,
-        external_reference: input.tenantId,
+        reason: input.reason,
+        external_reference: input.externalRef,
+        payer_email: input.payerEmail,
         auto_recurring: {
           frequency: 1,
           frequency_type: 'months',
           transaction_amount: input.amount / 100,
-          currency_id: input.currency
+          currency_id: input.currency,
+          end_date: endDate.toISOString()
         },
-        back_url: input.backUrlSuccess,
-        payer_email: input.payerEmail
+        status: 'pending',
+        back_url: input.backUrlSuccess
       }
 
       this.logger.log(`MP body: ${JSON.stringify(body, null, 2)}`)
-
-      if (input.trialDays !== null && input.trialDays > 0) {
-        body.trial_days = input.trialDays
-      }
 
       const result = await preApproval.create({ body })
 
@@ -94,7 +95,6 @@ export class MercadopagoSubscriptionProvider implements SubscriptionProvider {
 
       return {
         providerSubscriptionId,
-        providerPreapprovalId: providerSubscriptionId,
         providerCustomerId: result.payer_id?.toString() ?? null,
         paymentUrl,
         status

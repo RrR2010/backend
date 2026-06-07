@@ -13,11 +13,11 @@ export interface CreateSubscriptionInput {
   currency: 'BRL'
   payerEmail: string
   payerName: string
+  reason: string
+  externalRef: string
   backUrlSuccess: string
   backUrlPending: string
   backUrlFailure: string
-  webhookUrl: string
-  trialDays: number | null
 }
 
 export interface UpdateSubscriptionInput {
@@ -31,7 +31,6 @@ export interface UpdateSubscriptionInput {
 
 export interface CreateSubscriptionResult {
   providerSubscriptionId: string
-  providerPreapprovalId: string | null
   providerCustomerId: string | null
   paymentUrl: string | null
   status: SubscriptionStatus
@@ -56,7 +55,7 @@ export interface ProviderSubscriptionSnapshot {
  * Maps Mercado Pago preapproval status strings to our internal SubscriptionStatus enum.
  *
  * Mercado Pago preapproval statuses:
- * - 'pending': awaiting payer authorization → maps to TRIALING (not yet active)
+ * - 'pending': awaiting payer authorization → maps to PENDING (not yet active)
  * - 'authorized': active and charging → maps to ACTIVE
  * - 'paused': temporarily suspended → maps to PAUSED
  * - 'cancelled': ended by user or system → maps to CANCELED
@@ -69,7 +68,7 @@ export function mapMercadoPagoStatus(
     case 'authorized':
       return SubscriptionStatus.ACTIVE
     case 'pending':
-      return SubscriptionStatus.TRIALING
+      return SubscriptionStatus.PENDING
     case 'paused':
       return SubscriptionStatus.PAUSED
     case 'cancelled':

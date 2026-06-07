@@ -288,7 +288,7 @@ export class PlanValidatorService {
 
     if (
       status === SubscriptionStatus.ACTIVE ||
-      status === SubscriptionStatus.TRIALING
+      status === SubscriptionStatus.PENDING
     ) {
       return {
         hasAccess: true,

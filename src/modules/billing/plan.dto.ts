@@ -34,9 +34,6 @@ export class BasePlanResponseDto {
   @ApiProperty({ nullable: true })
   maxRevisions!: number | null
 
-  @ApiProperty({ nullable: true })
-  trialDays!: number | null
-
   @ApiProperty({ type: [String] })
   features!: string[]
 
@@ -53,8 +50,11 @@ export class BasePlanResponseDto {
     dto.additionalUserPrice = plan.additionalUserPrice
     dto.maxProducts = plan.maxProducts
     dto.maxRevisions = plan.maxRevisions
-    dto.trialDays = plan.trialDays
-    dto.features = plan.features as string[]
+    dto.features = Array.isArray(plan.features)
+      ? (plan.features as string[])
+      : typeof plan.features === 'string'
+        ? JSON.parse(plan.features)
+        : []
     dto.allowsAdditionalUsers = plan.allowsAdditionalUsers
   }
 }

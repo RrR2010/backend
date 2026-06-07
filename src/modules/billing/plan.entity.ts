@@ -13,7 +13,6 @@ export interface PlanProps {
   additionalUserPrice: number | null
   maxProducts: number | null
   maxRevisions: number | null
-  trialDays: number | null
   features: Json
   isPublic: boolean
   isActive: boolean
@@ -33,7 +32,6 @@ export class Plan {
   readonly additionalUserPrice: number | null
   readonly maxProducts: number | null
   readonly maxRevisions: number | null
-  readonly trialDays: number | null
   readonly features: Json
   readonly isPublic: boolean
   readonly isActive: boolean
@@ -52,7 +50,6 @@ export class Plan {
     this.additionalUserPrice = props.additionalUserPrice
     this.maxProducts = props.maxProducts
     this.maxRevisions = props.maxRevisions
-    this.trialDays = props.trialDays
     this.features = props.features
     this.isPublic = props.isPublic
     this.isActive = props.isActive

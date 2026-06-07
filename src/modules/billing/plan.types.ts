@@ -10,7 +10,6 @@ export interface PlanDefinition {
   additionalUserPrice: number | null
   maxProducts: number | null
   maxRevisions: number | null
-  trialDays: number | null
   features: string[]
   allowsAdditionalUsers: boolean
   isPublic: boolean

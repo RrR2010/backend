@@ -88,21 +88,6 @@ export class PlanService {
     }
 
     // TODO: zod validate input
-    // TODO (2026-05-20 decision): Trial feature is being REMOVED.
-    // Basic plan ($99.90/mo) serves as the entry-level paid tier.
-    // All trialDays values below should be set to null, then the field
-    // should be removed from:
-    //   - PlanDefinition interface
-    //   - Plan entity and Prisma schema
-    //   - Subscription entity (trialEndsAt field)
-    //   - All trial-related logic in subscription service
-    //
-    // After removal, the plan definitions below should have:
-    //   FREE: trialDays: null (already null)
-    //   BASIC: trialDays: null (was 7)
-    //   PREMIUM: trialDays: null (was 7)
-    //
-    // See docs/USER-STORIES.md §4 for the confirmed decision.
     const planDefinitions: PlanDefinition[] = [
       {
         type: PlanType.FREE,
@@ -115,7 +100,6 @@ export class PlanService {
         additionalUserPrice: null,
         maxProducts: 5,
         maxRevisions: 5,
-        trialDays: null,
         features: [
           'Basic product catalog',
           'Limited revisions',
@@ -136,13 +120,11 @@ export class PlanService {
         additionalUserPrice: 5000,
         maxProducts: 20,
         maxRevisions: null,
-        trialDays: 7,
         features: [
           'Extended product catalog',
           'Unlimited revisions',
           'Additional users available',
-          'Email support',
-          'Trial period'
+          'Email support'
         ],
         allowsAdditionalUsers: true,
         isPublic: true
@@ -158,14 +140,12 @@ export class PlanService {
         additionalUserPrice: 5000,
         maxProducts: 100,
         maxRevisions: null,
-        trialDays: 7,
         features: [
           'Large product catalog',
           'Unlimited revisions',
           'Team collaboration',
           'Additional users available',
-          'Priority support',
-          'Trial period'
+          'Priority support'
         ],
         allowsAdditionalUsers: true,
         isPublic: true
@@ -183,7 +163,6 @@ export class PlanService {
         additionalUserPrice: def.additionalUserPrice,
         maxProducts: def.maxProducts,
         maxRevisions: def.maxRevisions,
-        trialDays: def.trialDays,
         features: def.features,
         isPublic: def.isPublic,
         isActive: true,

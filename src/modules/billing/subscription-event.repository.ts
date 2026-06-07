@@ -16,6 +16,11 @@ export interface SubscriptionEventFilter {
   providerEventType?: string
 }
 
+export interface PaginationOptions {
+  skip?: number
+  take?: number
+}
+
 export abstract class SubscriptionEventRepository {
   abstract findById(
     id: string,
@@ -35,8 +40,13 @@ export abstract class SubscriptionEventRepository {
   ): Promise<SubscriptionEvent | null>
   abstract findAll(
     filter: SubscriptionEventFilter,
-    ctx: RequestContext
+    ctx: RequestContext,
+    pagination?: PaginationOptions
   ): Promise<SubscriptionEvent[]>
+  abstract countByFilter(
+    filter: SubscriptionEventFilter,
+    ctx: RequestContext
+  ): Promise<number>
   abstract save(
     event: SubscriptionEvent,
     ctx: RequestContext
@@ -136,7 +146,8 @@ export class PrismaSubscriptionEventRepository implements SubscriptionEventRepos
 
   async findAll(
     filter: SubscriptionEventFilter,
-    ctx: RequestContext
+    ctx: RequestContext,
+    pagination?: PaginationOptions
   ): Promise<SubscriptionEvent[]> {
     const where: Prisma.SubscriptionEventWhereInput = {}
 
@@ -155,11 +166,43 @@ export class PrismaSubscriptionEventRepository implements SubscriptionEventRepos
       where.providerEventType = filter.providerEventType
     }
 
-    const prismaEvents = await this.prisma.subscriptionEvent.findMany({
+    const findManyOptions: Prisma.SubscriptionEventFindManyArgs = {
       where,
       orderBy: { createdAt: 'desc' }
-    })
+    }
+    if (pagination?.skip !== undefined) {
+      findManyOptions.skip = pagination.skip
+    }
+    if (pagination?.take !== undefined) {
+      findManyOptions.take = pagination.take
+    }
+
+    const prismaEvents = await this.prisma.subscriptionEvent.findMany(findManyOptions)
     return prismaEvents.map((event) => SubscriptionEventMapper.toDomain(event))
+  }
+
+  async countByFilter(
+    filter: SubscriptionEventFilter,
+    ctx: RequestContext
+  ): Promise<number> {
+    const where: Prisma.SubscriptionEventWhereInput = {}
+
+    // Tenant filtering via subscription relationship
+    if (ctx.scope === UserScope.TENANT) {
+      where.subscription = { tenantId: ctx.tenantId }
+    }
+
+    if (filter.subscriptionId) {
+      where.subscriptionId = filter.subscriptionId
+    }
+    if (filter.providerEventId) {
+      where.providerEventId = filter.providerEventId
+    }
+    if (filter.providerEventType) {
+      where.providerEventType = filter.providerEventType
+    }
+
+    return this.prisma.subscriptionEvent.count({ where })
   }
 
   async save(
@@ -211,6 +254,7 @@ class SubscriptionEventMapper {
       providerEventType: prismaEvent.providerEventType,
       statusBefore: prismaEvent.statusBefore ?? null,
       statusAfter: prismaEvent.statusAfter ?? null,
+      actionStatus: prismaEvent.actionStatus ?? undefined,
       payload: prismaEvent.payload as Json,
       createdAt: prismaEvent.createdAt
     })
@@ -226,6 +270,7 @@ class SubscriptionEventMapper {
       providerEventType: event.providerEventType,
       statusBefore: event.statusBefore ?? null,
       statusAfter: event.statusAfter ?? null,
+      actionStatus: event.actionStatus as any,
       payload: event.payload as Prisma.InputJsonValue,
       createdAt: event.createdAt
     }

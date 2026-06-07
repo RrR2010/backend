@@ -9,7 +9,6 @@ export interface CreateSubscriptionInput {
   backUrlSuccess: string
   backUrlPending: string
   backUrlFailure: string
-  webhookUrl: string
 }
 
 // TODO: zod validate input

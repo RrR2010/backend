@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { PlanService } from '@billing/plan.service'
 import { SubscriptionService } from '@billing/subscription.service'
@@ -18,12 +18,20 @@ import { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import { FakeSubscriptionProvider } from '@billing/fake-subscription.provider'
 import { MercadopagoSubscriptionProvider } from '@billing/mercadopago-subscription.provider'
 import { SubscriptionController } from '@billing/subscription.controller'
+import { PlanController } from '@billing/plan.controller'
 import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
 import { TenantModule } from '@tenants/tenant.module'
 import { AuditLogModule } from '@audit-logs/audit-log.module'
+import { BootstrapModule } from '@bootstrap/bootstrap.module'
 
 @Module({
-  imports: [PrismaModule, ConfigModule, TenantModule, AuditLogModule],
+  imports: [
+    PrismaModule,
+    ConfigModule,
+    TenantModule,
+    AuditLogModule,
+    forwardRef(() => BootstrapModule)
+  ],
 
   providers: [
     PlanService,
@@ -82,6 +90,6 @@ import { AuditLogModule } from '@audit-logs/audit-log.module'
     SUBSCRIPTION_PROVIDER_TOKEN
   ],
 
-  controllers: [SubscriptionController]
+  controllers: [SubscriptionController, PlanController]
 })
 export class BillingModule {}

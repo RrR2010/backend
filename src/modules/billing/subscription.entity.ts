@@ -17,7 +17,6 @@ export interface SubscriptionProps {
   additionalUsers: number
   currentAmount: number
   nextBillingAmount: number | null
-  trialEndsAt: Date | null
   currentPeriodStart: Date | null
   currentPeriodEnd: Date | null
   graceEndsAt: Date | null
@@ -28,20 +27,9 @@ export interface SubscriptionProps {
   createdAt: Date
   updatedAt: Date
 
-  // TODO (2026-05-20 decisions): Add pending plan change fields for end-of-cycle changes.
-  // These fields store a requested plan change that will be applied at the next billing cycle.
-  // Pattern: user requests change → stored as pending → applied by webhook/cron at cycle end.
-  //
-  // pendingPlanType: The plan type the user wants to change to (e.g., 'PREMIUM')
-  // pendingEffectiveFrom: The date when the change should take effect (currentPeriodEnd)
-  // pendingNewAmount: The new monthly amount for the target plan
-  //
-  // Future consideration: Move these to a separate PendingPlanChange entity for better
-  // auditability and history tracking. For now, keeping them on Subscription is simpler.
-  //
-  // pendingPlanType: PlanType | null
-  // pendingEffectiveFrom: Date | null
-  // pendingNewAmount: number | null
+  pendingPlanType: PlanType | null
+  pendingEffectiveFrom: Date | null
+  pendingNewAmount: number | null
 }
 
 export class Subscription {
@@ -60,11 +48,13 @@ export class Subscription {
   readonly additionalUsers: number
   readonly currentAmount: number
   readonly nextBillingAmount: number | null
-  readonly trialEndsAt: Date | null
   readonly currentPeriodStart: Date | null
   readonly currentPeriodEnd: Date | null
   readonly graceEndsAt: Date | null
   readonly cancelAtPeriodEnd: boolean
+  readonly pendingPlanType: PlanType | null
+  readonly pendingEffectiveFrom: Date | null
+  readonly pendingNewAmount: number | null
   readonly failedPaymentCount: number
   readonly lastPaymentAt: Date | null
   readonly lastWebhookAt: Date | null
@@ -79,7 +69,7 @@ export class Subscription {
     this.currency = props.currency
     this.provider = props.provider
     this.providerSubscriptionId = props.providerSubscriptionId
-    this.providerPreapprovalId = props.providerPreapprovalId
+    this.providerPreapprovalId = props.providerPreapprovalId ?? null
     this.providerCustomerId = props.providerCustomerId
     this.basePriceSnapshot = props.basePriceSnapshot
     this.additionalUserPriceSnapshot = props.additionalUserPriceSnapshot
@@ -87,11 +77,13 @@ export class Subscription {
     this.additionalUsers = props.additionalUsers
     this.currentAmount = props.currentAmount
     this.nextBillingAmount = props.nextBillingAmount
-    this.trialEndsAt = props.trialEndsAt
     this.currentPeriodStart = props.currentPeriodStart
     this.currentPeriodEnd = props.currentPeriodEnd
     this.graceEndsAt = props.graceEndsAt
     this.cancelAtPeriodEnd = props.cancelAtPeriodEnd
+    this.pendingPlanType = props.pendingPlanType ?? null
+    this.pendingEffectiveFrom = props.pendingEffectiveFrom ?? null
+    this.pendingNewAmount = props.pendingNewAmount ?? null
     this.failedPaymentCount = props.failedPaymentCount
     this.lastPaymentAt = props.lastPaymentAt
     this.lastWebhookAt = props.lastWebhookAt
@@ -106,6 +98,9 @@ export class Subscription {
     return new Subscription({
       id: Id.generate(),
       ...props,
+      pendingPlanType: props.pendingPlanType ?? null,
+      pendingEffectiveFrom: props.pendingEffectiveFrom ?? null,
+      pendingNewAmount: props.pendingNewAmount ?? null,
       createdAt: new Date(),
       updatedAt: new Date()
     })
@@ -115,12 +110,12 @@ export class Subscription {
     return new Subscription(props)
   }
 
-  isActive(): boolean {
-    return this.status === SubscriptionStatus.ACTIVE
+  isPending(): boolean {
+    return this.status === SubscriptionStatus.PENDING
   }
 
-  isTrialing(): boolean {
-    return this.status === SubscriptionStatus.TRIALING
+  isActive(): boolean {
+    return this.status === SubscriptionStatus.ACTIVE
   }
 
   isPastDue(): boolean {
@@ -146,14 +141,14 @@ export class Subscription {
   canBeModified(): boolean {
     return (
       this.isActive() ||
-      this.isTrialing() ||
+      this.isPending() ||
       this.isPastDue() ||
       this.isInGracePeriod()
     )
   }
 
   canPause(): boolean {
-    return this.isActive() || this.isTrialing()
+    return this.isActive()
   }
 
   canResume(): boolean {
@@ -203,6 +198,55 @@ export class Subscription {
       additionalUserPriceSnapshot: newAdditionalUserPrice,
       currentAmount: newBasePrice,
       nextBillingAmount: newNextBillingAmount,
+      updatedAt: new Date()
+    })
+  }
+
+  withProviderSubscriptionId(
+    providerSubscriptionId: string
+  ): Subscription {
+    return Subscription.rehydrate({
+      ...this,
+      providerSubscriptionId,
+      updatedAt: new Date()
+    })
+  }
+
+  withPendingPlanChange(
+    planType: PlanType,
+    effectiveFrom: Date,
+    newAmount: number
+  ): Subscription {
+    return Subscription.rehydrate({
+      ...this,
+      pendingPlanType: planType,
+      pendingEffectiveFrom: effectiveFrom,
+      pendingNewAmount: newAmount,
+      updatedAt: new Date()
+    })
+  }
+
+  clearPendingPlanChange(): Subscription {
+    return Subscription.rehydrate({
+      ...this,
+      pendingPlanType: null,
+      pendingEffectiveFrom: null,
+      pendingNewAmount: null,
+      updatedAt: new Date()
+    })
+  }
+
+  applyPendingPlanChange(): Subscription {
+    if (!this.pendingPlanType) {
+      throw new Error('No pending plan change to apply')
+    }
+    return Subscription.rehydrate({
+      ...this,
+      planType: this.pendingPlanType,
+      currentAmount: this.pendingNewAmount ?? this.currentAmount,
+      pendingPlanType: null,
+      pendingEffectiveFrom: null,
+      pendingNewAmount: null,
       updatedAt: new Date()
     })
   }

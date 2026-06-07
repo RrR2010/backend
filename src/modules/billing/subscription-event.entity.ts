@@ -8,6 +8,7 @@ export interface SubscriptionEventProps {
   providerEventType: string
   statusBefore: string | null
   statusAfter: string | null
+  actionStatus?: string
   payload: Json
   createdAt: Date
 }
@@ -19,6 +20,7 @@ export class SubscriptionEvent {
   readonly providerEventType: string
   readonly statusBefore: string | null
   readonly statusAfter: string | null
+  readonly actionStatus: string
   readonly payload: Json
   readonly createdAt: Date
 
@@ -29,6 +31,7 @@ export class SubscriptionEvent {
     this.providerEventType = props.providerEventType
     this.statusBefore = props.statusBefore
     this.statusAfter = props.statusAfter
+    this.actionStatus = props.actionStatus ?? 'COMPLETED'
     this.payload = props.payload
     this.createdAt = props.createdAt
   }
