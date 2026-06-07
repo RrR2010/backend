@@ -2,9 +2,9 @@ import { RegistrationState } from '@shared/enums'
 
 export interface BootstrapRegisterResult {
   registrationId: string
-  paymentUrl: string
+  paymentUrl: string | null
   expiresAt: Date
-  handoffToken: string
+  handoffToken: string | null
   subscriptionId: string | null
 }
 

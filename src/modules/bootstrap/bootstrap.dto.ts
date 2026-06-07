@@ -95,18 +95,18 @@ export class BootstrapRegisterResponseDto {
   @ApiProperty()
   registrationId!: string
 
-  @ApiProperty()
-  paymentUrl!: string
+  @ApiProperty({ nullable: true })
+  paymentUrl!: string | null
 
   @ApiProperty()
   expiresAt!: Date
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ nullable: true })
   subscriptionId!: string | null
 
   static from(
     registrationId: string,
-    paymentUrl: string,
+    paymentUrl: string | null,
     expiresAt: Date,
     subscriptionId: string | null = null
   ): BootstrapRegisterResponseDto {

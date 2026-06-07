@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, Inject } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope, TenantRole } from '@users/user.types'
@@ -37,8 +37,8 @@ import {
   RegistrationState,
   TenantSiteType,
   Gender,
-  SubscriptionStatus,
-  PlanType
+  PlanType,
+  SubscriptionStatus
 } from '@shared/enums'
 import { SystemState } from '@shared/behaviours/lockable'
 import { AuditLogService } from '@audit-logs/audit-log.service'
@@ -48,7 +48,11 @@ import { UserRepository } from '@users/user.repository'
 import { Prisma } from '@prisma/client'
 import type { Request, Response } from 'express'
 import { SubscriptionService } from '@billing/subscription.service'
+import { SubscriptionRepository } from '@billing/subscription.repository'
 import { PlanService } from '@billing/plan.service'
+import { Subscription } from '@billing/subscription.entity'
+import type { SubscriptionProvider } from '@billing/subscription-provider.interface'
+import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
 
 @Injectable()
 export class BootstrapService {
@@ -65,6 +69,7 @@ export class BootstrapService {
     private readonly registrationRepo: TenantRegistrationRepository,
     private readonly prismaService: PrismaService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly subscriptionRepository: SubscriptionRepository,
     private readonly planService: PlanService,
     private readonly passwordHasher: PasswordHasher,
     private readonly tenantSiteRepo: TenantSiteRepository,
@@ -73,7 +78,9 @@ export class BootstrapService {
     private readonly auditLogService: AuditLogService,
     private readonly tenantRepository: TenantRepository,
     private readonly userRepository: UserRepository,
-    private readonly sessionService: SessionService
+    private readonly sessionService: SessionService,
+    @Inject(SUBSCRIPTION_PROVIDER_TOKEN)
+    private readonly subscriptionProvider: SubscriptionProvider
   ) {}
 
   async register(
@@ -81,18 +88,6 @@ export class BootstrapService {
     _reqIp: string | null,
     _reqUserAgent: string | null
   ): Promise<BootstrapRegisterResult> {
-    // TODO (2026-05-20 decision): Branch for FREE plan — skip payment provider entirely.
-    // If dto.planType === PlanType.FREE, provision immediately without calling
-    // createSubscriptionForOnboarding(). Flow should be:
-    //   1. Validate + hash password
-    //   2. Check duplicates
-    //   3. Create TenantRegistration in PENDING state
-    //   4. Call provisionRegistration() directly
-    //   5. Mark registration PROVISIONED
-    //   6. Generate handoff token
-    //   7. Return result with paymentUrl = null (or a frontend "success" URL)
-    // This avoids creating a $0 subscription in Mercado Pago for free-tier users.
-    // See docs/USER-STORIES.md §2A for the confirmed flow diagram.
     // 1. Normalize inputs
     const normalizedEmail = dto.email.toLowerCase().trim()
     const normalizedTaxId = this.normalizeTaxId(dto.tenantSiteTaxId)
@@ -169,34 +164,22 @@ export class BootstrapService {
     // 6. Save registration
     await this.registrationRepo.save(registration, this.platformCtx)
 
-    // TODO (2026-05-20 decision): Add FREE plan branch BEFORE this point.
-    // If dto.planType === PlanType.FREE:
-    //   - Skip steps 7-10 (no payment provider call)
-    //   - Call provisionRegistration() directly
-    //   - Mark registration PROVISIONED
-    //   - Return result with paymentUrl = null
-    //   - Frontend can go straight to claim-session
-    //
-    // Example structure:
-    //   if (dto.planType === PlanType.FREE) {
-    //     return this.registerFreePlan(registration, dto, _reqIp, _reqUserAgent);
-    //   }
-    //
-    // The registerFreePlan() method would:
-    //   1. Call provisionRegistration()
-    //   2. Mark registration PROVISIONED
-    //   3. Generate handoff token (if not already generated)
-    //   4. Return BootstrapRegisterResult with paymentUrl = null
+    // 7. Branch for FREE plan — skip payment provider entirely
+    if (dto.planType === PlanType.FREE) {
+      return this.registerFreePlan(
+        registration,
+        handoffToken,
+        dto,
+        _reqIp,
+        _reqUserAgent
+      )
+    }
 
-    // 7. Create subscription in provider (replaces old payment preference flow)
+    // 8. Create subscription in provider (replaces old payment preference flow)
     // NOTE: This path is only for PAID plans (BASIC, PREMIUM).
     const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000'
-    )
-    const backendUrl = this.configService.get<string>(
-      'BACKEND_URL',
-      'http://localhost:3001'
     )
 
     let onboardingResult: Awaited<
@@ -210,10 +193,11 @@ export class BootstrapService {
           dto.planType,
           normalizedEmail,
           dto.fullName.trim(),
+          `Plano ${dto.planType}`,
+          registration.id.value,
           `${frontendUrl}/bootstrap/success`,
           `${frontendUrl}/bootstrap/pending`,
-          `${frontendUrl}/bootstrap/failure`,
-          `${backendUrl}/subscriptions/webhook`
+          `${frontendUrl}/bootstrap/failure`
         )
     } catch (error) {
       // Mark registration as rejected to prevent orphaned PENDING records
@@ -296,6 +280,135 @@ export class BootstrapService {
     }
   }
 
+  /**
+   * Registers a FREE plan tenant without involving the payment provider.
+   * Provisions all entities immediately and returns a result with no payment URL.
+   */
+  private async registerFreePlan(
+    registration: TenantRegistration,
+    handoffToken: string,
+    dto: BootstrapRegisterDto,
+    _reqIp: string | null,
+    _reqUserAgent: string | null
+  ): Promise<BootstrapRegisterResult> {
+    this.logger.log(
+      `Registering FREE plan for registration ${registration.id.value}`
+    )
+
+    // Step 1: Provision all tenant entities
+    const provisioningResult = await this.provisionRegistration(
+      registration,
+      this.platformCtx
+    )
+
+    // Step 2: Create local subscription directly (no provider call for FREE plan)
+    // We bypass finalizeOnboardingSubscription because it uses the payment provider
+    // name. FREE plans have no provider, so we set provider='free' explicitly.
+    const plan = await this.planService.getByType(PlanType.FREE, this.platformCtx)
+    const priceSnapshot = this.planService.applyPriceSnapshot(plan, 0)
+    const now = new Date()
+    const syntheticProviderId = `free-${registration.id.value}`
+
+    const subscription = Subscription.create({
+      tenantId: provisioningResult.tenantId,
+      planType: PlanType.FREE,
+      status: SubscriptionStatus.ACTIVE,
+      currency: 'BRL',
+      provider: 'free',
+      providerSubscriptionId: syntheticProviderId,
+      providerPreapprovalId: null,
+      providerCustomerId: null,
+      basePriceSnapshot: priceSnapshot.basePrice,
+      additionalUserPriceSnapshot: priceSnapshot.additionalUserPrice,
+      includedUsersSnapshot: priceSnapshot.includedUsers,
+      additionalUsers: 0,
+      currentAmount: priceSnapshot.totalPrice,
+      nextBillingAmount: priceSnapshot.totalPrice,
+      currentPeriodStart: now,
+      currentPeriodEnd: new Date(
+        now.getTime() + 30 * 24 * 60 * 60 * 1000
+      ),
+      graceEndsAt: null,
+      cancelAtPeriodEnd: false,
+      pendingPlanType: null,
+      pendingEffectiveFrom: null,
+      pendingNewAmount: null,
+      failedPaymentCount: 0,
+      lastPaymentAt: null,
+      lastWebhookAt: null
+    })
+
+    await this.subscriptionRepository.save(subscription, this.platformCtx)
+
+    // Create onboarding event
+    await this.auditLogService.create(
+      {
+        userId: 'system',
+        tenantId: provisioningResult.tenantId,
+        entityName: 'Subscription',
+        entityId: subscription.id.value,
+        ipAddress: _reqIp,
+        userAgent: _reqUserAgent,
+        action: 'subscription.onboarding_completed',
+        before: null,
+        after: {
+          planType: PlanType.FREE,
+          amount: 0,
+          providerSubscriptionId: syntheticProviderId,
+          source: 'onboarding'
+        },
+        description: null
+      },
+      this.platformCtx
+    )
+
+    // Step 3: Mark registration as PROVISIONED
+    registration.markProvisioned({
+      userId: provisioningResult.userId,
+      tenantId: provisioningResult.tenantId,
+      membershipId: provisioningResult.membershipId,
+      profileId: provisioningResult.profileId,
+      identityId: provisioningResult.identityId,
+      tenantSiteId: provisioningResult.tenantSiteId
+    })
+    await this.registrationRepo.save(registration, this.platformCtx)
+
+    // Step 4: Audit log
+    await this.auditLogService.create(
+      {
+        userId: 'system',
+        tenantId: null,
+        entityName: 'TenantRegistration',
+        entityId: registration.id.value,
+        ipAddress: _reqIp,
+        userAgent: _reqUserAgent,
+        action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_CREATED,
+        before: null,
+        after: {
+          externalRef: registration.externalRef,
+          email: (registration.identityData as Record<string, unknown>)
+            ?.identifier as string,
+          planType: PlanType.FREE
+        },
+        description: null
+      },
+      this.platformCtx
+    )
+
+    this.logger.log(
+      `FREE plan registration completed: ${registration.id.value}`
+    )
+
+    // Return result with paymentUrl = null
+    return {
+      registrationId: registration.id.value,
+      paymentUrl: null,
+      expiresAt: registration.expiresAt,
+      handoffToken,
+      subscriptionId: syntheticProviderId
+    }
+  }
+
   private normalizeTaxId(taxId: string): string {
     return taxId.replace(/[^\d]/g, '')
   }
@@ -323,183 +436,7 @@ export class BootstrapService {
     }
   }
 
-  // --------------- Webhook Handling ---------------
-
-  // ⛔ DEAD CODE (2026-05-20 decision): This entire method is marked for deletion.
-  // The bootstrap webhook endpoint (POST /bootstrap/webhook/payment) is dead code.
-  // All webhook handling has been consolidated into POST /subscriptions/webhook
-  // in the billing module. This method only handles 'preapproval' topic and ignores
-  // everything else. The handlePreapprovalWebhook() and getProviderSnapshot() methods
-  // below are also dead code.
-  //
-  // Actions needed:
-  //   1. Delete BootstrapController.handleWebhook() endpoint
-  //   2. Delete this handleWebhook() method
-  //   3. Delete handlePreapprovalWebhook() method
-  //   4. Delete getProviderSnapshot() method
-  //   5. Ensure /subscriptions/webhook handles onboarding preapproval events
-  //      (it may need a branch to detect onboarding vs existing tenant subscriptions)
-  //
-  // See docs/USER-STORIES.md §2C for the confirmed decision.
-  async handleWebhook(
-    body: Record<string, unknown>,
-    _headers: Record<string, string>,
-    queryParams: Record<string, string>
-  ): Promise<void> {
-    const ctx = this.platformCtx
-
-    // Detect topic type
-    // For subscription flow: Mercado Pago sends 'preapproval' for recurring subscriptions
-    // For old payment flow: 'merchant_order' or 'payment'
-    const topic =
-      (body.topic as string) ??
-      (queryParams.topic as string) ??
-      (queryParams.type as string) ??
-      'payment'
-
-    // Extract resource ID from payload
-    const resourceId = this.extractPaymentId(body, queryParams)
-    if (!resourceId) {
-      this.logger.warn('Webhook received without resource ID', { body })
-      return
-    }
-
-    // Handle subscription preapproval topic (new subscription flow)
-    if (topic === 'preapproval') {
-      await this.handlePreapprovalWebhook(resourceId, ctx)
-      return
-    }
-
-    // Ignore non-subscription topics
-    this.logger.debug('Ignoring non-subscription webhook topic', { topic })
-  }
-
-  /**
-   * ⛔ DEAD CODE — Marked for deletion (2026-05-20 decision).
-   * This method is part of the dead bootstrap webhook flow.
-   * Additionally, getProviderSnapshot() below returns a hardcoded ACTIVE status
-   * (line ~428) which is a security gap — the webhook event is trusted without
-   * verifying the actual subscription state with the provider.
-   *
-   * The onboarding preapproval handling should be moved to the subscription
-   * webhook handler, which already has proper provider verification,
-   * deduplication, and event logging.
-   */
-  private async handlePreapprovalWebhook(
-    preapprovalId: string,
-    ctx: RequestContext
-  ): Promise<void> {
-    // Find registration by provider subscription ID
-    const registration = await this.registrationRepo.findBySubscriptionId(
-      preapprovalId,
-      ctx
-    )
-
-    if (!registration) {
-      this.logger.warn('Preapproval webhook for unknown registration', {
-        preapprovalId
-      })
-      return
-    }
-
-    // Idempotency: skip if already provisioned
-    if (
-      registration.state === RegistrationState.PROVISIONED ||
-      registration.state === RegistrationState.PROVISIONING
-    ) {
-      this.logger.debug('Registration already processed', {
-        registrationId: registration.id.value
-      })
-      return
-    }
-
-    // Check if registration has expired
-    if (
-      registration.state === RegistrationState.PENDING &&
-      registration.expiresAt < new Date()
-    ) {
-      registration.markExpired()
-      await this.registrationRepo.save(registration, ctx)
-      this.logger.warn(
-        'Registration expired before subscription authorization',
-        {
-          registrationId: registration.id.value
-        }
-      )
-      return
-    }
-
-    // Query provider to get authoritative subscription status
-    const providerSnapshot = await this.getProviderSnapshot(preapprovalId)
-    if (!providerSnapshot) {
-      this.logger.error('Failed to fetch provider snapshot for preapproval', {
-        preapprovalId
-      })
-      return
-    }
-
-    // Only proceed if subscription is authorized (active)
-    if (providerSnapshot.status !== SubscriptionStatus.ACTIVE) {
-      this.logger.debug('Subscription not yet authorized, waiting', {
-        preapprovalId,
-        status: providerSnapshot.status
-      })
-      return
-    }
-
-    // Mark as approved and process
-    registration.markApproved()
-    await this.registrationRepo.save(registration, ctx)
-
-    await this.auditLogService.create(
-      {
-        userId: 'system',
-        tenantId: null,
-        entityName: 'TenantRegistration',
-        entityId: registration.id.value,
-        ipAddress: null,
-        userAgent: null,
-        action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_AUTHORIZED,
-        before: { state: RegistrationState.PENDING },
-        after: {
-          state: RegistrationState.APPROVED,
-          providerSubscriptionId: preapprovalId
-        },
-        description: null
-      },
-      ctx
-    )
-
-    // Trigger provisioning
-    await this.handleApprovedSubscription(registration, ctx)
-  }
-
-  /**
-   * ⛔ DEAD CODE — Marked for deletion (2026-05-20 decision).
-   * CRITICAL: This method returns a hardcoded ACTIVE status (line below),
-   * which means the webhook trusts the event without verifying with the provider.
-   * This is a security gap that will be eliminated when this method is deleted
-   * and the subscription webhook handler (with proper provider verification)
-   * takes over onboarding preapproval handling.
-   */
-  private async getProviderSnapshot(
-    providerSubscriptionId: string
-  ): Promise<{ status: SubscriptionStatus } | null> {
-    try {
-      // TODO Phase 7: Query provider for authoritative status instead of hardcoded value.
-      // Currently returns a hardcoded ACTIVE status which is a security gap — the webhook
-      // event is trusted without verifying the actual subscription state with the provider.
-      // In production with MercadoPago, this should call the provider's getSubscription
-      // method to verify the preapproval status authoritatively.
-      return { status: SubscriptionStatus.ACTIVE }
-    } catch (error) {
-      this.logger.error('Failed to get provider snapshot', {
-        providerSubscriptionId,
-        error: error instanceof Error ? error.message : String(error)
-      })
-      return null
-    }
-  }
+  // --------------- Provisioning ---------------
 
   /**
    * Handles approved subscription by provisioning the tenant and
@@ -510,94 +447,65 @@ export class BootstrapService {
     ctx: RequestContext
   ): Promise<void> {
     // Finding 1: Wrap entire flow in a Prisma transaction with atomic state lock
-    await this.prismaService.$transaction(async (tx) => {
-      // Atomic conditional update: PENDING/APPROVED → PROVISIONING
-      const updated = await tx.tenantRegistration.updateMany({
-        where: {
-          id: registration.id.value,
-          state: {
-            in: [RegistrationState.PENDING, RegistrationState.APPROVED]
-          }
-        },
-        data: {
-          state: RegistrationState.PROVISIONING,
-          updatedAt: new Date()
-        }
-      })
-
-      if (updated.count === 0) {
-        // Another request already claimed it — return silently
-        this.logger.debug('Registration already claimed by another request', {
-          registrationId: registration.id.value
-        })
-        return
-      }
-
-      // Audit: provisioning started
-      await this.auditLogService.create(
-        {
-          userId: 'system',
-          tenantId: null,
-          entityName: 'TenantRegistration',
-          entityId: registration.id.value,
-          ipAddress: null,
-          userAgent: null,
-          action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_STARTED,
-          before: { state: RegistrationState.APPROVED },
-          after: { state: RegistrationState.PROVISIONING },
-          description: null
-        },
-        ctx
-      )
-
-      try {
-        // Provision tenant entities
-        const provisioningResult = await this.provisionRegistration(
-          registration,
-          ctx,
-          tx
-        )
-
-        // Mark as PROVISIONED
-        await tx.tenantRegistration.update({
-          where: { id: registration.id.value },
+    const provisioningResult = await this.prismaService.$transaction(
+      async (tx) => {
+        // Atomic conditional update: PENDING/APPROVED → PROVISIONING
+        const updated = await tx.tenantRegistration.updateMany({
+          where: {
+            id: registration.id.value,
+            state: {
+              in: [RegistrationState.PENDING, RegistrationState.APPROVED]
+            }
+          },
           data: {
-            state: RegistrationState.PROVISIONED,
-            provisionedUserId: provisioningResult.userId,
-            provisionedTenantId: provisioningResult.tenantId,
-            provisionedMembershipId: provisioningResult.membershipId,
-            provisionedProfileId: provisioningResult.profileId,
-            provisionedIdentityId: provisioningResult.identityId,
-            provisionedTenantSiteId: provisioningResult.tenantSiteId,
-            provisionedAt: new Date(),
+            state: RegistrationState.PROVISIONING,
             updatedAt: new Date()
           }
         })
 
-        // Create local subscription entity linked to the new tenant
-        const planType = (registration.tenantData as Record<string, unknown>)
-          .planType
-
-        // Runtime validation: ensure planType is a valid PlanType enum value
-        if (
-          typeof planType !== 'string' ||
-          !Object.values(PlanType).includes(planType as PlanType)
-        ) {
-          this.logger.error('Invalid planType in registration tenantData', {
-            registrationId: registration.id.value,
-            planType
+        if (updated.count === 0) {
+          // Another request already claimed it — return silently
+          this.logger.debug('Registration already claimed by another request', {
+            registrationId: registration.id.value
           })
-          throw new Error(`Invalid planType: ${planType}`)
+          return null
         }
 
-        if (registration.subscriptionId) {
-          await this.subscriptionService.finalizeOnboardingSubscription(
-            provisioningResult.tenantId,
-            registration.subscriptionId,
-            planType as PlanType,
-            ctx
-          )
-        }
+        // Audit: provisioning started
+        await this.auditLogService.create(
+          {
+            userId: 'system',
+            tenantId: null,
+            entityName: 'TenantRegistration',
+            entityId: registration.id.value,
+            ipAddress: null,
+            userAgent: null,
+            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_STARTED,
+            before: { state: RegistrationState.APPROVED },
+            after: { state: RegistrationState.PROVISIONING },
+            description: null
+          },
+          ctx
+        )
+
+        // Provision tenant entities (this is the part that must share the transaction)
+        const result = await this.provisionRegistration(registration, ctx, tx)
+
+        // Mark as PROVISIONED (tenant/user/membership/profile/identity/site now exist)
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: {
+            state: RegistrationState.PROVISIONED,
+            provisionedUserId: result.userId,
+            provisionedTenantId: result.tenantId,
+            provisionedMembershipId: result.membershipId,
+            provisionedProfileId: result.profileId,
+            provisionedIdentityId: result.identityId,
+            provisionedTenantSiteId: result.tenantSiteId,
+            provisionedAt: new Date(),
+            updatedAt: new Date()
+          }
+        })
 
         // Audit: provisioning completed
         await this.auditLogService.create(
@@ -612,39 +520,58 @@ export class BootstrapService {
             before: { state: RegistrationState.PROVISIONING },
             after: {
               state: RegistrationState.PROVISIONED,
-              ...provisioningResult
+              ...result
             },
             description: null
           },
+          ctx
+        )
+
+        return result
+      }
+    ) // ← transaction commits here — tenant is now visible to other connections
+
+    // Bail out if another request already claimed this registration
+    if (!provisioningResult) return
+
+    // ------------------------------------------------------------------
+    // Create local subscription entity AFTER the transaction commits
+    // so the subscription repository can resolve the tenant FK.
+    // ------------------------------------------------------------------
+    const planType = (registration.tenantData as Record<string, unknown>)
+      .planType
+
+    if (
+      typeof planType !== 'string' ||
+      !Object.values(PlanType).includes(planType as PlanType)
+    ) {
+      this.logger.error('Invalid planType in registration tenantData', {
+        registrationId: registration.id.value,
+        planType
+      })
+      throw new Error(`Invalid planType: ${planType}`)
+    }
+
+    if (registration.subscriptionId) {
+      try {
+        await this.subscriptionService.finalizeOnboardingSubscription(
+          provisioningResult.tenantId,
+          registration.subscriptionId,
+          planType as PlanType,
           ctx
         )
       } catch (error) {
-        // Finding 3: Do NOT throw — keep registration in PROVISIONING for operator recovery
-        this.logger.error('Provisioning failed', {
-          registrationId: registration.id.value,
-          error: (error as Error).message
-        })
-
-        await this.auditLogService.create(
+        // Log but don't fail — the registration is already PROVISIONED
+        // and the subscription can be retried via /bootstrap/retry
+        this.logger.warn(
+          'Subscription creation failed after provisioning (can retry)',
           {
-            userId: 'system',
-            tenantId: null,
-            entityName: 'TenantRegistration',
-            entityId: registration.id.value,
-            ipAddress: null,
-            userAgent: null,
-            action: BOOTSTRAP_AUDIT_ACTIONS.PROVISIONING_FAILED,
-            before: { state: RegistrationState.PROVISIONING },
-            after: {
-              state: RegistrationState.PROVISIONING,
-              error: (error as Error).message
-            },
-            description: null
-          },
-          ctx
+            registrationId: registration.id.value,
+            error: (error as Error).message
+          }
         )
       }
-    })
+    }
   }
 
   /**
@@ -954,6 +881,47 @@ export class BootstrapService {
     })
   }
 
+  async fakeApproveByProviderSubscriptionId(
+    providerSubscriptionId: string
+  ): Promise<string> {
+    const ctx = this.platformCtx
+
+    const registration = await this.registrationRepo.findBySubscriptionId(
+      providerSubscriptionId,
+      ctx
+    )
+    if (!registration) {
+      throw new RegistrationNotFoundError(
+        `Subscription ${providerSubscriptionId}`
+      )
+    }
+
+    const registrationId = registration.id.value
+    await this.fakeApproveRegistration(registrationId)
+    return registrationId
+  }
+
+  async fakeFailByProviderSubscriptionId(
+    providerSubscriptionId: string
+  ): Promise<string> {
+    const ctx = this.platformCtx
+
+    const registration = await this.registrationRepo.findBySubscriptionId(
+      providerSubscriptionId,
+      ctx
+    )
+    if (!registration) {
+      throw new RegistrationNotFoundError(
+        `Subscription ${providerSubscriptionId}`
+      )
+    }
+
+    const registrationId = registration.id.value
+    registration.markRejected()
+    await this.registrationRepo.save(registration, ctx)
+    return registrationId
+  }
+
   // --------------- Dev-Only Fake Approval ---------------
 
   /**
@@ -979,6 +947,8 @@ export class BootstrapService {
     }
 
     const ctx = this.platformCtx
+
+    // Check registration exists
     const registration = await this.registrationRepo.findById(
       registrationId,
       ctx
@@ -990,17 +960,174 @@ export class BootstrapService {
       throw new InvalidRegistrationStateError()
     }
 
-    // Simulate webhook flow for authorized subscription (preapproval)
-    await this.handleWebhook(
-      {
-        topic: 'preapproval',
-        action: 'preapproval.updated',
-        data: { id: registration.subscriptionId ?? 'fake-preapproval-id' },
-        external_reference: registration.externalRef
-      },
-      { 'x-signature': 'dev-signature', 'x-request-id': crypto.randomUUID() },
-      {}
+    // Step 1: Construct fake MP webhook payload and send through the
+    // real webhook pipeline to test the signature validation,
+    // status fetching, and deduplication logic.
+    const fakeBody = {
+      type: 'subscription_preapproval',
+      data: { id: registration.subscriptionId }
+    }
+    const fakeHeaders = {
+      'x-signature': 'fake',
+      'x-request-id': 'fake'
+    }
+
+    try {
+      const pipelineResult = await this.subscriptionService.processWebhook(
+        fakeBody,
+        fakeHeaders,
+        'subscription_preapproval'
+      )
+      this.logger.debug('Fake webhook pipeline result', {
+        registrationId,
+        processed: pipelineResult.processed,
+        providerSubscriptionId: pipelineResult.providerSubscriptionId
+      })
+    } catch (error) {
+      this.logger.warn('Fake webhook pipeline test failed (non-fatal)', {
+        registrationId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      // Don't block provisioning — this is a dev-only helper
+    }
+
+    // Step 2: Continue with existing provisioning flow
+    if (registration.state === RegistrationState.PENDING) {
+      registration.markApproved()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id.value,
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_AUTHORIZED,
+          before: { state: RegistrationState.PENDING },
+          after: {
+            state: RegistrationState.APPROVED,
+            providerSubscriptionId: registration.subscriptionId
+          },
+          description: null
+        },
+        ctx
+      )
+    }
+
+    await this.handleApprovedSubscription(registration, ctx)
+  }
+
+  // --------------- Onboarding Webhook Handler ---------------
+
+  /**
+   * Handles an onboarding webhook from the payment provider.
+   * Called by SubscriptionController when processWebhook detects a
+   * subscription_preapproval event without a local subscription.
+   *
+   * Flow:
+   * 1. Find registration by provider subscription ID
+   * 2. Idempotency: skip if already processed
+   * 3. Check if registration has expired
+   * 4. Fetch authoritative status from provider
+   * 5. Proceed only if subscription is ACTIVE
+   * 6. Mark approved and trigger provisioning
+   */
+  async handleOnboardingWebhook(
+    providerSubscriptionId: string,
+    ctx: RequestContext
+  ): Promise<{ processed: boolean }> {
+    this.logger.log('Handling onboarding webhook', { providerSubscriptionId })
+
+    // Find registration by provider subscription ID
+    const registration = await this.registrationRepo.findBySubscriptionId(
+      providerSubscriptionId,
+      ctx
     )
+
+    if (!registration) {
+      this.logger.warn('Onboarding webhook for unknown registration', {
+        providerSubscriptionId
+      })
+      return { processed: false }
+    }
+
+    // Idempotency: skip if already provisioned or in provisioning
+    if (
+      registration.state === RegistrationState.PROVISIONED ||
+      registration.state === RegistrationState.PROVISIONING
+    ) {
+      this.logger.debug('Registration already processed', {
+        registrationId: registration.id.value
+      })
+      return { processed: false }
+    }
+
+    // Check if registration has expired
+    if (
+      registration.state === RegistrationState.PENDING &&
+      registration.expiresAt < new Date()
+    ) {
+      registration.markExpired()
+      await this.registrationRepo.save(registration, ctx)
+      this.logger.warn(
+        'Registration expired before subscription authorization',
+        {
+          registrationId: registration.id.value
+        }
+      )
+      return { processed: false }
+    }
+
+    // Fetch authoritative status from provider
+    let snapshot
+    try {
+      snapshot = await this.subscriptionProvider.getSubscription(
+        providerSubscriptionId
+      )
+    } catch (error) {
+      this.logger.error('Failed to fetch provider snapshot for preapproval', {
+        providerSubscriptionId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      return { processed: false }
+    }
+
+    // Only proceed if subscription is authorized (ACTIVE in MP)
+    if (snapshot.status !== SubscriptionStatus.ACTIVE) {
+      this.logger.debug('Subscription not yet authorized, waiting', {
+        providerSubscriptionId,
+        status: snapshot.status
+      })
+      return { processed: false }
+    }
+
+    // Mark as approved and trigger provisioning
+    registration.markApproved()
+    await this.registrationRepo.save(registration, ctx)
+
+    await this.auditLogService.create(
+      {
+        userId: 'system',
+        tenantId: null,
+        entityName: 'TenantRegistration',
+        entityId: registration.id.value,
+        ipAddress: null,
+        userAgent: null,
+        action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_AUTHORIZED,
+        before: { state: RegistrationState.PENDING },
+        after: {
+          state: RegistrationState.APPROVED,
+          providerSubscriptionId
+        },
+        description: null
+      },
+      ctx
+    )
+
+    await this.handleApprovedSubscription(registration, ctx)
+    return { processed: true }
   }
 
   // --------------- Session Handoff ---------------
@@ -1162,29 +1289,5 @@ export class BootstrapService {
       // 7. Return
       return ClaimSessionResponseDto.from(user, tenant)
     })
-  }
-
-  private extractPaymentId(
-    body: Record<string, unknown>,
-    queryParams: Record<string, string>
-  ): string | null {
-    // MP v2: data.id from query params
-    if (queryParams?.['data.id']) {
-      return String(queryParams['data.id'])
-    }
-    // MP merchant_order: id from query params
-    if (queryParams?.['id']) {
-      return String(queryParams['id'])
-    }
-    // Fallback: body data.id
-    if (typeof body.data === 'object' && body.data !== null) {
-      const data = body.data as Record<string, unknown>
-      if (typeof data.id === 'string') return data.id
-      if (typeof data.id === 'number') return String(data.id)
-    }
-    // Fallback: top-level id
-    if (typeof body.id === 'string') return body.id
-    if (typeof body.id === 'number') return String(body.id)
-    return null
   }
 }

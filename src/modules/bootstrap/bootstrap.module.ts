@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { BootstrapController } from '@bootstrap/bootstrap.controller'
 import { BootstrapService } from '@bootstrap/bootstrap.service'
@@ -30,7 +30,7 @@ import { IngredientModule } from '@ingredients/ingredient.module'
     TenantModule,
     TenantMembershipModule,
     MemberProfileModule,
-    BillingModule,
+    forwardRef(() => BillingModule),
     IngredientModule
   ],
 
@@ -45,6 +45,6 @@ import { IngredientModule } from '@ingredients/ingredient.module'
     }
   ],
 
-  exports: [TenantRegistrationRepository]
+  exports: [TenantRegistrationRepository, BootstrapService]
 })
 export class BootstrapModule {}

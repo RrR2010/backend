@@ -9,7 +9,6 @@ import {
   Headers,
   Param,
   Get,
-  Query,
   UnauthorizedException,
   ForbiddenException
 } from '@nestjs/common'
@@ -68,7 +67,9 @@ export class BootstrapController {
     )
 
     // Set handoff token in custom header (not in body)
-    res.setHeader('X-Handoff-Token', result.handoffToken)
+    if (result.handoffToken !== null) {
+      res.setHeader('X-Handoff-Token', result.handoffToken)
+    }
 
     return BootstrapRegisterResponseDto.from(
       result.registrationId,
@@ -76,27 +77,6 @@ export class BootstrapController {
       result.expiresAt,
       result.subscriptionId
     )
-  }
-
-  // ⛔ DEAD CODE (2026-05-20 decision): This endpoint is marked for deletion.
-  // The bootstrap webhook (POST /bootstrap/webhook/payment) is dead code.
-  // All webhook handling has been consolidated into POST /subscriptions/webhook
-  // in the billing module. This endpoint only delegates to BootstrapService.handleWebhook()
-  // which itself is dead code.
-  //
-  // Action: Delete this method and remove the route.
-  // See docs/USER-STORIES.md §2C for the confirmed decision.
-  @Public()
-  @Post('webhook/payment')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Handle payment provider webhook notifications' })
-  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  async handleWebhook(
-    @Body() body: Record<string, unknown>,
-    @Headers() headers: Record<string, string>,
-    @Query() queryParams: Record<string, string>
-  ): Promise<void> {
-    await this.bootstrapService.handleWebhook(body, headers, queryParams)
   }
 
   @Public()
@@ -221,5 +201,56 @@ export class BootstrapController {
     }
     await this.bootstrapService.fakeApproveRegistration(registrationId)
     return { status: 'approved' }
+  }
+
+  @Public()
+  @Get('fake-approve/by-provider-subscription/:providerSubscriptionId')
+  @ApiOperation({
+    summary:
+      '[DEV ONLY] Simulate payment approval by provider subscription ID'
+  })
+  @ApiResponse({ status: 302, description: 'Redirects to bootstrap success page' })
+  @ApiResponse({ status: 404, description: 'Registration not found' })
+  async fakeApproveByProviderSubscription(
+    @Param('providerSubscriptionId') providerSubscriptionId: string,
+    @Res() res: Response
+  ) {
+    const registrationId =
+      await this.bootstrapService.fakeApproveByProviderSubscriptionId(
+        providerSubscriptionId
+      )
+
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000'
+    )
+    res.redirect(
+      `${frontendUrl}/bootstrap/pending?registrationId=${registrationId}`
+    )
+  }
+
+  @Public()
+  @Get('fake-approve/fail/by-provider-subscription/:providerSubscriptionId')
+  @ApiOperation({
+    summary: '[DEV ONLY] Simulate payment failure by provider subscription ID'
+  })
+  @ApiResponse({ status: 302, description: 'Redirects to bootstrap failure page' })
+  @ApiResponse({ status: 404, description: 'Registration not found' })
+  async fakeFailByProviderSubscription(
+    @Param('providerSubscriptionId') providerSubscriptionId: string,
+    @Res() res: Response
+  ) {
+    const registrationId =
+      await this.bootstrapService.fakeFailByProviderSubscriptionId(
+        providerSubscriptionId
+      )
+
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000'
+    )
+    res.redirect(
+      `${frontendUrl}/bootstrap/failure?registrationId=${registrationId}`
+    )
   }
 }
