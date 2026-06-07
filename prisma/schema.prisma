@@ -141,6 +141,18 @@ enum AllergenRelationType {
   MAY_CONTAIN
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum LabelProfileStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+}
+
 enum PlanType {
   FREE
   BASIC
@@ -149,13 +161,20 @@ enum PlanType {
 }
 
 enum SubscriptionStatus {
-  TRIALING
+  PENDING
   ACTIVE
   PAST_DUE
   GRACE
   PAUSED
   CANCELED
   EXPIRED
+}
+
+enum ActionStatus {
+  COMPLETED
+  SCHEDULED
+  CANCELED
+  FAILED
 }
 
 // ============== TENANT ==============
@@ -179,6 +198,10 @@ model Tenant {
   sites       TenantSite[]
   auditLogs   AuditLog[]
   subscription Subscription?
+
+  // Products domain
+  products            Product[]
+  formulationVersions FormulationVersion[]
 
   // Ingredient domain
   tenantAllergens     TenantAllergen[]
@@ -472,7 +495,7 @@ model Plan {
   additionalUserPrice Int?
   maxProducts         Int?
   maxRevisions        Int?
-  trialDays           Int?
+
   features            Json
   isPublic            Boolean  @default(true)
   isActive            Boolean  @default(true)
@@ -510,11 +533,13 @@ model Subscription {
   currentAmount          Int
   nextBillingAmount      Int?
 
-  trialEndsAt            DateTime?
   currentPeriodStart     DateTime?
   currentPeriodEnd       DateTime?
   graceEndsAt            DateTime?
   cancelAtPeriodEnd      Boolean  @default(false)
+  pendingPlanType        String?
+  pendingEffectiveFrom   DateTime?
+  pendingNewAmount       Int?
 
   failedPaymentCount     Int      @default(0)
   lastPaymentAt          DateTime?
@@ -532,21 +557,129 @@ model Subscription {
 }
 
 model SubscriptionEvent {
-  id                   String   @id @default(uuid())
+  id                   String       @id @default(uuid())
   subscriptionId       String
   subscription         Subscription @relation(fields: [subscriptionId], references: [id])
 
-  providerEventId      String?  @unique
+  providerEventId      String?      @unique
   providerEventType    String
+  actionStatus         ActionStatus @default(COMPLETED)
   statusBefore         String?
   statusAfter          String?
   payload              Json
 
-  createdAt            DateTime @default(now()) @db.Timestamptz(3)
+  createdAt            DateTime     @default(now()) @db.Timestamptz(3)
 
   @@index([subscriptionId])
   @@index([providerEventType])
   @@index([createdAt])
+}
+
+// ============== PRODUCTS DOMAIN ==============
+
+model Product {
+  id            String        @id @default(uuid())
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
+  systemState   SystemState   @default(ACTIVE)
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  name          String
+  code          String
+  status        ProductStatus @default(DRAFT)
+
+  commercialName    String?
+  denomination      String?
+  productType       String?
+  notes             String?
+  barcodeGtin       String?
+  declaredWeight    Decimal?
+  declaredVolume    Decimal?
+  shelfLifeDays     Int?
+  storageConditions String?
+
+  nutritionInfo       ProductNutritionalInfo?
+  labelProfile        LabelProfile?
+  formulationVersions FormulationVersion[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model ProductNutritionalInfo {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id])
+  servingSize Decimal?
+  data        Json?
+}
+
+model LabelProfile {
+  id            String             @id @default(uuid())
+  createdAt     DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @db.Timestamptz(3)
+  productId     String             @unique
+  product       Product            @relation(fields: [productId], references: [id])
+  status        LabelProfileStatus @default(DRAFT)
+  designerData  Json?
+  gerencialData Json?
+  approvedAt    DateTime?
+}
+
+// ============== FORMULATIONS DOMAIN ==============
+
+model FormulationVersion {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id])
+  version     Int
+  notes       String?
+
+  revisions FormulationRevision[]
+
+  @@unique([productId, version])
+  @@index([tenantId])
+  @@index([productId])
+}
+
+model FormulationRevision {
+  id                     String               @id @default(uuid())
+  createdAt              DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime             @updatedAt @db.Timestamptz(3)
+  systemState            SystemState          @default(ACTIVE)
+  formulationVersionId   String
+  formulationVersion     FormulationVersion   @relation(fields: [formulationVersionId], references: [id])
+  revision               Int
+  notes                  String?
+  nutritionalSummary     Json?
+  complianceSummary      Json?
+
+  items FormulationItem[]
+
+  @@unique([formulationVersionId, revision])
+  @@index([formulationVersionId])
+}
+
+model FormulationItem {
+  id                    String               @id @default(uuid())
+  createdAt             DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime             @updatedAt @db.Timestamptz(3)
+  formulationRevisionId String
+  formulationRevision   FormulationRevision  @relation(fields: [formulationRevisionId], references: [id])
+  ingredientId          String
+  ingredient            Ingredient           @relation(fields: [ingredientId], references: [id])
+  quantity              Decimal
+  unit                  String               @default("g")
+
+  @@index([formulationRevisionId])
+  @@index([ingredientId])
 }
 
 // ============== BASE CATALOGS (Platform-Scoped) ==============
@@ -702,6 +835,7 @@ model Ingredient {
   regulatoryProfile IngredientRegulatoryProfile?
   labelingProfile   IngredientLabelingProfile?
   technicalProfile  IngredientTechnicalProfile?
+  formulationItems  FormulationItem[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
