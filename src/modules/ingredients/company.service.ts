@@ -37,7 +37,7 @@ export class CompanyService {
       ) {
         // taxId can be null; only throw AlreadyExistsError if taxId was provided
         if (props.taxId) {
-          throw new CompanyAlreadyExistsError(props.taxId, tenantId)
+          throw new CompanyAlreadyExistsError()
         }
       }
       throw error
@@ -69,7 +69,7 @@ export class CompanyService {
       ) {
         const taxId = company.taxId
         if (taxId) {
-          throw new CompanyAlreadyExistsError(taxId, company.tenantId)
+          throw new CompanyAlreadyExistsError()
         }
       }
       throw error

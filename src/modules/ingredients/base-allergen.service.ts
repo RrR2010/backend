@@ -26,7 +26,7 @@ export class BaseAllergenService {
   async findById(id: string, _ctx: RequestContext): Promise<BaseAllergen> {
     const allergen = await this.repository.findById(id, _ctx)
     if (!allergen) {
-      throw new BaseAllergenNotFoundError(id)
+      throw new BaseAllergenNotFoundError()
     }
     return allergen
   }

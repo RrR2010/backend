@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class BaseAllergenNotFoundError extends HttpException {
-  constructor(id: string) {
+  constructor() {
     super(
       {
-        message: `Base allergen with id ${id} not found`,
-        code: 'BASE_ALLERGEN_NOT_FOUND'
+        message: 'Resource not found or access denied',
+        code: 'NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
     )
@@ -13,11 +13,11 @@ export class BaseAllergenNotFoundError extends HttpException {
 }
 
 export class BaseAllergenAlreadyExistsError extends HttpException {
-  constructor(name: string) {
+  constructor() {
     super(
       {
-        message: `Base allergen already exists with name ${name}`,
-        code: 'BASE_ALLERGEN_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )

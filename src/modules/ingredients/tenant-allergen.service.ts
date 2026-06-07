@@ -38,7 +38,7 @@ export class TenantAllergenService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new TenantAllergenAlreadyExistsError(props.name, tenantId)
+        throw new TenantAllergenAlreadyExistsError()
       }
       throw error
     }

@@ -22,6 +22,12 @@ import { Phone } from '@phones/phone.entity'
 import { TenantSite } from '@tenant-sites/tenant-site.entity'
 import { MemberProfile } from '@member-profiles/member-profile.entity'
 import { MemberProfileDocument } from '@member-profile-documents/member-profile-document.entity'
+import { Product } from '@products/product.entity'
+import { ProductNutritionalInfo } from '@products/product-nutritional-info.entity'
+import { LabelProfile } from '@products/label-profile.entity'
+import { FormulationVersion } from '@formulations/formulation-version.entity'
+import { FormulationRevision } from '@formulations/formulation-revision.entity'
+import { FormulationItem } from '@formulations/formulation-item.entity'
 import { AuditLog } from '@audit-logs/audit-log.entity'
 import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 
@@ -64,6 +70,12 @@ export type Subjects =
       | typeof MemberProfile
       | typeof MemberProfileDocument
       | typeof AuditLog
+      | typeof Product
+      | typeof ProductNutritionalInfo
+      | typeof LabelProfile
+      | typeof FormulationVersion
+      | typeof FormulationRevision
+      | typeof FormulationItem
       | AnyClass
     >
   | 'all'

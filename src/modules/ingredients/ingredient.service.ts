@@ -164,7 +164,7 @@ export class IngredientService {
       const existingIds = new Set(existingBaseAllergens.map((a) => a.id))
       for (const baseId of baseAllergenIds) {
         if (!existingIds.has(baseId)) {
-          throw new BaseAllergenNotFoundError(baseId)
+          throw new BaseAllergenNotFoundError()
         }
       }
     }
@@ -176,7 +176,7 @@ export class IngredientService {
       const existingIds = new Set(existingBaseNutrients.map((n) => n.id))
       for (const baseId of baseNutrientIds) {
         if (!existingIds.has(baseId)) {
-          throw new BaseNutrientNotFoundError(baseId)
+          throw new BaseNutrientNotFoundError()
         }
       }
     }

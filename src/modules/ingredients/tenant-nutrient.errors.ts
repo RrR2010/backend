@@ -13,11 +13,11 @@ export class TenantNutrientNotFoundError extends HttpException {
 }
 
 export class TenantNutrientAlreadyExistsError extends HttpException {
-  constructor(name: string, tenantId: string) {
+  constructor() {
     super(
       {
-        message: `TenantNutrient already exists with name '${name}' for tenant ${tenantId}`,
-        code: 'TENANT_NUTRIENT_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )

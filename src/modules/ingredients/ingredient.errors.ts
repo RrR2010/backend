@@ -13,11 +13,11 @@ export class IngredientNotFoundError extends HttpException {
 }
 
 export class IngredientAlreadyExistsError extends HttpException {
-  constructor(code: string, tenantId: string) {
+  constructor() {
     super(
       {
-        message: `Ingredient already exists with code '${code}' for tenant ${tenantId}`,
-        code: 'INGREDIENT_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )

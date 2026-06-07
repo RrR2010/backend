@@ -38,7 +38,7 @@ export class FunctionalGroupService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new FunctionalGroupAlreadyExistsError(props.name, tenantId)
+        throw new FunctionalGroupAlreadyExistsError()
       }
       throw error
     }

@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 
 export class BaseNutrientNotFoundError extends HttpException {
-  constructor(id: string) {
+  constructor() {
     super(
       {
-        message: `Base nutrient with id ${id} not found`,
-        code: 'BASE_NUTRIENT_NOT_FOUND'
+        message: 'Resource not found or access denied',
+        code: 'NOT_FOUND'
       },
       HttpStatus.NOT_FOUND
     )
@@ -13,11 +13,11 @@ export class BaseNutrientNotFoundError extends HttpException {
 }
 
 export class BaseNutrientAlreadyExistsError extends HttpException {
-  constructor(name: string) {
+  constructor() {
     super(
       {
-        message: `Base nutrient already exists with name ${name}`,
-        code: 'BASE_NUTRIENT_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )

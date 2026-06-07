@@ -42,7 +42,7 @@ export class TenantNutrientService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new TenantNutrientAlreadyExistsError(props.name, tenantId)
+        throw new TenantNutrientAlreadyExistsError()
       }
       throw error
     }

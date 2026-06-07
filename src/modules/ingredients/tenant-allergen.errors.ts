@@ -13,11 +13,11 @@ export class TenantAllergenNotFoundError extends HttpException {
 }
 
 export class TenantAllergenAlreadyExistsError extends HttpException {
-  constructor(name: string, tenantId: string) {
+  constructor() {
     super(
       {
-        message: `TenantAllergen already exists with name '${name}' for tenant ${tenantId}`,
-        code: 'TENANT_ALLERGEN_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )

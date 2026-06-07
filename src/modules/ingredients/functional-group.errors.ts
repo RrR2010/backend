@@ -13,11 +13,11 @@ export class FunctionalGroupNotFoundError extends HttpException {
 }
 
 export class FunctionalGroupAlreadyExistsError extends HttpException {
-  constructor(name: string, tenantId: string) {
+  constructor() {
     super(
       {
-        message: `FunctionalGroup already exists with name '${name}' for tenant ${tenantId}`,
-        code: 'FUNCTIONAL_GROUP_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )

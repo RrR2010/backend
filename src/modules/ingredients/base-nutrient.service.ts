@@ -26,7 +26,7 @@ export class BaseNutrientService {
   async findById(id: string, _ctx: RequestContext): Promise<BaseNutrient> {
     const nutrient = await this.repository.findById(id, _ctx)
     if (!nutrient) {
-      throw new BaseNutrientNotFoundError(id)
+      throw new BaseNutrientNotFoundError()
     }
     return nutrient
   }

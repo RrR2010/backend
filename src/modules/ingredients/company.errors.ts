@@ -13,11 +13,11 @@ export class CompanyNotFoundError extends HttpException {
 }
 
 export class CompanyAlreadyExistsError extends HttpException {
-  constructor(taxId: string, tenantId: string) {
+  constructor() {
     super(
       {
-        message: `Company already exists with taxId '${taxId}' for tenant ${tenantId}`,
-        code: 'COMPANY_ALREADY_EXISTS'
+        message: 'Resource already exists',
+        code: 'ALREADY_EXISTS'
       },
       HttpStatus.CONFLICT
     )
