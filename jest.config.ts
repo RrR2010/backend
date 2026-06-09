@@ -23,7 +23,6 @@ module.exports = {
     '^@phones/(.*)$': '<rootDir>/src/modules/phones/$1',
     '^@addresses/(.*)$': '<rootDir>/src/modules/addresses/$1',
     '^@bootstrap/(.*)$': '<rootDir>/src/modules/bootstrap/$1',
-    '^@payments/(.*)$': '<rootDir>/src/modules/payments/$1',
     '^@billing/(.*)$': '<rootDir>/src/modules/billing/$1',
     '^@impersonation/(.*)$': '<rootDir>/src/modules/impersonation/$1',
   },

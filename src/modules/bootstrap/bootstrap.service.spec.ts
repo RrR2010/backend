@@ -231,7 +231,7 @@ describe('BootstrapService.registerFreePlan', () => {
       getSubscription: jest.fn(),
       getPayment: jest.fn(),
       listPaymentsBySubscription: jest.fn()
-    }
+    } as any
 
     service = new BootstrapService(
       registrationRepo,

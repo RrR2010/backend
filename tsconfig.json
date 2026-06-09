@@ -42,7 +42,6 @@
       "@phones/*": ["src/modules/phones/*"],
       "@addresses/*": ["src/modules/addresses/*"],
       "@bootstrap/*": ["src/modules/bootstrap/*"],
-      "@payments/*": ["src/modules/payments/*"],
       "@billing/*": ["src/modules/billing/*"],
       "@webhook/*": ["src/modules/webhook/*"],
       "@impersonation/*": ["src/modules/impersonation/*"],

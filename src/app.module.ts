@@ -23,7 +23,6 @@ import { TenantSiteModule } from '@tenant-sites/tenant-site.module'
 import { MemberProfileDocumentModule } from '@member-profile-documents/member-profile-document.module'
 import { AuditLogModule } from '@audit-logs/audit-log.module'
 import { BootstrapModule } from '@bootstrap/bootstrap.module'
-import { PaymentModule } from '@payments/payment.module'
 import { BillingModule } from '@billing/billing.module'
 import { IngredientModule } from '@ingredients/ingredient.module'
 import { ImpersonationModule } from '@impersonation/impersonation.module'
@@ -49,7 +48,6 @@ import { WebhookModule } from '@webhook/webhook.module'
     AuditLogModule,
     AuthorizationModule,
     BootstrapModule,
-    PaymentModule,
     BillingModule,
     IngredientModule,
     ImpersonationModule,
