@@ -57,8 +57,5 @@ export const GRACE_PERIOD_DAYS = parseInt(
   10
 )
 
-// Number of consecutive payment failures before entering grace period
-export const GRACE_PERIOD_FAILURE_THRESHOLD = 3
-
 // Default billing cycle in days when provider does not return period end date
 export const DEFAULT_BILLING_CYCLE_DAYS = 30

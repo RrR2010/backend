@@ -76,7 +76,10 @@ export function mapMercadoPagoStatus(
     case 'expired':
       return SubscriptionStatus.EXPIRED
     default:
-      logger.warn(`Unknown MP status: "${mpStatus}", defaulting to PAST_DUE`)
-      return SubscriptionStatus.PAST_DUE
+      // TODO (EP-001): This function will be removed when Mercado Pago provider
+      // is removed (T-027). Fallback changed from PAST_DUE to ACTIVE since
+      // PAST_DUE status will be removed (T-026).
+      logger.warn(`Unknown MP status: "${mpStatus}", defaulting to ACTIVE`)
+      return SubscriptionStatus.ACTIVE
   }
 }

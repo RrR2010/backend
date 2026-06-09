@@ -69,6 +69,7 @@ export enum PlanType {
 }
 
 export enum SubscriptionStatus {
+  PENDING = 'PENDING',
   TRIALING = 'TRIALING',
   ACTIVE = 'ACTIVE',
   PAST_DUE = 'PAST_DUE',

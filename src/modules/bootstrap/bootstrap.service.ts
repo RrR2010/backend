@@ -117,6 +117,7 @@ export class BootstrapService {
       handoffTokenUsedAt: null,
       paymentId: null,
       subscriptionId: null,
+      providerCustomerId: null,
       tenantData: {
         name: normalizedTenantName,
         locale: dto.tenantLocale ?? 'pt-BR',
@@ -316,7 +317,6 @@ export class BootstrapService {
       currency: 'BRL',
       provider: 'free',
       providerSubscriptionId: syntheticProviderId,
-      providerPreapprovalId: null,
       providerCustomerId: null,
       basePriceSnapshot: priceSnapshot.basePrice,
       additionalUserPriceSnapshot: priceSnapshot.additionalUserPrice,
@@ -668,6 +668,7 @@ export class BootstrapService {
           logoUrl: null,
           settings: Prisma.JsonNull,
           systemState: SystemState.ACTIVE,
+          providerCustomerId: registration.providerCustomerId ?? null,
           createdAt: now,
           updatedAt: now
         }
@@ -960,9 +961,11 @@ export class BootstrapService {
       throw new InvalidRegistrationStateError()
     }
 
-    // Step 1: Construct fake MP webhook payload and send through the
+    // Step 1: Construct fake webhook payload and send through the
     // real webhook pipeline to test the signature validation,
     // status fetching, and deduplication logic.
+    // TODO (EP-001): Adapt to Asaas webhook format when implementing
+    // the full Asaas flow. Currently uses MP-like payload.
     const fakeBody = {
       type: 'subscription_preapproval',
       data: { id: registration.subscriptionId }

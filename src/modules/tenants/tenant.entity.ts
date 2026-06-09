@@ -19,6 +19,7 @@ export type TenantProps = AuditableProps &
     language: string
     logoUrl: string | null
     settings: Json | null
+    providerCustomerId: string | null
   }
 
 type CreateTenantProps = Omit<
@@ -38,6 +39,7 @@ export class Tenant extends Lockable(Auditable(Base<TenantProps>)) {
     const tenant = new Tenant({
       ...props,
       id: Id.generate(),
+      providerCustomerId: props.providerCustomerId ?? null,
       createdAt: now,
       updatedAt: now,
       systemState: SystemState.ACTIVE
@@ -85,6 +87,10 @@ export class Tenant extends Lockable(Auditable(Base<TenantProps>)) {
 
   get settings(): Json | null {
     return this._props.settings
+  }
+
+  get providerCustomerId(): string | null {
+    return this._props.providerCustomerId
   }
 
   // --------------- Behaviours ---------------

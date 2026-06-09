@@ -56,7 +56,6 @@ describe('PlanValidatorService', () => {
       currency: 'BRL',
       provider: 'free',
       providerSubscriptionId: `free-${tenantId}`,
-      providerPreapprovalId: null,
       providerCustomerId: null,
       basePriceSnapshot: 0,
       additionalUserPriceSnapshot: null,

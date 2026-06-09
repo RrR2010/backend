@@ -192,6 +192,7 @@ model Tenant {
   language    String
   logoUrl     String?
   settings    Json?
+  providerCustomerId String?
 
   memberships TenantMembership[]
   sessions    Session[]
@@ -432,6 +433,7 @@ model TenantRegistration {
   state RegistrationState @default(PENDING)
   paymentId             String?  @unique
   subscriptionId        String?  @unique
+  providerCustomerId    String?
   expiresAt             DateTime
   handoffTokenHash      String?  @unique
   handoffTokenExpiresAt DateTime?
@@ -522,7 +524,6 @@ model Subscription {
 
   provider               String   @default("mercadopago")
   providerSubscriptionId String   @unique
-  providerPreapprovalId  String?  @unique
   providerCustomerId     String?
 
   basePriceSnapshot      Int

@@ -44,7 +44,10 @@
       "@bootstrap/*": ["src/modules/bootstrap/*"],
       "@payments/*": ["src/modules/payments/*"],
       "@billing/*": ["src/modules/billing/*"],
-      "@impersonation/*": ["src/modules/impersonation/*"]
+      "@webhook/*": ["src/modules/webhook/*"],
+      "@impersonation/*": ["src/modules/impersonation/*"],
+      "@formulations/*": ["src/modules/formulations/*"],
+      "@products/*": ["src/modules/products/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/@types"]
   }

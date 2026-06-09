@@ -102,7 +102,8 @@ class PrismaTenantMapper {
       timezone: prismaTenant.timezone,
       language: prismaTenant.language,
       logoUrl: prismaTenant.logoUrl,
-      settings: prismaTenant.settings as Json | null
+      settings: prismaTenant.settings as Json | null,
+      providerCustomerId: prismaTenant.providerCustomerId ?? null
     })
   }
 
@@ -119,6 +120,7 @@ class PrismaTenantMapper {
       timezone: tenant.timezone,
       language: tenant.language,
       logoUrl: tenant.logoUrl,
+      providerCustomerId: tenant.providerCustomerId ?? null,
       settings:
         tenant.settings === null
           ? Prisma.JsonNull

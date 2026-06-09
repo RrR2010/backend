@@ -23,7 +23,8 @@ export class TenantService {
       timezone: 'America/Sao_Paulo',
       language: 'pt-BR',
       logoUrl: null,
-      settings: null
+      settings: null,
+      providerCustomerId: null
     })
 
     await this.tenantRepository.save(tenant, ctx)

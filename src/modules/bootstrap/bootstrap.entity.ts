@@ -10,6 +10,7 @@ export type TenantRegistrationProps = AuditableProps & {
   state: RegistrationState
   paymentId: string | null
   subscriptionId: string | null
+  providerCustomerId: string | null
   expiresAt: Date
   handoffTokenHash: string | null
   handoffTokenExpiresAt: Date | null
@@ -53,6 +54,7 @@ export class TenantRegistration extends Auditable(
     const registration = new TenantRegistration({
       ...props,
       id: Id.generate(),
+      providerCustomerId: props.providerCustomerId ?? null,
       createdAt: now,
       updatedAt: now
     })
@@ -83,6 +85,10 @@ export class TenantRegistration extends Auditable(
 
   get subscriptionId(): string | null {
     return this._props.subscriptionId
+  }
+
+  get providerCustomerId(): string | null {
+    return this._props.providerCustomerId
   }
 
   get expiresAt(): Date {

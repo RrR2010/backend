@@ -183,8 +183,6 @@ class SubscriptionMapper {
       currency: prismaSubscription.currency,
       provider: prismaSubscription.provider,
       providerSubscriptionId: prismaSubscription.providerSubscriptionId,
-      providerPreapprovalId:
-        prismaSubscription.providerPreapprovalId ?? null,
       providerCustomerId: prismaSubscription.providerCustomerId ?? null,
       basePriceSnapshot: prismaSubscription.basePriceSnapshot,
       additionalUserPriceSnapshot:
@@ -221,7 +219,6 @@ class SubscriptionMapper {
       currency: subscription.currency,
       provider: subscription.provider,
       providerSubscriptionId: subscription.providerSubscriptionId,
-      providerPreapprovalId: subscription.providerPreapprovalId ?? null,
       providerCustomerId: subscription.providerCustomerId ?? null,
       basePriceSnapshot: subscription.basePriceSnapshot,
       additionalUserPriceSnapshot:

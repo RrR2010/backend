@@ -18,7 +18,6 @@ import {
   ChangePlanInput,
   AddUserInput,
   GRACE_PERIOD_DAYS,
-  GRACE_PERIOD_FAILURE_THRESHOLD,
   DEFAULT_BILLING_CYCLE_DAYS
 } from '@billing/subscription.types'
 import {
@@ -165,7 +164,6 @@ export class SubscriptionService {
       currency: 'BRL',
       provider: this.provider.name,
       providerSubscriptionId,
-      providerPreapprovalId: null,
       providerCustomerId: null,
       basePriceSnapshot: priceSnapshot.basePrice,
       additionalUserPriceSnapshot: priceSnapshot.additionalUserPrice,
@@ -830,9 +828,8 @@ export class SubscriptionService {
   }
 
   /**
-   * Handles a payment failure by incrementing the failure counter.
-   * If failures reach the threshold, enters grace period in a single DB write
-   * (avoids the double-save that occurred when calling applyGracePeriod separately).
+   * Handles a payment failure by transitioning the subscription directly
+   * to GRACE period. No failure threshold check — single overdue → GRACE.
    */
   async handlePaymentFailure(
     tenantId: string,
@@ -840,74 +837,43 @@ export class SubscriptionService {
   ): Promise<Subscription> {
     const subscription = await this.getSubscriptionOrThrow(tenantId, ctx)
 
-    const newFailureCount = subscription.failedPaymentCount + 1
-
-    // Fix 3: Enter grace period only after reaching the failure threshold
-    // (not on the first failure). This gives the payment provider time to
-    // retry and avoids premature grace period activation.
-    if (
-      newFailureCount >= GRACE_PERIOD_FAILURE_THRESHOLD &&
-      !subscription.isInGracePeriod() &&
-      !subscription.isCanceled()
-    ) {
-      // Fix 2: Combine failure recording and grace period into a single
-      // state transition to ensure only one DB write per logical operation.
-      const graceEndsAt = new Date()
-      graceEndsAt.setDate(graceEndsAt.getDate() + GRACE_PERIOD_DAYS)
-
-      const updated = subscription.withGracePeriodAfterFailure(
-        newFailureCount,
-        graceEndsAt
-      )
-      const saved = await this.subscriptionRepository.save(updated, ctx)
-
-      // Create event
-      await this.createEvent(
-        saved.id.value,
-        'subscription.grace_period_started',
-        subscription.status,
-        saved.status,
-        {
-          providerSubscriptionId: saved.providerSubscriptionId,
-          graceEndsAt: saved.graceEndsAt,
-          gracePeriodDays: GRACE_PERIOD_DAYS,
-          failedPaymentCount: saved.failedPaymentCount
-        },
-        ctx
-      )
-
+    // Idempotency: already in grace period
+    if (subscription.isInGracePeriod()) {
       this.logger.log(
-        `Grace period applied to subscription ${saved.id.value} after ${newFailureCount} failures, ends at ${graceEndsAt.toISOString()}`
+        `Subscription ${subscription.id.value} is already in grace period`
       )
-      return saved
+      return subscription
     }
 
-    // Below threshold — just record the failure
-    const updated = subscription.withPaymentFailure(newFailureCount)
+    const graceEndsAt = new Date()
+    graceEndsAt.setDate(graceEndsAt.getDate() + GRACE_PERIOD_DAYS)
+
+    const updated = subscription.withGracePeriod(graceEndsAt)
     const saved = await this.subscriptionRepository.save(updated, ctx)
 
     // Create event
     await this.createEvent(
       saved.id.value,
-      'subscription.payment_failed',
+      'subscription.grace_period_started',
       subscription.status,
       saved.status,
       {
         providerSubscriptionId: saved.providerSubscriptionId,
-        failedPaymentCount: saved.failedPaymentCount
+        graceEndsAt: saved.graceEndsAt,
+        gracePeriodDays: GRACE_PERIOD_DAYS
       },
       ctx
     )
 
     this.logger.log(
-      `Payment failure recorded for subscription ${saved.id.value}, count: ${newFailureCount}`
+      `Grace period applied to subscription ${saved.id.value} after payment failure, ends at ${graceEndsAt.toISOString()}`
     )
     return saved
   }
 
   /**
    * Handles a successful payment by resetting failure counter.
-   * Only sets status to ACTIVE if currently PAST_DUE or GRACE;
+   * Only sets status to ACTIVE if currently GRACE;
    * preserves PAUSED status otherwise.
    */
   async handlePaymentSuccess(
@@ -918,12 +884,10 @@ export class SubscriptionService {
 
     const now = new Date()
 
-    // Fix 8: Only set status to ACTIVE if PAST_DUE or GRACE;
-    // preserve PAUSED (or other) status otherwise
-    const targetStatus =
-      subscription.isPastDue() || subscription.isInGracePeriod()
-        ? SubscriptionStatus.ACTIVE
-        : subscription.status
+    // Only set status to ACTIVE if GRACE; preserve PAUSED (or other) status otherwise
+    const targetStatus = subscription.isInGracePeriod()
+      ? SubscriptionStatus.ACTIVE
+      : subscription.status
 
     const updated = subscription.withPaymentSuccess(now, targetStatus)
     const saved = await this.subscriptionRepository.save(updated, ctx)
@@ -931,16 +895,14 @@ export class SubscriptionService {
     // Create event
     await this.createEvent(
       saved.id.value,
-      'subscription.payment_failed',
+      'subscription.payment_succeeded',
       subscription.status,
       saved.status,
       {
         providerSubscriptionId: saved.providerSubscriptionId,
-        failedPaymentCount: saved.failedPaymentCount,
-        failureThreshold: GRACE_PERIOD_FAILURE_THRESHOLD
+        failedPaymentCount: saved.failedPaymentCount
       },
-      ctx,
-      'FAILED'
+      ctx
     )
 
     this.logger.log(`Payment succeeded for subscription ${saved.id.value}`)
@@ -1144,38 +1106,25 @@ export class SubscriptionService {
 
     // Handle specific event types.
     const isPaymentFailure =
-      topic.includes('payment') &&
-      (snapshot.lastError !== null || newStatus === SubscriptionStatus.PAST_DUE)
+      topic.includes('payment') && snapshot.lastError !== null
 
     const isPaymentSuccess =
       topic.includes('payment') &&
       newStatus === SubscriptionStatus.ACTIVE &&
-      (subscription.isPastDue() || subscription.isInGracePeriod())
+      subscription.isInGracePeriod()
 
     const isCancellation =
       newStatus === SubscriptionStatus.CANCELED &&
       statusBefore !== SubscriptionStatus.CANCELED
 
     const isResumption =
-      newStatus === SubscriptionStatus.ACTIVE &&
-      (subscription.isPaused() || subscription.isPastDue())
+      newStatus === SubscriptionStatus.ACTIVE && subscription.isPaused()
 
     if (isPaymentFailure) {
-      const newFailureCount = subscription.failedPaymentCount + 1
-
-      if (
-        newFailureCount >= GRACE_PERIOD_FAILURE_THRESHOLD &&
-        !subscription.isInGracePeriod() &&
-        !subscription.isCanceled()
-      ) {
+      if (!subscription.isInGracePeriod() && !subscription.isCanceled()) {
         const graceEndsAt = new Date()
         graceEndsAt.setDate(graceEndsAt.getDate() + GRACE_PERIOD_DAYS)
-        updated = updated.withGracePeriodAfterFailure(
-          newFailureCount,
-          graceEndsAt
-        )
-      } else {
-        updated = updated.withPaymentFailure(newFailureCount)
+        updated = updated.withGracePeriod(graceEndsAt)
       }
     } else if (isPaymentSuccess) {
       updated = updated.withPaymentSuccess(now, newStatus)
@@ -1274,8 +1223,6 @@ export class SubscriptionService {
       // Fallback: use snapshot status as a heuristic
       if (snapshot.status === SubscriptionStatus.ACTIVE) {
         wasPaymentSuccess = true
-      } else if (snapshot.status === SubscriptionStatus.PAST_DUE) {
-        wasPaymentFailure = true
       }
     }
 
@@ -1288,20 +1235,10 @@ export class SubscriptionService {
           (paymentId ? ` (payment: ${paymentId})` : '')
       )
     } else if (wasPaymentFailure) {
-      const newFailureCount = subscription.failedPaymentCount + 1
-      if (
-        newFailureCount >= GRACE_PERIOD_FAILURE_THRESHOLD &&
-        !subscription.isInGracePeriod() &&
-        !subscription.isCanceled()
-      ) {
+      if (!subscription.isInGracePeriod() && !subscription.isCanceled()) {
         const graceEndsAt = new Date()
         graceEndsAt.setDate(graceEndsAt.getDate() + GRACE_PERIOD_DAYS)
-        updated = updated.withGracePeriodAfterFailure(
-          newFailureCount,
-          graceEndsAt
-        )
-      } else {
-        updated = updated.withPaymentFailure(newFailureCount)
+        updated = updated.withGracePeriod(graceEndsAt)
       }
       this.logger.log(
         `Authorized payment failure for subscription ${subscription.id.value}` +

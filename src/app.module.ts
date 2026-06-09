@@ -27,6 +27,7 @@ import { PaymentModule } from '@payments/payment.module'
 import { BillingModule } from '@billing/billing.module'
 import { IngredientModule } from '@ingredients/ingredient.module'
 import { ImpersonationModule } from '@impersonation/impersonation.module'
+import { WebhookModule } from '@webhook/webhook.module'
 
 @Module({
   imports: [
@@ -51,7 +52,8 @@ import { ImpersonationModule } from '@impersonation/impersonation.module'
     PaymentModule,
     BillingModule,
     IngredientModule,
-    ImpersonationModule
+    ImpersonationModule,
+    WebhookModule
     // CaslModule.forRoot({
     //   superuserRole: PlatformRole.ADMIN,
     //   getUserFromRequest: (request) => request.user

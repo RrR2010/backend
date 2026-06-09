@@ -9,7 +9,6 @@ export interface SubscriptionProps {
   currency: string
   provider: string
   providerSubscriptionId: string
-  providerPreapprovalId: string | null
   providerCustomerId: string | null
   basePriceSnapshot: number
   additionalUserPriceSnapshot: number | null
@@ -40,7 +39,6 @@ export class Subscription {
   readonly currency: string
   readonly provider: string
   readonly providerSubscriptionId: string
-  readonly providerPreapprovalId: string | null
   readonly providerCustomerId: string | null
   readonly basePriceSnapshot: number
   readonly additionalUserPriceSnapshot: number | null
@@ -69,7 +67,6 @@ export class Subscription {
     this.currency = props.currency
     this.provider = props.provider
     this.providerSubscriptionId = props.providerSubscriptionId
-    this.providerPreapprovalId = props.providerPreapprovalId ?? null
     this.providerCustomerId = props.providerCustomerId
     this.basePriceSnapshot = props.basePriceSnapshot
     this.additionalUserPriceSnapshot = props.additionalUserPriceSnapshot
@@ -278,36 +275,10 @@ export class Subscription {
   }
 
   /**
-   * Combines payment failure recording and grace period entry into a single
-   * state transition to avoid double-save in the repository.
-   */
-  withGracePeriodAfterFailure(
-    failedCount: number,
-    graceEndsAt: Date
-  ): Subscription {
-    return Subscription.rehydrate({
-      ...this,
-      status: SubscriptionStatus.GRACE,
-      failedPaymentCount: failedCount,
-      graceEndsAt,
-      updatedAt: new Date()
-    })
-  }
-
-  withPaymentFailure(failedCount: number): Subscription {
-    return Subscription.rehydrate({
-      ...this,
-      status: SubscriptionStatus.PAST_DUE,
-      failedPaymentCount: failedCount,
-      updatedAt: new Date()
-    })
-  }
-
-  /**
    * Handles a successful payment by resetting failure counter.
    * If targetStatus is provided, sets that status; otherwise defaults to ACTIVE.
    * Callers should pass the appropriate status based on current state
-   * (e.g., preserve PAUSED, set ACTIVE only from PAST_DUE or GRACE).
+   * (e.g., preserve PAUSED, set ACTIVE only from GRACE).
    */
   withPaymentSuccess(
     lastPaymentAt: Date,

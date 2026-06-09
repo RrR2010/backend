@@ -74,6 +74,11 @@ export class BootstrapRegisterDto {
   @IsEnum(Gender)
   gender?: Gender
 
+  @ApiProperty({ required: false, example: '123.456.789-00' })
+  @IsOptional()
+  @IsString()
+  cpf?: string
+
   @ApiProperty({ example: 'joao@email.com' })
   @IsEmail()
   email!: string
