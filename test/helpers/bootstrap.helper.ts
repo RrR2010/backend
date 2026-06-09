@@ -33,9 +33,10 @@ export function createTestRegistrationDto(
 }
 
 /**
- * Creates a valid Mercado Pago webhook payload for a given registration and payment status.
+ * Creates a fake webhook payload for a given registration and payment status.
+ * Used with the fake subscription provider for testing.
  */
-export function mockWebhookPayload(
+export function createFakeWebhookPayload(
   registrationExternalRef: string,
   paymentStatus: 'approved' | 'pending' | 'rejected' | 'cancelled',
   paymentId?: string
@@ -49,10 +50,10 @@ export function mockWebhookPayload(
 }
 
 /**
- * Creates valid Mercado Pago webhook headers for dev/testing.
+ * Creates fake webhook headers for dev/testing.
  * The fake provider always accepts any signature.
  */
-export function mockWebhookHeaders(): Record<string, string> {
+export function createFakeWebhookHeaders(): Record<string, string> {
   return {
     'x-signature': 'test-signature-' + crypto.randomUUID(),
     'x-request-id': crypto.randomUUID()

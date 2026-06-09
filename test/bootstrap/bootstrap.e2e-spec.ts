@@ -1,4 +1,5 @@
-import 'dotenv/config'
+import * as dotenv from 'dotenv'
+dotenv.config({ path: '.env.dev' })
 
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
@@ -7,8 +8,8 @@ import { AppModule } from '../../src/app.module'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import {
   createTestRegistrationDto,
-  mockWebhookPayload,
-  mockWebhookHeaders
+  createFakeWebhookPayload,
+  createFakeWebhookHeaders
 } from '../helpers/bootstrap.helper'
 
 async function waitForProvisioned(
@@ -154,8 +155,8 @@ describe('Bootstrap E2E (Phase 7)', () => {
       const externalRef = registerRes.body.registrationId // externalRef is the registrationId
 
       // 2. Send webhook with approved status
-      const webhookPayload = mockWebhookPayload(externalRef, 'approved')
-      const headers = mockWebhookHeaders()
+      const webhookPayload = createFakeWebhookPayload(externalRef, 'approved')
+      const headers = createFakeWebhookHeaders()
 
       await supertest(app.getHttpServer())
         .post('/bootstrap/webhook/payment')
@@ -184,8 +185,8 @@ describe('Bootstrap E2E (Phase 7)', () => {
       const externalRef = registrationId
 
       // 2. Send webhook twice with same approved status
-      const webhookPayload = mockWebhookPayload(externalRef, 'approved')
-      const headers = mockWebhookHeaders()
+      const webhookPayload = createFakeWebhookPayload(externalRef, 'approved')
+      const headers = createFakeWebhookHeaders()
 
       await supertest(app.getHttpServer())
         .post('/bootstrap/webhook/payment')

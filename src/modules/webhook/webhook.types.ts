@@ -7,7 +7,7 @@ export interface AsaasWebhookPayload {
     | 'SUBSCRIPTION_CREATED'
     | 'SUBSCRIPTION_UPDATED'
     | 'SUBSCRIPTION_INACTIVATED'
-  payment?: {
+  payment: {
     id: string
     subscription: string
     value: number
@@ -16,14 +16,14 @@ export interface AsaasWebhookPayload {
     dueDate?: string
     billingType?: string
     invoiceUrl?: string
-  }
-  subscription?: {
+  } | null
+  subscription: {
     id: string
     status?: string
     cycle?: string
     value?: number
     nextDueDate?: string
-  }
+  } | null
 }
 
 export type AsaasWebhookEvent = AsaasWebhookPayload['event']

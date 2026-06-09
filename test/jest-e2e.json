@@ -27,6 +27,7 @@ module.exports = {
     '^@addresses/(.*)$': '<rootDir>/src/modules/addresses/$1',
     '^@bootstrap/(.*)$': '<rootDir>/src/modules/bootstrap/$1',
     '^@billing/(.*)$': '<rootDir>/src/modules/billing/$1',
+    '^@webhook/(.*)$': '<rootDir>/src/modules/webhook/$1',
     '^@impersonation/(.*)$': '<rootDir>/src/modules/impersonation/$1'
   },
   collectCoverageFrom: ['src/**/*.ts'],

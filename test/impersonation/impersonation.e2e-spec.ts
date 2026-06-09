@@ -1,4 +1,5 @@
-import 'dotenv/config'
+import * as dotenv from 'dotenv'
+dotenv.config({ path: '.env.dev' })
 
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
@@ -85,7 +86,7 @@ describe('Tenant Impersonation E2E (EPIC_010)', () => {
         planType: 'BASIC',
         status: overrides.subscriptionStatus ?? 'ACTIVE',
         currency: 'BRL',
-        provider: 'mercadopago',
+        provider: 'asaas',
         providerSubscriptionId: 'sub-' + crypto.randomUUID(),
         basePriceSnapshot: 5000,
         includedUsersSnapshot: 3,
