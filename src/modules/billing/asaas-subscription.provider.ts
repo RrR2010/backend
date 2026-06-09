@@ -41,14 +41,14 @@ export function mapAsaasStatus(
 export class AsaasSubscriptionProvider implements SubscriptionProvider {
   readonly name = 'asaas'
   private readonly logger = new Logger(AsaasSubscriptionProvider.name)
-  private readonly webhookAccessToken: string
+  private readonly webhookAuthToken: string
 
   constructor(
     private readonly asaasApiService: AsaasApiService,
     private readonly config: ConfigService
   ) {
-    this.webhookAccessToken = this.config.get<string>(
-      'ASAAS_WEBHOOK_ACCESS_TOKEN',
+    this.webhookAuthToken = this.config.get<string>(
+      'ASAAS_WEBHOOK_AUTH_TOKEN',
       ''
     )
   }
@@ -82,12 +82,23 @@ export class AsaasSubscriptionProvider implements SubscriptionProvider {
       cycle: 'MONTHLY',
       externalReference: input.externalRef,
       callback: {
-        successUrl: input.backUrlSuccess
+        successUrl: input.backUrlSuccess,
+        autoRedirect: true,
+        cancelUrl: input.backUrlFailure
       }
     })
 
     const status = mapAsaasStatus(result.status)
-    const paymentUrl = result.checkoutSession ?? result.paymentLink ?? null
+
+    // Build checkout URL from the checkoutSession UUID
+    const env = this.config.get<string>('ASAAS_ENV', 'sandbox')
+    const checkoutBaseUrl =
+      env === 'production'
+        ? 'https://www.asaas.com'
+        : 'https://sandbox.asaas.com'
+    const paymentUrl = result.checkoutSession
+      ? `${checkoutBaseUrl}/checkoutSession/show/${result.checkoutSession}`
+      : result.paymentLink ?? null
 
     this.logger.log(
       `Asaas subscription created: ${result.id}, status: ${result.status}, paymentUrl: ${paymentUrl}`
@@ -186,9 +197,9 @@ export class AsaasSubscriptionProvider implements SubscriptionProvider {
     headers: Record<string, string>,
     _body: unknown
   ): boolean {
-    if (!this.webhookAccessToken) {
+    if (!this.webhookAuthToken) {
       this.logger.warn(
-        'ASAAS_WEBHOOK_ACCESS_TOKEN is not configured — webhook validation will fail'
+        'ASAAS_WEBHOOK_AUTH_TOKEN is not configured — webhook validation will fail'
       )
       return false
     }
@@ -196,6 +207,6 @@ export class AsaasSubscriptionProvider implements SubscriptionProvider {
     const token = headers['asaas-access-token']
     if (!token) return false
 
-    return token === this.webhookAccessToken
+    return token === this.webhookAuthToken
   }
 }

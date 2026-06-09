@@ -179,6 +179,7 @@ export class BootstrapService {
     }
 
     // 8. (T-012) Create Asaas customer for paid plans when using Asaas provider
+    // TODO(EP-001): make provider-agnostic when second provider is needed
     const subscriptionProviderName = this.subscriptionProvider.name
     if (subscriptionProviderName === 'asaas') {
       const cpfCnpj = dto.cpf ?? normalizedTaxId
@@ -271,7 +272,7 @@ export class BootstrapService {
       onboardingResult.providerResult.providerSubscriptionId
     this.logger.log(`Provider subscription created: ${providerSubscriptionId}`)
 
-    // 9. Audit log
+    // 11. Audit log
     await this.auditLogService.create(
       {
         userId: 'system',
@@ -314,20 +315,20 @@ export class BootstrapService {
       this.platformCtx
     )
 
-    // 10. Return result
-    // Use paymentUrl directly from provider result (no environment-based branching needed)
-    const paymentUrl = onboardingResult.providerResult.paymentUrl
+    // 12. Return result
+    const checkoutUrl = onboardingResult.providerResult.paymentUrl
 
-    if (!paymentUrl) {
+    if (!checkoutUrl) {
       throw new Error('Subscription provider returned no checkout URL')
     }
 
     return {
       registrationId: registration.id.value,
-      paymentUrl,
+      checkoutUrl,
       expiresAt: registration.expiresAt,
       handoffToken,
-      subscriptionId: onboardingResult.providerResult.providerSubscriptionId
+      subscriptionId: onboardingResult.providerResult.providerSubscriptionId,
+      registrationExternalRef: registration.externalRef
     }
   }
 
@@ -450,13 +451,14 @@ export class BootstrapService {
       `FREE plan registration completed: ${registration.id.value}`
     )
 
-    // Return result with paymentUrl = null
+    // Return result with checkoutUrl = null
     return {
       registrationId: registration.id.value,
-      paymentUrl: null,
+      checkoutUrl: null,
       expiresAt: registration.expiresAt,
       handoffToken,
-      subscriptionId: syntheticProviderId
+      subscriptionId: syntheticProviderId,
+      registrationExternalRef: registration.externalRef
     }
   }
 
@@ -609,7 +611,8 @@ export class BootstrapService {
           provisioningResult.tenantId,
           registration.subscriptionId,
           planType as PlanType,
-          ctx
+          ctx,
+          registration.providerCustomerId ?? null
         )
       } catch (error) {
         // Log but don't fail — the registration is already PROVISIONED

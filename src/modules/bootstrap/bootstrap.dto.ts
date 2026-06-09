@@ -101,7 +101,7 @@ export class BootstrapRegisterResponseDto {
   registrationId!: string
 
   @ApiProperty({ nullable: true })
-  paymentUrl!: string | null
+  checkoutUrl!: string | null
 
   @ApiProperty()
   expiresAt!: Date
@@ -109,17 +109,22 @@ export class BootstrapRegisterResponseDto {
   @ApiProperty({ nullable: true })
   subscriptionId!: string | null
 
+  @ApiProperty()
+  registrationExternalRef!: string
+
   static from(
     registrationId: string,
-    paymentUrl: string | null,
+    checkoutUrl: string | null,
     expiresAt: Date,
-    subscriptionId: string | null = null
+    subscriptionId: string | null = null,
+    registrationExternalRef: string
   ): BootstrapRegisterResponseDto {
     const dto = new BootstrapRegisterResponseDto()
     dto.registrationId = registrationId
-    dto.paymentUrl = paymentUrl
+    dto.checkoutUrl = checkoutUrl
     dto.expiresAt = expiresAt
     dto.subscriptionId = subscriptionId
+    dto.registrationExternalRef = registrationExternalRef
     return dto
   }
 }

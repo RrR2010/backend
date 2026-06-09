@@ -73,9 +73,10 @@ export class BootstrapController {
 
     return BootstrapRegisterResponseDto.from(
       result.registrationId,
-      result.paymentUrl,
+      result.checkoutUrl,
       result.expiresAt,
-      result.subscriptionId
+      result.subscriptionId,
+      result.registrationExternalRef
     )
   }
 

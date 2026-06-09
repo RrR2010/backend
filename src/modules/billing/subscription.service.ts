@@ -134,7 +134,8 @@ export class SubscriptionService {
     tenantId: string,
     providerSubscriptionId: string,
     planType: PlanType,
-    ctx: RequestContext
+    ctx: RequestContext,
+    providerCustomerId: string | null = null
   ): Promise<Subscription> {
     // TODO: zod validate input
 
@@ -166,7 +167,7 @@ export class SubscriptionService {
       currency: 'BRL',
       provider: this.provider.name,
       providerSubscriptionId,
-      providerCustomerId: null,
+      providerCustomerId,
       basePriceSnapshot: priceSnapshot.basePrice,
       additionalUserPriceSnapshot: priceSnapshot.additionalUserPrice,
       includedUsersSnapshot: priceSnapshot.includedUsers,
@@ -499,6 +500,21 @@ export class SubscriptionService {
     if (subscription.planType === PlanType.FREE) {
       // Validate downgrade limits (if any)
       this.validateDowngradeLimits(subscription, newPlan)
+
+      // TODO(EP-001, Wave 4+): When upgrading FREE → PAID with Asaas, the
+      // subscription has no providerCustomerId because no Asaas customer was
+      // created during FREE registration (T-012 only runs for paid plans).
+      // This path needs to create an Asaas customer first, then use that ID
+      // when calling createSubscriptionForOnboarding.
+      if (
+        this.provider.name === 'asaas' &&
+        subscription.providerCustomerId === null
+      ) {
+        throw new Error(
+          'FREE → PAID upgrade with Asaas requires customer creation first, which is not yet implemented. ' +
+            'See TODO(EP-001, Wave 4+).'
+        )
+      }
 
       // Create provider subscription via onboarding flow
       // The tenant already exists, so we create the subscription directly
@@ -853,7 +869,7 @@ export class SubscriptionService {
     // Create event
     await this.createEvent(
       saved.id.value,
-      'subscription.grace_period_started',
+      'payment_failed',
       subscription.status,
       saved.status,
       {
@@ -865,7 +881,7 @@ export class SubscriptionService {
     )
 
     this.logger.log(
-      `Grace period applied to subscription ${saved.id.value} after payment failure, ends at ${graceEndsAt.toISOString()}`
+      `Payment failure: grace period applied to subscription ${saved.id.value}, ends at ${graceEndsAt.toISOString()}`
     )
     return saved
   }

@@ -290,12 +290,12 @@ describe('BootstrapService.registerFreePlan', () => {
   // ============== FREE plan tests ==============
 
   describe('register() with FREE plan', () => {
-    it('should return paymentUrl: null for FREE plan', async () => {
+    it('should return checkoutUrl: null for FREE plan', async () => {
       const dto = createFreeRegisterDto()
 
       const result = await service.register(dto, null, null)
 
-      expect(result.paymentUrl).toBeNull()
+      expect(result.checkoutUrl).toBeNull()
     })
 
     it('should generate a handoff token', async () => {
@@ -398,7 +398,7 @@ describe('BootstrapService.registerFreePlan', () => {
 
       const result = await service.register(dto, null, null)
 
-      expect(result.paymentUrl).toBe('http://example.com/pay')
+      expect(result.checkoutUrl).toBe('http://example.com/pay')
       expect(
         subscriptionService.createSubscriptionForOnboarding
       ).toHaveBeenCalledWith(

@@ -26,6 +26,8 @@ export interface AsaasCreateSubscriptionInput {
   externalReference?: string
   callback?: {
     successUrl: string
+    autoRedirect?: boolean
+    cancelUrl?: string
   }
 }
 
