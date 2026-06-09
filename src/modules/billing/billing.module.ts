@@ -17,6 +17,8 @@ import { PrismaModule } from '@shared/prisma/prisma.module'
 import { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import { FakeSubscriptionProvider } from '@billing/fake-subscription.provider'
 import { MercadopagoSubscriptionProvider } from '@billing/mercadopago-subscription.provider'
+import { AsaasSubscriptionProvider } from '@billing/asaas-subscription.provider'
+import { AsaasApiService } from '@billing/asaas-api.service'
 import { SubscriptionController } from '@billing/subscription.controller'
 import { PlanController } from '@billing/plan.controller'
 import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
@@ -52,29 +54,34 @@ import { BootstrapModule } from '@bootstrap/bootstrap.module'
     },
     FakeSubscriptionProvider,
     MercadopagoSubscriptionProvider,
+    AsaasSubscriptionProvider,
+    AsaasApiService,
     {
       provide: SUBSCRIPTION_PROVIDER_TOKEN,
       useFactory: (
         config: ConfigService,
         fake: FakeSubscriptionProvider,
-        mp: MercadopagoSubscriptionProvider
+        mp: MercadopagoSubscriptionProvider,
+        asaas: AsaasSubscriptionProvider
       ): SubscriptionProvider => {
         const provider = config.get<string>('SUBSCRIPTION_PROVIDER')
         if (!provider) {
           throw new Error(
-            'SUBSCRIPTION_PROVIDER is not configured. Set to "mercadopago" or "fake" in .env.dev'
+            'SUBSCRIPTION_PROVIDER is not configured. Set to "asaas", "mercadopago", or "fake" in .env.dev'
           )
         }
+        if (provider === 'asaas') return asaas
         if (provider === 'mercadopago') return mp
         if (provider === 'fake') return fake
         throw new Error(
-          `Invalid SUBSCRIPTION_PROVIDER: "${provider}". Must be "mercadopago" or "fake"`
+          `Invalid SUBSCRIPTION_PROVIDER: "${provider}". Must be "asaas", "mercadopago", or "fake"`
         )
       },
       inject: [
         ConfigService,
         FakeSubscriptionProvider,
-        MercadopagoSubscriptionProvider
+        MercadopagoSubscriptionProvider,
+        AsaasSubscriptionProvider
       ]
     }
   ],
@@ -87,7 +94,8 @@ import { BootstrapModule } from '@bootstrap/bootstrap.module'
     SubscriptionService,
     SubscriptionLifecycleService,
     PlanValidatorService,
-    SUBSCRIPTION_PROVIDER_TOKEN
+    SUBSCRIPTION_PROVIDER_TOKEN,
+    AsaasApiService
   ],
 
   controllers: [SubscriptionController, PlanController]

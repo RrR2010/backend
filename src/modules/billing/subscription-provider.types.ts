@@ -18,6 +18,8 @@ export interface CreateSubscriptionInput {
   backUrlSuccess: string
   backUrlPending: string
   backUrlFailure: string
+  /** Provider-specific customer ID (required by Asaas, null for MP/fake) */
+  providerCustomerId: string | null
 }
 
 export interface UpdateSubscriptionInput {

@@ -77,7 +77,7 @@ export class BootstrapRegisterDto {
   @ApiProperty({ required: false, example: '123.456.789-00' })
   @IsOptional()
   @IsString()
-  cpf?: string
+  cpf: string | null = null
 
   @ApiProperty({ example: 'joao@email.com' })
   @IsEmail()

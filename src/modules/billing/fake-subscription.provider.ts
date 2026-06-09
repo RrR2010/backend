@@ -164,9 +164,11 @@ export class FakeSubscriptionProvider implements SubscriptionProvider {
     const record = fakeSubscriptionStore.get(providerSubscriptionId)
     if (!record) return false
 
-    record.status = SubscriptionStatus.PAST_DUE
+    record.status = SubscriptionStatus.GRACE
     record.lastError = 'Simulated payment failure'
-    this.logger.log(`Fake subscription failed: ${providerSubscriptionId}`)
+    this.logger.log(
+      `Fake subscription failed (grace): ${providerSubscriptionId}`
+    )
     return true
   }
 

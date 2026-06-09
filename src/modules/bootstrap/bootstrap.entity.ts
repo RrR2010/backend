@@ -186,6 +186,11 @@ export class TenantRegistration extends Auditable(
     this.touch()
   }
 
+  updateProviderCustomerId(providerCustomerId: string): void {
+    this._props.providerCustomerId = providerCustomerId
+    this.touch()
+  }
+
   updatePaymentId(paymentId: string): void {
     this._props.paymentId = paymentId
     this.touch()

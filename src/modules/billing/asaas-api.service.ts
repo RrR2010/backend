@@ -128,10 +128,7 @@ export class AsaasApiService {
   // Customers
   // ─────────────────────────────────────────────
 
-  async createCustomer(
-    name: string,
-    cpfCnpj: string
-  ): Promise<AsaasCustomer> {
+  async createCustomer(name: string, cpfCnpj: string): Promise<AsaasCustomer> {
     this.logger.log(`Creating Asaas customer: ${name}`)
 
     try {
@@ -152,7 +149,9 @@ export class AsaasApiService {
   async createSubscription(
     input: AsaasCreateSubscriptionInput
   ): Promise<AsaasCreateSubscriptionResult> {
-    this.logger.log(`Creating Asaas subscription for customer: ${input.customer}`)
+    this.logger.log(
+      `Creating Asaas subscription for customer: ${input.customer}`
+    )
 
     try {
       const response = await this.http.post<AsaasCreateSubscriptionResult>(
@@ -182,7 +181,7 @@ export class AsaasApiService {
     this.logger.log(`Cancelling Asaas subscription: ${id}`)
 
     try {
-      await this.http.put(`/v3/subscriptions/${id}`, { status: 'INACTIVE' })
+      await this.http.delete(`/v3/subscriptions/${id}`)
     } catch (error) {
       throw this.wrapError(error, `Failed to cancel Asaas subscription: ${id}`)
     }
@@ -209,9 +208,7 @@ export class AsaasApiService {
     this.logger.log(`Fetching Asaas payment: ${id}`)
 
     try {
-      const response = await this.http.get<AsaasPayment>(
-        `/v3/payments/${id}`
-      )
+      const response = await this.http.get<AsaasPayment>(`/v3/payments/${id}`)
       return response.data
     } catch (error) {
       throw this.wrapError(error, `Failed to fetch Asaas payment: ${id}`)
@@ -221,7 +218,9 @@ export class AsaasApiService {
   async listPaymentsBySubscription(
     subscriptionId: string
   ): Promise<AsaasPayment[]> {
-    this.logger.log(`Listing Asaas payments for subscription: ${subscriptionId}`)
+    this.logger.log(
+      `Listing Asaas payments for subscription: ${subscriptionId}`
+    )
 
     try {
       const response = await this.http.get<AsaasListPaymentsResponse>(
@@ -243,31 +242,26 @@ export class AsaasApiService {
   // Error handling
   // ─────────────────────────────────────────────
 
-  private wrapError(
-    error: unknown,
-    defaultMessage: string
-  ): AsaasApiError {
+  private wrapError(error: unknown, defaultMessage: string): AsaasApiError {
     if (error instanceof AxiosError && error.response) {
       const statusCode = error.response.status
-      const responseData = error.response.data as Record<string, unknown> | undefined
+      const responseData = error.response.data as
+        | Record<string, unknown>
+        | undefined
       const asaasErrors = responseData?.errors as
         | Array<{ code: string; description: string }>
         | undefined
 
       const message =
-        asaasErrors
-          ?.map((e) => `${e.code}: ${e.description}`)
-          .join('; ') ?? defaultMessage
+        asaasErrors?.map((e) => `${e.code}: ${e.description}`).join('; ') ??
+        defaultMessage
 
-      this.logger.error(
-        `Asaas API error (${statusCode}): ${message}`,
-        {
-          statusCode,
-          url: error.config?.url,
-          method: error.config?.method,
-          responseData
-        }
-      )
+      this.logger.error(`Asaas API error (${statusCode}): ${message}`, {
+        statusCode,
+        url: error.config?.url,
+        method: error.config?.method,
+        responseData
+      })
 
       return new AsaasApiError(message, statusCode, asaasErrors)
     }
@@ -276,9 +270,6 @@ export class AsaasApiService {
       error: error instanceof Error ? error.message : String(error)
     })
 
-    return new AsaasApiError(
-      defaultMessage,
-      500
-    )
+    return new AsaasApiError(defaultMessage, 500)
   }
 }

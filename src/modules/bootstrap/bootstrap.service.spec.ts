@@ -19,7 +19,7 @@ import type { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { BootstrapRegisterDto } from './bootstrap.dto'
 import { Plan } from '@billing/plan.entity'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 import type { Subscription } from '@billing/subscription.entity'
 import { Id } from '@shared/value-objects'
 import { TenantRegistration } from './bootstrap.entity'
@@ -223,6 +223,16 @@ describe('BootstrapService.registerFreePlan', () => {
       validateWebhookSignature: jest.fn()
     }
 
+    const asaasApiService = {
+      createCustomer: jest.fn(),
+      createSubscription: jest.fn(),
+      updateSubscription: jest.fn(),
+      cancelSubscription: jest.fn(),
+      getSubscription: jest.fn(),
+      getPayment: jest.fn(),
+      listPaymentsBySubscription: jest.fn()
+    }
+
     service = new BootstrapService(
       registrationRepo,
       prisma,
@@ -237,11 +247,14 @@ describe('BootstrapService.registerFreePlan', () => {
       tenantRepository,
       userRepository,
       sessionService,
-      subscriptionProvider
+      subscriptionProvider,
+      asaasApiService
     )
 
     // Mock crypto.randomUUID for deterministic IDs
-    jest.spyOn(crypto, 'randomUUID').mockReturnValue('mock-uuid-12345678-1234-1234-1234-123456789012')
+    jest
+      .spyOn(crypto, 'randomUUID')
+      .mockReturnValue('mock-uuid-12345678-1234-1234-1234-123456789012')
   })
 
   afterEach(() => {
@@ -300,7 +313,8 @@ describe('BootstrapService.registerFreePlan', () => {
 
       // subscriptionRepository.save should be called with Subscription having provider='free'
       expect(subscriptionRepository.save).toHaveBeenCalled()
-      const savedSub = (subscriptionRepository.save as jest.Mock).mock.calls[0][0] as Subscription
+      const savedSub = (subscriptionRepository.save as jest.Mock).mock
+        .calls[0][0] as Subscription
       expect(savedSub.provider).toBe('free')
       expect(savedSub.planType).toBe(PlanType.FREE)
     })
@@ -312,7 +326,8 @@ describe('BootstrapService.registerFreePlan', () => {
 
       // Registration should be saved with PROVISIONED state
       expect(registrationRepo.save).toHaveBeenCalled()
-      const savedRegistration = (registrationRepo.save as jest.Mock).mock.calls[0][0] as TenantRegistration
+      const savedRegistration = (registrationRepo.save as jest.Mock).mock
+        .calls[0][0] as TenantRegistration
       expect(savedRegistration.state).toBe(RegistrationState.PROVISIONED)
     })
   })
@@ -394,7 +409,8 @@ describe('BootstrapService.registerFreePlan', () => {
         expect.any(String),
         expect.any(String),
         expect.any(String),
-        expect.any(String)
+        expect.any(String),
+        null
       )
     })
 

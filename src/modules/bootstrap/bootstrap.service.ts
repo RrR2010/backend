@@ -53,6 +53,7 @@ import { PlanService } from '@billing/plan.service'
 import { Subscription } from '@billing/subscription.entity'
 import type { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
+import { AsaasApiService } from '@billing/asaas-api.service'
 
 @Injectable()
 export class BootstrapService {
@@ -80,7 +81,8 @@ export class BootstrapService {
     private readonly userRepository: UserRepository,
     private readonly sessionService: SessionService,
     @Inject(SUBSCRIPTION_PROVIDER_TOKEN)
-    private readonly subscriptionProvider: SubscriptionProvider
+    private readonly subscriptionProvider: SubscriptionProvider,
+    private readonly asaasApiService: AsaasApiService
   ) {}
 
   async register(
@@ -176,12 +178,59 @@ export class BootstrapService {
       )
     }
 
-    // 8. Create subscription in provider (replaces old payment preference flow)
+    // 8. (T-012) Create Asaas customer for paid plans when using Asaas provider
+    const subscriptionProviderName = this.subscriptionProvider.name
+    if (subscriptionProviderName === 'asaas') {
+      const cpfCnpj = dto.cpf ?? normalizedTaxId
+      try {
+        const asaasCustomer = await this.asaasApiService.createCustomer(
+          dto.fullName.trim(),
+          cpfCnpj
+        )
+        registration.updateProviderCustomerId(asaasCustomer.id)
+        await this.registrationRepo.save(registration, this.platformCtx)
+        this.logger.log(
+          `Asaas customer created for registration ${registration.id.value}: ${asaasCustomer.id}`
+        )
+      } catch (error) {
+        this.logger.error(
+          `Failed to create Asaas customer for registration ${registration.id.value}`,
+          { error: error instanceof Error ? error.message : String(error) }
+        )
+        registration.markRejected()
+        await this.registrationRepo.save(registration, this.platformCtx)
+        throw error
+      }
+    }
+
+    // 9. Create subscription in provider (replaces old payment preference flow)
     // NOTE: This path is only for PAID plans (BASIC, PREMIUM).
     const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000'
     )
+
+    const providerInput: {
+      planType: PlanType
+      payerEmail: string
+      payerName: string
+      reason: string
+      externalRef: string
+      backUrlSuccess: string
+      backUrlPending: string
+      backUrlFailure: string
+      providerCustomerId: string | null
+    } = {
+      planType: dto.planType,
+      payerEmail: normalizedEmail,
+      payerName: dto.fullName.trim(),
+      reason: `Plano ${dto.planType}`,
+      externalRef: registration.id.value,
+      backUrlSuccess: `${frontendUrl}/bootstrap/success`,
+      backUrlPending: `${frontendUrl}/bootstrap/pending`,
+      backUrlFailure: `${frontendUrl}/bootstrap/failure`,
+      providerCustomerId: registration.providerCustomerId ?? null
+    }
 
     let onboardingResult: Awaited<
       ReturnType<
@@ -191,14 +240,15 @@ export class BootstrapService {
     try {
       onboardingResult =
         await this.subscriptionService.createSubscriptionForOnboarding(
-          dto.planType,
-          normalizedEmail,
-          dto.fullName.trim(),
-          `Plano ${dto.planType}`,
-          registration.id.value,
-          `${frontendUrl}/bootstrap/success`,
-          `${frontendUrl}/bootstrap/pending`,
-          `${frontendUrl}/bootstrap/failure`
+          providerInput.planType,
+          providerInput.payerEmail,
+          providerInput.payerName,
+          providerInput.reason,
+          providerInput.externalRef,
+          providerInput.backUrlSuccess,
+          providerInput.backUrlPending,
+          providerInput.backUrlFailure,
+          providerInput.providerCustomerId
         )
     } catch (error) {
       // Mark registration as rejected to prevent orphaned PENDING records
@@ -207,7 +257,7 @@ export class BootstrapService {
       throw error
     }
 
-    // 8. Update registration with provider subscription ID
+    // 10. Update registration with provider subscription ID
     registration.updateSubscriptionId(
       onboardingResult.providerResult.providerSubscriptionId
     )
@@ -305,7 +355,10 @@ export class BootstrapService {
     // Step 2: Create local subscription directly (no provider call for FREE plan)
     // We bypass finalizeOnboardingSubscription because it uses the payment provider
     // name. FREE plans have no provider, so we set provider='free' explicitly.
-    const plan = await this.planService.getByType(PlanType.FREE, this.platformCtx)
+    const plan = await this.planService.getByType(
+      PlanType.FREE,
+      this.platformCtx
+    )
     const priceSnapshot = this.planService.applyPriceSnapshot(plan, 0)
     const now = new Date()
     const syntheticProviderId = `free-${registration.id.value}`
@@ -325,9 +378,7 @@ export class BootstrapService {
       currentAmount: priceSnapshot.totalPrice,
       nextBillingAmount: priceSnapshot.totalPrice,
       currentPeriodStart: now,
-      currentPeriodEnd: new Date(
-        now.getTime() + 30 * 24 * 60 * 60 * 1000
-      ),
+      currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
       graceEndsAt: null,
       cancelAtPeriodEnd: false,
       pendingPlanType: null,

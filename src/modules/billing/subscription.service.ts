@@ -77,7 +77,8 @@ export class SubscriptionService {
     externalRef: string,
     backUrlSuccess: string,
     backUrlPending: string,
-    backUrlFailure: string
+    backUrlFailure: string,
+    providerCustomerId: string | null
   ): Promise<{
     providerResult: CreateSubscriptionResult
     priceSnapshot: PriceSnapshot
@@ -110,7 +111,8 @@ export class SubscriptionService {
       externalRef,
       backUrlSuccess,
       backUrlPending,
-      backUrlFailure
+      backUrlFailure,
+      providerCustomerId: providerCustomerId ?? null
     }
 
     // Create subscription in provider
@@ -372,20 +374,20 @@ export class SubscriptionService {
     const saved = await this.subscriptionRepository.save(updated, ctx)
 
     // Create event
-      await this.createEvent(
-        saved.id.value,
-        cancelAtPeriodEnd
-          ? 'subscription.cancel_at_period_end'
-          : 'subscription.canceled',
-        subscription.status,
-        saved.status,
-        {
-          providerSubscriptionId: saved.providerSubscriptionId,
-          cancelAtPeriodEnd: saved.cancelAtPeriodEnd
-        },
-        ctx,
-        cancelAtPeriodEnd ? 'SCHEDULED' : 'COMPLETED'
-      )
+    await this.createEvent(
+      saved.id.value,
+      cancelAtPeriodEnd
+        ? 'subscription.cancel_at_period_end'
+        : 'subscription.canceled',
+      subscription.status,
+      saved.status,
+      {
+        providerSubscriptionId: saved.providerSubscriptionId,
+        cancelAtPeriodEnd: saved.cancelAtPeriodEnd
+      },
+      ctx,
+      cancelAtPeriodEnd ? 'SCHEDULED' : 'COMPLETED'
+    )
 
     this.logger.log(
       `Subscription ${saved.id.value} canceled (atPeriodEnd: ${cancelAtPeriodEnd})`
@@ -457,7 +459,8 @@ export class SubscriptionService {
             providerSubscriptionId: saved.providerSubscriptionId,
             oldPendingPlanType: subscription.pendingPlanType,
             oldAmount: subscription.currentAmount,
-            effectiveFrom: subscription.pendingEffectiveFrom?.toISOString() ?? null
+            effectiveFrom:
+              subscription.pendingEffectiveFrom?.toISOString() ?? null
           },
           ctx,
           'CANCELED'
@@ -504,17 +507,17 @@ export class SubscriptionService {
         'http://localhost:3000'
       )
 
-      const onboardingResult =
-        await this.createSubscriptionForOnboarding(
-          input.newPlanType,
-          'payer@email.com', // Placeholder — ideally from tenant identity
-          'Payer',
-          `Plano ${input.newPlanType}`,
-          subscription.id.value,
-          `${frontendUrl}/bootstrap/success`,
-          `${frontendUrl}/bootstrap/pending`,
-          `${frontendUrl}/bootstrap/failure`
-        )
+      const onboardingResult = await this.createSubscriptionForOnboarding(
+        input.newPlanType,
+        'payer@email.com', // Placeholder — ideally from tenant identity
+        'Payer',
+        `Plano ${input.newPlanType}`,
+        subscription.id.value,
+        `${frontendUrl}/bootstrap/success`,
+        `${frontendUrl}/bootstrap/pending`,
+        `${frontendUrl}/bootstrap/failure`,
+        null
+      )
 
       // Update subscription: switch from synthetic free-{id} to real provider ID,
       // and store the pending plan change
@@ -523,11 +526,7 @@ export class SubscriptionService {
         .withProviderSubscriptionId(
           onboardingResult.providerResult.providerSubscriptionId
         )
-        .withPendingPlanChange(
-          input.newPlanType,
-          effectiveFrom,
-          newAmount
-        )
+        .withPendingPlanChange(input.newPlanType, effectiveFrom, newAmount)
       const saved = await this.subscriptionRepository.save(updated, ctx)
 
       await this.createEvent(
@@ -542,7 +541,7 @@ export class SubscriptionService {
           oldAmount: subscription.currentAmount,
           newAmount,
           effectiveFrom: effectiveFrom.toISOString(),
-        paymentUrl: onboardingResult.providerResult.paymentUrl ?? undefined
+          paymentUrl: onboardingResult.providerResult.paymentUrl ?? undefined
         },
         ctx,
         'SCHEDULED'
@@ -1439,10 +1438,7 @@ export class SubscriptionService {
     ctx: RequestContext
   ): Promise<{ total: number; applied: number; errors: number }> {
     // Find all subscriptions with pendingPlanType not null
-    const allSubscriptions = await this.subscriptionRepository.findAll(
-      {},
-      ctx
-    )
+    const allSubscriptions = await this.subscriptionRepository.findAll({}, ctx)
 
     const dueSubscriptions = allSubscriptions.filter(
       (sub) =>
