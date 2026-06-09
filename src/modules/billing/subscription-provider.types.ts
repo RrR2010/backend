@@ -2,7 +2,8 @@ import { Logger } from '@nestjs/common'
 import { PlanType, SubscriptionStatus } from '@shared/enums'
 
 // Logger instance for status mapping warnings (avoids console.warn)
-const logger = new Logger('MercadoPagoStatusMapper')
+// TODO (EP-001 T-027): Remove this file when Mercado Pago provider is deleted
+const logger = new Logger('ProviderStatusMapper')
 
 // ============== INPUT TYPES ==============
 
@@ -54,14 +55,16 @@ export interface ProviderSubscriptionSnapshot {
 // ============== STATUS MAPPING ==============
 
 /**
- * Maps Mercado Pago preapproval status strings to our internal SubscriptionStatus enum.
+ * Maps provider status strings to our internal SubscriptionStatus enum.
  *
- * Mercado Pago preapproval statuses:
- * - 'pending': awaiting payer authorization → maps to PENDING (not yet active)
- * - 'authorized': active and charging → maps to ACTIVE
- * - 'paused': temporarily suspended → maps to PAUSED
- * - 'cancelled': ended by user or system → maps to CANCELED
- * - 'expired': ended due to time or failures → maps to EXPIRED
+ * Supported statuses:
+ * - 'authorized' → ACTIVE
+ * - 'pending' → PENDING
+ * - 'paused' → PAUSED
+ * - 'cancelled' → CANCELED
+ * - 'expired' → EXPIRED
+ *
+ * TODO (EP-001 T-027): Remove this function when Mercado Pago provider is deleted.
  */
 export function mapMercadoPagoStatus(
   mpStatus: string | undefined
@@ -78,10 +81,7 @@ export function mapMercadoPagoStatus(
     case 'expired':
       return SubscriptionStatus.EXPIRED
     default:
-      // TODO (EP-001): This function will be removed when Mercado Pago provider
-      // is removed (T-027). Fallback changed from PAST_DUE to ACTIVE since
-      // PAST_DUE status will be removed (T-026).
-      logger.warn(`Unknown MP status: "${mpStatus}", defaulting to ACTIVE`)
+      logger.warn(`Unknown provider status: "${mpStatus}", defaulting to ACTIVE`)
       return SubscriptionStatus.ACTIVE
   }
 }

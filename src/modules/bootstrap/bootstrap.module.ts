@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { BootstrapController } from '@bootstrap/bootstrap.controller'
+import { RegistrationsController } from '@bootstrap/registrations.controller'
 import { BootstrapService } from '@bootstrap/bootstrap.service'
 import {
   TenantRegistrationRepository,
@@ -34,7 +35,7 @@ import { IngredientModule } from '@ingredients/ingredient.module'
     IngredientModule
   ],
 
-  controllers: [BootstrapController],
+  controllers: [BootstrapController, RegistrationsController],
 
   providers: [
     BootstrapService,

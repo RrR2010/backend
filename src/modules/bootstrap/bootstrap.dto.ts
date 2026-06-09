@@ -26,17 +26,17 @@ export class BootstrapRegisterDto {
   @ApiProperty({ required: false, example: 'pt-BR' })
   @IsOptional()
   @IsString()
-  tenantLocale?: string
+  tenantLocale: string | null = null
 
   @ApiProperty({ required: false, example: 'America/Sao_Paulo' })
   @IsOptional()
   @IsString()
-  tenantTimezone?: string
+  tenantTimezone: string | null = null
 
   @ApiProperty({ required: false, example: 'pt' })
   @IsOptional()
   @IsString()
-  tenantLanguage?: string
+  tenantLanguage: string | null = null
 
   @ApiProperty({ example: 'Loja Centro' })
   @IsString()
@@ -53,7 +53,7 @@ export class BootstrapRegisterDto {
   @ApiProperty({ required: false, enum: TenantSiteType, example: 'FACTORY' })
   @IsOptional()
   @IsEnum(TenantSiteType)
-  tenantSiteType?: TenantSiteType
+  tenantSiteType: TenantSiteType | null = null
 
   @ApiProperty({ example: 'Joao da Silva' })
   @IsString()
@@ -62,17 +62,17 @@ export class BootstrapRegisterDto {
   @ApiProperty({ required: false, example: 'Joao' })
   @IsOptional()
   @IsString()
-  displayName?: string
+  displayName: string | null = null
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsDateString()
-  dateOfBirth?: string
+  dateOfBirth: string | null = null
 
   @ApiProperty({ required: false, enum: Gender })
   @IsOptional()
   @IsEnum(Gender)
-  gender?: Gender
+  gender: Gender | null = null
 
   @ApiProperty({ required: false, example: '123.456.789-00' })
   @IsOptional()
@@ -133,9 +133,13 @@ export class BootstrapStatusResponseDto {
   @ApiProperty({ enum: RegistrationState })
   state!: RegistrationState
 
-  static from(state: RegistrationState): BootstrapStatusResponseDto {
+  @ApiProperty({ nullable: true, description: 'Tenant ID, available when state is PROVISIONED' })
+  tenantId!: string | null
+
+  static from(state: RegistrationState, tenantId: string | null = null): BootstrapStatusResponseDto {
     const dto = new BootstrapStatusResponseDto()
     dto.state = state
+    dto.tenantId = tenantId
     return dto
   }
 }

@@ -72,7 +72,6 @@ export enum SubscriptionStatus {
   PENDING = 'PENDING',
   TRIALING = 'TRIALING',
   ACTIVE = 'ACTIVE',
-  PAST_DUE = 'PAST_DUE',
   GRACE = 'GRACE',
   PAUSED = 'PAUSED',
   CANCELED = 'CANCELED',

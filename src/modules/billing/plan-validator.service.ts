@@ -300,17 +300,6 @@ export class PlanValidatorService {
       }
     }
 
-    if (status === SubscriptionStatus.PAST_DUE) {
-      return {
-        hasAccess: true,
-        isDegraded: true,
-        restrictions: ['read_only_mode'],
-        subscriptionStatus: status,
-        graceEndsAt: null,
-        message: 'Payment is overdue. Some features may be restricted.'
-      }
-    }
-
     if (status === SubscriptionStatus.GRACE) {
       const isGraceExpired =
         subscription.graceEndsAt !== null &&

@@ -345,12 +345,12 @@ describe('Tenant Impersonation E2E (EPIC_010)', () => {
   })
 
   // ================================================================
-  // Test: PAST_DUE subscription returns 403
+  // Test: EXPIRED subscription returns 403
   // ================================================================
-  it('should return 403 for PAST_DUE subscription', async () => {
+  it('should return 403 for EXPIRED subscription', async () => {
     const adminUserId = crypto.randomUUID()
-    const pastDueTenantId = await createTestTenant({
-      subscriptionStatus: 'PAST_DUE',
+    const expiredTenantId = await createTestTenant({
+      subscriptionStatus: 'EXPIRED',
     })
     await createPlatformUser(adminUserId, [PlatformRole.ADMIN])
 
@@ -365,9 +365,9 @@ describe('Tenant Impersonation E2E (EPIC_010)', () => {
     await supertest(app.getHttpServer())
       .post('/tenant-nutrients')
       .set('Cookie', `accessToken=${token}`)
-      .set('X-Tenant-Id', pastDueTenantId)
+      .set('X-Tenant-Id', expiredTenantId)
       .send({
-        tenantId: pastDueTenantId,
+        tenantId: expiredTenantId,
         name: 'Should Fail',
         unit: 'G',
         category: 'OTHER',

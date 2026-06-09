@@ -115,10 +115,6 @@ export class Subscription {
     return this.status === SubscriptionStatus.ACTIVE
   }
 
-  isPastDue(): boolean {
-    return this.status === SubscriptionStatus.PAST_DUE
-  }
-
   isInGracePeriod(): boolean {
     return this.status === SubscriptionStatus.GRACE
   }
@@ -139,7 +135,6 @@ export class Subscription {
     return (
       this.isActive() ||
       this.isPending() ||
-      this.isPastDue() ||
       this.isInGracePeriod()
     )
   }

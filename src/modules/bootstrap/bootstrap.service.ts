@@ -211,6 +211,15 @@ export class BootstrapService {
       'http://localhost:3000'
     )
 
+    // Configure Asaas checkout callback URLs
+    // The success URL uses ASAAS_CHECKOUT_SUCCESS_URL with the registration
+    // externalRef so the frontend can poll for provisioning status.
+    const checkoutSuccessUrl =
+      this.configService.get<string>(
+        'ASAAS_CHECKOUT_SUCCESS_URL',
+        `${frontendUrl}/register/success`
+      ) + `?ref=${registration.externalRef}`
+
     const providerInput: {
       planType: PlanType
       payerEmail: string
@@ -227,7 +236,7 @@ export class BootstrapService {
       payerName: dto.fullName.trim(),
       reason: `Plano ${dto.planType}`,
       externalRef: registration.id.value,
-      backUrlSuccess: `${frontendUrl}/bootstrap/success`,
+      backUrlSuccess: checkoutSuccessUrl,
       backUrlPending: `${frontendUrl}/bootstrap/pending`,
       backUrlFailure: `${frontendUrl}/bootstrap/failure`,
       providerCustomerId: registration.providerCustomerId ?? null
@@ -1018,8 +1027,7 @@ export class BootstrapService {
     // Step 1: Construct fake webhook payload and send through the
     // real webhook pipeline to test the signature validation,
     // status fetching, and deduplication logic.
-    // TODO (EP-001): Adapt to Asaas webhook format when implementing
-    // the full Asaas flow. Currently uses MP-like payload.
+    // TODO (EP-001 T-027): Adapt to Asaas webhook format when MP provider is removed.
     const fakeBody = {
       type: 'subscription_preapproval',
       data: { id: registration.subscriptionId }
@@ -1074,6 +1082,97 @@ export class BootstrapService {
     }
 
     await this.handleApprovedSubscription(registration, ctx)
+  }
+
+  // --------------- Asaas Webhook Handler ---------------
+
+  /**
+   * Processes a PAYMENT_CONFIRMED webhook from Asaas.
+   * Finds the registration by provider subscription ID and triggers
+   * tenant provisioning if the registration is in PENDING or APPROVED state.
+   * Idempotent: skips if already PROVISIONED.
+   *
+   * Called by the webhook service when Asaas sends PAYMENT_CONFIRMED event.
+   */
+  async processPaymentConfirmed(
+    providerSubscriptionId: string,
+    ctx: RequestContext
+  ): Promise<{ processed: boolean }> {
+    this.logger.log('Processing PAYMENT_CONFIRMED webhook', {
+      providerSubscriptionId
+    })
+
+    // Find registration by provider subscription ID
+    const registration = await this.registrationRepo.findBySubscriptionId(
+      providerSubscriptionId,
+      ctx
+    )
+
+    if (!registration) {
+      this.logger.warn('PAYMENT_CONFIRMED for unknown registration', {
+        providerSubscriptionId
+      })
+      return { processed: false }
+    }
+
+    // Idempotency: skip if already PROVISIONED or in provisioning
+    if (
+      registration.state === RegistrationState.PROVISIONED ||
+      registration.state === RegistrationState.PROVISIONING
+    ) {
+      this.logger.debug('Registration already processed', {
+        registrationId: registration.id.value,
+        state: registration.state
+      })
+      return { processed: false }
+    }
+
+    // Check if registration has expired
+    if (
+      registration.state === RegistrationState.PENDING &&
+      registration.expiresAt < new Date()
+    ) {
+      registration.markExpired()
+      await this.registrationRepo.save(registration, ctx)
+      this.logger.warn(
+        'Registration expired before payment confirmation',
+        {
+          registrationId: registration.id.value
+        }
+      )
+      return { processed: false }
+    }
+
+    // Mark as approved (if still PENDING) and trigger provisioning
+    if (registration.state === RegistrationState.PENDING) {
+      registration.markApproved()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id.value,
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.SUBSCRIPTION_AUTHORIZED,
+          before: { state: RegistrationState.PENDING },
+          after: {
+            state: RegistrationState.APPROVED,
+            providerSubscriptionId
+          },
+          description: null
+        },
+        ctx
+      )
+    }
+
+    // Trigger provisioning (handleApprovedSubscription handles the
+    // PENDING/APPROVED → PROVISIONING → PROVISIONED flow)
+    await this.handleApprovedSubscription(registration, ctx)
+
+    return { processed: true }
   }
 
   // --------------- Onboarding Webhook Handler ---------------
@@ -1188,6 +1287,59 @@ export class BootstrapService {
   }
 
   // --------------- Session Handoff ---------------
+
+  /**
+   * Polls registration status by externalRef.
+   * Used by the frontend after checkout redirect to poll for provisioning completion.
+   * This endpoint is unauthenticated — externalRef serves as a one-time token.
+   */
+  async getStatusByExternalRef(externalRef: string): Promise<BootstrapStatusResponseDto> {
+    const ctx = this.platformCtx
+
+    const registration = await this.registrationRepo.findByExternalRef(
+      externalRef,
+      ctx
+    )
+
+    if (!registration) {
+      throw new RegistrationNotFoundError(externalRef)
+    }
+
+    // Check expiry
+    // This GET endpoint mutates state (marks expired registrations) to avoid
+    // a separate cleanup cron. Acceptable trade-off for simplicity.
+    if (
+      registration.state === RegistrationState.PENDING &&
+      registration.expiresAt < new Date()
+    ) {
+      registration.markExpired()
+      await this.registrationRepo.save(registration, ctx)
+
+      await this.auditLogService.create(
+        {
+          userId: 'system',
+          tenantId: null,
+          entityName: 'TenantRegistration',
+          entityId: registration.id.value,
+          ipAddress: null,
+          userAgent: null,
+          action: BOOTSTRAP_AUDIT_ACTIONS.REGISTRATION_EXPIRED,
+          before: { state: RegistrationState.PENDING },
+          after: { state: RegistrationState.EXPIRED },
+          description: null
+        },
+        ctx
+      )
+    }
+
+    // Return tenantId only when PROVISIONED
+    const tenantId =
+      registration.state === RegistrationState.PROVISIONED
+        ? registration.provisionedTenantId
+        : null
+
+    return BootstrapStatusResponseDto.from(registration.state, tenantId)
+  }
 
   async getStatus(registrationId: string): Promise<BootstrapStatusResponseDto> {
     const ctx = this.platformCtx

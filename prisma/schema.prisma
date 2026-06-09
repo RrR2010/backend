@@ -163,7 +163,6 @@ enum PlanType {
 enum SubscriptionStatus {
   PENDING
   ACTIVE
-  PAST_DUE
   GRACE
   PAUSED
   CANCELED
@@ -180,24 +179,24 @@ enum ActionStatus {
 // ============== TENANT ==============
 
 model Tenant {
-  id          String      @id @unique @default(uuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  systemState SystemState @default(ACTIVE)
-  name        String
-  slug        String?
-  website     String?     @unique
-  locale      String
-  timezone    String
-  language    String
-  logoUrl     String?
-  settings    Json?
+  id                 String      @id @unique @default(uuid())
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  systemState        SystemState @default(ACTIVE)
+  name               String
+  slug               String?
+  website            String?     @unique
+  locale             String
+  timezone           String
+  language           String
+  logoUrl            String?
+  settings           Json?
   providerCustomerId String?
 
-  memberships TenantMembership[]
-  sessions    Session[]
-  sites       TenantSite[]
-  auditLogs   AuditLog[]
+  memberships  TenantMembership[]
+  sessions     Session[]
+  sites        TenantSite[]
+  auditLogs    AuditLog[]
   subscription Subscription?
 
   // Products domain
@@ -205,16 +204,16 @@ model Tenant {
   formulationVersions FormulationVersion[]
 
   // Ingredient domain
-  tenantAllergens     TenantAllergen[]
-  tenantNutrients     TenantNutrient[]
-  functionalGroups    FunctionalGroup[]
-  companies           Company[]
-  technicalInfoSources TechnicalInfoSource[]
-  ingredients         Ingredient[]
-  ingredientAllergens IngredientTenantAllergen[]
-  ingredientNutrients IngredientTenantNutrient[]
-  ingredientBaseAllergens IngredientBaseAllergen[]
-  ingredientBaseNutrients IngredientBaseNutrient[]
+  tenantAllergens              TenantAllergen[]
+  tenantNutrients              TenantNutrient[]
+  functionalGroups             FunctionalGroup[]
+  companies                    Company[]
+  technicalInfoSources         TechnicalInfoSource[]
+  ingredients                  Ingredient[]
+  ingredientAllergens          IngredientTenantAllergen[]
+  ingredientNutrients          IngredientTenantNutrient[]
+  ingredientBaseAllergens      IngredientBaseAllergen[]
+  ingredientBaseNutrients      IngredientBaseNutrient[]
   ingredientRegulatoryProfiles IngredientRegulatoryProfile[]
   ingredientLabelingProfiles   IngredientLabelingProfile[]
   ingredientTechnicalProfiles  IngredientTechnicalProfile[]
@@ -400,22 +399,22 @@ model MemberProfileDocument {
 // ============== AUDIT LOG ==============
 
 model AuditLog {
-  id          String   @id @unique @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  tenantId    String?
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
-  entityName  String
-  entityId    String
-  ipAddress   String?
-  userAgent   String?
-  action      String
-  before      Json?
-  after       Json?
-  description               String?
-  tenantImpersonationId     String?   @map("tenant_impersonation_id")
+  id                    String   @id @unique @default(uuid())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  userId                String?
+  user                  User?    @relation(fields: [userId], references: [id])
+  tenantId              String?
+  tenant                Tenant?  @relation(fields: [tenantId], references: [id])
+  entityName            String
+  entityId              String
+  ipAddress             String?
+  userAgent             String?
+  action                String
+  before                Json?
+  after                 Json?
+  description           String?
+  tenantImpersonationId String?  @map("tenant_impersonation_id")
 
   @@index([tenantId])
   @@index([userId])
@@ -427,37 +426,37 @@ model AuditLog {
 // ============== TENANT REGISTRATION ==============
 
 model TenantRegistration {
-  id                    String   @id @default(uuid())
-  externalRef           String   @unique
+  id                      String            @id @default(uuid())
+  externalRef             String            @unique
   // Valid values defined in RegistrationState enum (backend/src/shared/enums.ts)
-  state RegistrationState @default(PENDING)
-  paymentId             String?  @unique
-  subscriptionId        String?  @unique
-  providerCustomerId    String?
-  expiresAt             DateTime
-  handoffTokenHash      String?  @unique
-  handoffTokenExpiresAt DateTime?
-  handoffTokenUsedAt    DateTime?
-  tenantData            Json
-  tenantSiteData        Json
-  userData              Json
-  identityData          Json
-  profileData           Json
+  state                   RegistrationState @default(PENDING)
+  paymentId               String?           @unique
+  subscriptionId          String?           @unique
+  providerCustomerId      String?
+  expiresAt               DateTime
+  handoffTokenHash        String?           @unique
+  handoffTokenExpiresAt   DateTime?
+  handoffTokenUsedAt      DateTime?
+  tenantData              Json
+  tenantSiteData          Json
+  userData                Json
+  identityData            Json
+  profileData             Json
   provisionedUserId       String?
   provisionedTenantId     String?
   provisionedMembershipId String?
   provisionedProfileId    String?
   provisionedIdentityId   String?
-  provisionedTenantSiteId  String?
-  paymentStatus         String?
-  paymentStatusDetail   String?
-  webhookProcessedAt    DateTime?
-  approvedAt            DateTime?
-  provisionedAt         DateTime?
-  rejectedAt            DateTime?
-  expiredAt             DateTime?
-  createdAt             DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime @updatedAt @db.Timestamptz(3)
+  provisionedTenantSiteId String?
+  paymentStatus           String?
+  paymentStatusDetail     String?
+  webhookProcessedAt      DateTime?
+  approvedAt              DateTime?
+  provisionedAt           DateTime?
+  rejectedAt              DateTime?
+  expiredAt               DateTime?
+  createdAt               DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime          @updatedAt @db.Timestamptz(3)
 
   @@index([state])
   @@index([expiresAt])
@@ -487,26 +486,26 @@ model TenantSite {
 // ============== BILLING ==============
 
 model Plan {
-  id                  String   @id @default(uuid())
-  type                String   @unique
+  id                  String  @id @default(uuid())
+  type                String  @unique
   name                String
   description         String?
   basePrice           Int
-  currency            String   @default("BRL")
+  currency            String  @default("BRL")
   includedUsers       Int
   additionalUserPrice Int?
   maxProducts         Int?
   maxRevisions        Int?
 
-  features            Json
-  isPublic            Boolean  @default(true)
-  isActive            Boolean  @default(true)
+  features              Json
+  isPublic              Boolean @default(true)
+  isActive              Boolean @default(true)
   // Phase 5: Added for validation logic (allowsAdditionalUsers check in subscription service).
   // This field deviates from EPIC_007 schema which did not originally include it.
   allowsAdditionalUsers Boolean @default(false)
 
-  createdAt           DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@index([type])
   @@index([isPublic])
@@ -514,42 +513,42 @@ model Plan {
 }
 
 model Subscription {
-  id                     String   @id @default(uuid())
-  tenantId               String   @unique
-  tenant                 Tenant   @relation(fields: [tenantId], references: [id])
+  id       String @id @default(uuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-  planType               String
-  status                 String
-  currency               String   @default("BRL")
+  planType String
+  status   String
+  currency String @default("BRL")
 
-  provider               String   @default("mercadopago")
-  providerSubscriptionId String   @unique
+  provider               String  @default("free")
+  providerSubscriptionId String  @unique
   providerCustomerId     String?
 
-  basePriceSnapshot      Int
+  basePriceSnapshot           Int
   additionalUserPriceSnapshot Int?
-  includedUsersSnapshot   Int
+  includedUsersSnapshot       Int
 
-  additionalUsers        Int      @default(0)
-  currentAmount          Int
-  nextBillingAmount      Int?
+  additionalUsers   Int  @default(0)
+  currentAmount     Int
+  nextBillingAmount Int?
 
-  currentPeriodStart     DateTime?
-  currentPeriodEnd       DateTime?
-  graceEndsAt            DateTime?
-  cancelAtPeriodEnd      Boolean  @default(false)
-  pendingPlanType        String?
-  pendingEffectiveFrom   DateTime?
-  pendingNewAmount       Int?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  graceEndsAt          DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  pendingPlanType      String?
+  pendingEffectiveFrom DateTime?
+  pendingNewAmount     Int?
 
-  failedPaymentCount     Int      @default(0)
-  lastPaymentAt          DateTime?
-  lastWebhookAt          DateTime?
+  failedPaymentCount Int       @default(0)
+  lastPaymentAt      DateTime?
+  lastWebhookAt      DateTime?
 
-  createdAt              DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt              DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  events                 SubscriptionEvent[]
+  events SubscriptionEvent[]
 
   @@index([status])
   @@index([planType])
@@ -558,18 +557,18 @@ model Subscription {
 }
 
 model SubscriptionEvent {
-  id                   String       @id @default(uuid())
-  subscriptionId       String
-  subscription         Subscription @relation(fields: [subscriptionId], references: [id])
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
 
-  providerEventId      String?      @unique
-  providerEventType    String
-  actionStatus         ActionStatus @default(COMPLETED)
-  statusBefore         String?
-  statusAfter          String?
-  payload              Json
+  providerEventId   String?      @unique
+  providerEventType String
+  actionStatus      ActionStatus @default(COMPLETED)
+  statusBefore      String?
+  statusAfter       String?
+  payload           Json
 
-  createdAt            DateTime     @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([subscriptionId])
   @@index([providerEventType])
@@ -579,15 +578,15 @@ model SubscriptionEvent {
 // ============== PRODUCTS DOMAIN ==============
 
 model Product {
-  id            String        @id @default(uuid())
-  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
-  systemState   SystemState   @default(ACTIVE)
-  tenantId      String
-  tenant        Tenant        @relation(fields: [tenantId], references: [id])
-  name          String
-  code          String
-  status        ProductStatus @default(DRAFT)
+  id          String        @id @default(uuid())
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  systemState SystemState   @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant        @relation(fields: [tenantId], references: [id])
+  name        String
+  code        String
+  status      ProductStatus @default(DRAFT)
 
   commercialName    String?
   denomination      String?
@@ -651,16 +650,16 @@ model FormulationVersion {
 }
 
 model FormulationRevision {
-  id                     String               @id @default(uuid())
-  createdAt              DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt              DateTime             @updatedAt @db.Timestamptz(3)
-  systemState            SystemState          @default(ACTIVE)
-  formulationVersionId   String
-  formulationVersion     FormulationVersion   @relation(fields: [formulationVersionId], references: [id])
-  revision               Int
-  notes                  String?
-  nutritionalSummary     Json?
-  complianceSummary      Json?
+  id                   String             @id @default(uuid())
+  createdAt            DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime           @updatedAt @db.Timestamptz(3)
+  systemState          SystemState        @default(ACTIVE)
+  formulationVersionId String
+  formulationVersion   FormulationVersion @relation(fields: [formulationVersionId], references: [id])
+  revision             Int
+  notes                String?
+  nutritionalSummary   Json?
+  complianceSummary    Json?
 
   items FormulationItem[]
 
@@ -669,15 +668,15 @@ model FormulationRevision {
 }
 
 model FormulationItem {
-  id                    String               @id @default(uuid())
-  createdAt             DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime             @updatedAt @db.Timestamptz(3)
+  id                    String              @id @default(uuid())
+  createdAt             DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime            @updatedAt @db.Timestamptz(3)
   formulationRevisionId String
-  formulationRevision   FormulationRevision  @relation(fields: [formulationRevisionId], references: [id])
+  formulationRevision   FormulationRevision @relation(fields: [formulationRevisionId], references: [id])
   ingredientId          String
-  ingredient            Ingredient           @relation(fields: [ingredientId], references: [id])
+  ingredient            Ingredient          @relation(fields: [ingredientId], references: [id])
   quantity              Decimal
-  unit                  String               @default("g")
+  unit                  String              @default("g")
 
   @@index([formulationRevisionId])
   @@index([ingredientId])
@@ -699,14 +698,14 @@ model BaseAllergen {
 }
 
 model BaseNutrient {
-  id            String          @id @unique @default(uuid())
-  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
-  systemState   SystemState     @default(ACTIVE)
-  name          String          @unique
-  unit          NutrientUnit
-  category      NutrientCategory
-  sortOrder     Int             @default(0)
+  id          String           @id @unique @default(uuid())
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @db.Timestamptz(3)
+  systemState SystemState      @default(ACTIVE)
+  name        String           @unique
+  unit        NutrientUnit
+  category    NutrientCategory
+  sortOrder   Int              @default(0)
 
   ingredientNutrients IngredientBaseNutrient[]
 }
@@ -714,72 +713,72 @@ model BaseNutrient {
 // ============== INGREDIENT DOMAIN ==============
 
 model TenantAllergen {
-  id            String   @id @unique @default(uuid())
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+  id            String      @id @unique @default(uuid())
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(3)
   systemState   SystemState @default(ACTIVE)
   tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
   name          String
   category      String?
   regulatoryRef String?
-  sortOrder     Int      @default(0)
-  isActive      Boolean  @default(true)
+  sortOrder     Int         @default(0)
+  isActive      Boolean     @default(true)
 
-  ingredients   IngredientTenantAllergen[]
+  ingredients IngredientTenantAllergen[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
 }
 
 model TenantNutrient {
-  id            String          @id @unique @default(uuid())
-  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
-  systemState   SystemState     @default(ACTIVE)
-  tenantId      String
-  tenant        Tenant          @relation(fields: [tenantId], references: [id])
-  name          String
-  unit          NutrientUnit
-  category      NutrientCategory
-  sortOrder     Int             @default(0)
-  isActive      Boolean         @default(true)
+  id          String           @id @unique @default(uuid())
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @db.Timestamptz(3)
+  systemState SystemState      @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  name        String
+  unit        NutrientUnit
+  category    NutrientCategory
+  sortOrder   Int              @default(0)
+  isActive    Boolean          @default(true)
 
-  ingredients   IngredientTenantNutrient[]
+  ingredients IngredientTenantNutrient[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
 }
 
 model FunctionalGroup {
-  id            String   @id @unique @default(uuid())
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
-  systemState   SystemState @default(ACTIVE)
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  name          String
-  code          String?
-  sortOrder     Int      @default(0)
-  isActive      Boolean  @default(true)
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  name        String
+  code        String?
+  sortOrder   Int         @default(0)
+  isActive    Boolean     @default(true)
 
-  ingredients   Ingredient[]
+  ingredients Ingredient[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
 }
 
 model Company {
-  id            String   @id @unique @default(uuid())
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
-  systemState   SystemState @default(ACTIVE)
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  name          String
-  type          String
-  contactInfo   String?
-  taxId         String?
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  name        String
+  type        String
+  contactInfo String?
+  taxId       String?
 
   manufacturedIngredients Ingredient[] @relation("ManufacturerIngredients")
   suppliedIngredients     Ingredient[] @relation("SupplierIngredients")
@@ -800,33 +799,33 @@ model TechnicalInfoSource {
   url           String?
   documentRef   String?
 
-  ingredients   Ingredient[]
+  ingredients Ingredient[]
 
   @@index([tenantId])
 }
 
 model Ingredient {
-  id                String                   @id @unique @default(uuid())
-  createdAt         DateTime                 @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime                 @updatedAt @db.Timestamptz(3)
-  systemState       SystemState              @default(ACTIVE)
-  tenantId          String
-  tenant            Tenant                   @relation(fields: [tenantId], references: [id])
-  code              String
-  internalName      String
-  commercialName    String?
-  saleDenomination   String?
-  functionalGroupId String?
-  functionalGroup   FunctionalGroup?         @relation(fields: [functionalGroupId], references: [id])
-  ingredientFunction IngredientFunctionType
-  notes             String?
-  manufacturerId    String?
-  manufacturer      Company?                 @relation("ManufacturerIngredients", fields: [manufacturerId], references: [id])
-  supplierId        String?
-  supplier          Company?                 @relation("SupplierIngredients", fields: [supplierId], references: [id])
-  technicalSourceId String?
-  technicalSource   TechnicalInfoSource?     @relation(fields: [technicalSourceId], references: [id])
-  usageIndication   String?
+  id                  String                 @id @unique @default(uuid())
+  createdAt           DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime               @updatedAt @db.Timestamptz(3)
+  systemState         SystemState            @default(ACTIVE)
+  tenantId            String
+  tenant              Tenant                 @relation(fields: [tenantId], references: [id])
+  code                String
+  internalName        String
+  commercialName      String?
+  saleDenomination    String?
+  functionalGroupId   String?
+  functionalGroup     FunctionalGroup?       @relation(fields: [functionalGroupId], references: [id])
+  ingredientFunction  IngredientFunctionType
+  notes               String?
+  manufacturerId      String?
+  manufacturer        Company?               @relation("ManufacturerIngredients", fields: [manufacturerId], references: [id])
+  supplierId          String?
+  supplier            Company?               @relation("SupplierIngredients", fields: [supplierId], references: [id])
+  technicalSourceId   String?
+  technicalSource     TechnicalInfoSource?   @relation(fields: [technicalSourceId], references: [id])
+  usageIndication     String?
   ingredientsListDesc String?
 
   tenantAllergens   IngredientTenantAllergen[]
@@ -847,16 +846,16 @@ model Ingredient {
 }
 
 model IngredientTenantAllergen {
-  id            String               @id @unique @default(uuid())
-  createdAt     DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
-  tenantId      String
-  tenant        Tenant               @relation(fields: [tenantId], references: [id])
-  ingredientId  String
-  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id])
-  allergenId    String
-  allergen      TenantAllergen       @relation(fields: [allergenId], references: [id])
-  relationType  AllergenRelationType
+  id           String               @id @unique @default(uuid())
+  createdAt    DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime             @updatedAt @db.Timestamptz(3)
+  tenantId     String
+  tenant       Tenant               @relation(fields: [tenantId], references: [id])
+  ingredientId String
+  ingredient   Ingredient           @relation(fields: [ingredientId], references: [id])
+  allergenId   String
+  allergen     TenantAllergen       @relation(fields: [allergenId], references: [id])
+  relationType AllergenRelationType
 
   @@unique([tenantId, ingredientId, allergenId, relationType])
   @@index([tenantId])
@@ -865,16 +864,16 @@ model IngredientTenantAllergen {
 }
 
 model IngredientTenantNutrient {
-  id            String   @id @unique @default(uuid())
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  ingredientId  String
-  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
-  nutrientId    String
-  nutrient      TenantNutrient @relation(fields: [nutrientId], references: [id])
-  value         Decimal?
+  id           String         @id @unique @default(uuid())
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+  tenantId     String
+  tenant       Tenant         @relation(fields: [tenantId], references: [id])
+  ingredientId String
+  ingredient   Ingredient     @relation(fields: [ingredientId], references: [id])
+  nutrientId   String
+  nutrient     TenantNutrient @relation(fields: [nutrientId], references: [id])
+  value        Decimal?
 
   @@unique([tenantId, ingredientId, nutrientId])
   @@index([tenantId])
@@ -883,16 +882,16 @@ model IngredientTenantNutrient {
 }
 
 model IngredientBaseAllergen {
-  id            String               @id @unique @default(uuid())
-  createdAt     DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
-  tenantId      String
-  tenant        Tenant               @relation(fields: [tenantId], references: [id])
-  ingredientId  String
-  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id])
+  id             String               @id @unique @default(uuid())
+  createdAt      DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime             @updatedAt @db.Timestamptz(3)
+  tenantId       String
+  tenant         Tenant               @relation(fields: [tenantId], references: [id])
+  ingredientId   String
+  ingredient     Ingredient           @relation(fields: [ingredientId], references: [id])
   baseAllergenId String
-  baseAllergen  BaseAllergen         @relation(fields: [baseAllergenId], references: [id])
-  relationType  AllergenRelationType
+  baseAllergen   BaseAllergen         @relation(fields: [baseAllergenId], references: [id])
+  relationType   AllergenRelationType
 
   @@unique([tenantId, ingredientId, baseAllergenId])
   @@index([tenantId])
@@ -901,13 +900,13 @@ model IngredientBaseAllergen {
 }
 
 model IngredientBaseNutrient {
-  id             String   @id @unique @default(uuid())
-  createdAt      DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+  id             String       @id @unique @default(uuid())
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
   tenantId       String
-  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  tenant         Tenant       @relation(fields: [tenantId], references: [id])
   ingredientId   String
-  ingredient     Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
   baseNutrientId String
   baseNutrient   BaseNutrient @relation(fields: [baseNutrientId], references: [id])
   value          Decimal?
@@ -919,66 +918,66 @@ model IngredientBaseNutrient {
 }
 
 model IngredientRegulatoryProfile {
-  id                    String            @id @unique @default(uuid())
-  createdAt             DateTime          @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime          @updatedAt @db.Timestamptz(3)
-  systemState           SystemState       @default(ACTIVE)
-  tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id])
-  ingredientId          String            @unique
-  ingredient            Ingredient        @relation(fields: [ingredientId], references: [id])
-  hasRtiq               Boolean           @default(false)
-  isGmo                 Boolean           @default(false)
-  gmoIngredient         String?
-  gmoDonorSpecies       String?
-  gmoPercentage         Decimal?
-  isIrradiated          Boolean           @default(false)
-  irradiatedIngredient  String?
-  containsLactose       Boolean           @default(false)
-  containsGluten        Boolean           @default(false)
-  containsAspartame     Boolean           @default(false)
-  flavorOriginType      FlavorOriginType?
-  colorantOriginType    ColorantOriginType?
+  id                   String              @id @unique @default(uuid())
+  createdAt            DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime            @updatedAt @db.Timestamptz(3)
+  systemState          SystemState         @default(ACTIVE)
+  tenantId             String
+  tenant               Tenant              @relation(fields: [tenantId], references: [id])
+  ingredientId         String              @unique
+  ingredient           Ingredient          @relation(fields: [ingredientId], references: [id])
+  hasRtiq              Boolean             @default(false)
+  isGmo                Boolean             @default(false)
+  gmoIngredient        String?
+  gmoDonorSpecies      String?
+  gmoPercentage        Decimal?
+  isIrradiated         Boolean             @default(false)
+  irradiatedIngredient String?
+  containsLactose      Boolean             @default(false)
+  containsGluten       Boolean             @default(false)
+  containsAspartame    Boolean             @default(false)
+  flavorOriginType     FlavorOriginType?
+  colorantOriginType   ColorantOriginType?
 
   @@index([tenantId])
   @@index([ingredientId])
 }
 
 model IngredientLabelingProfile {
-  id                                        String   @id @unique @default(uuid())
-  createdAt                                 DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt                                 DateTime @updatedAt @db.Timestamptz(3)
-  systemState                               SystemState @default(ACTIVE)
-  tenantId                                  String
-  tenant                                    Tenant   @relation(fields: [tenantId], references: [id])
-  ingredientId                              String   @unique
-  ingredient                                Ingredient @relation(fields: [ingredientId], references: [id])
-  containsAddedSugars                       Boolean  @default(false)
-  containsIngredientWithAddedSugars         Boolean  @default(false)
-  containsNaturallyOccurringSugarSubstitutes Boolean @default(false)
-  usesProcessingThatIncreasesSugars         Boolean  @default(false)
-  containsAddedFatsOrOils                   Boolean  @default(false)
-  containsButterOrMargarine                 Boolean  @default(false)
-  containsDairyCream                        Boolean  @default(false)
-  containsIngredientsWithFatsOrCream        Boolean  @default(false)
+  id                                         String      @id @unique @default(uuid())
+  createdAt                                  DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt                                  DateTime    @updatedAt @db.Timestamptz(3)
+  systemState                                SystemState @default(ACTIVE)
+  tenantId                                   String
+  tenant                                     Tenant      @relation(fields: [tenantId], references: [id])
+  ingredientId                               String      @unique
+  ingredient                                 Ingredient  @relation(fields: [ingredientId], references: [id])
+  containsAddedSugars                        Boolean     @default(false)
+  containsIngredientWithAddedSugars          Boolean     @default(false)
+  containsNaturallyOccurringSugarSubstitutes Boolean     @default(false)
+  usesProcessingThatIncreasesSugars          Boolean     @default(false)
+  containsAddedFatsOrOils                    Boolean     @default(false)
+  containsButterOrMargarine                  Boolean     @default(false)
+  containsDairyCream                         Boolean     @default(false)
+  containsIngredientsWithFatsOrCream         Boolean     @default(false)
 
   @@index([tenantId])
   @@index([ingredientId])
 }
 
 model IngredientTechnicalProfile {
-  id            String   @id @unique @default(uuid())
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
-  systemState   SystemState @default(ACTIVE)
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  ingredientId  String   @unique
-  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
-  pac           Decimal?
-  pod           Decimal?
-  totalSolids   Decimal?
-  ashContent    Decimal?
+  id           String      @id @unique @default(uuid())
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime    @updatedAt @db.Timestamptz(3)
+  systemState  SystemState @default(ACTIVE)
+  tenantId     String
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  ingredientId String      @unique
+  ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
+  pac          Decimal?
+  pod          Decimal?
+  totalSolids  Decimal?
+  ashContent   Decimal?
 
   @@index([tenantId])
   @@index([ingredientId])
