@@ -227,7 +227,6 @@ export class BootstrapService {
       reason: string
       externalRef: string
       backUrlSuccess: string
-      backUrlPending: string
       backUrlFailure: string
       providerCustomerId: string | null
     } = {
@@ -237,7 +236,6 @@ export class BootstrapService {
       reason: `Plano ${dto.planType}`,
       externalRef: registration.id.value,
       backUrlSuccess: checkoutSuccessUrl,
-      backUrlPending: `${frontendUrl}/bootstrap/pending`,
       backUrlFailure: `${frontendUrl}/bootstrap/failure`,
       providerCustomerId: registration.providerCustomerId ?? null
     }
@@ -256,7 +254,6 @@ export class BootstrapService {
           providerInput.reason,
           providerInput.externalRef,
           providerInput.backUrlSuccess,
-          providerInput.backUrlPending,
           providerInput.backUrlFailure,
           providerInput.providerCustomerId
         )

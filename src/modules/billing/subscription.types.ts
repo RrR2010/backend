@@ -7,7 +7,6 @@ export interface CreateSubscriptionInput {
   payerEmail: string
   payerName: string
   backUrlSuccess: string
-  backUrlPending: string
   backUrlFailure: string
 }
 

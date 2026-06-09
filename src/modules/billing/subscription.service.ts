@@ -76,7 +76,6 @@ export class SubscriptionService {
     reason: string,
     externalRef: string,
     backUrlSuccess: string,
-    backUrlPending: string,
     backUrlFailure: string,
     providerCustomerId: string | null
   ): Promise<{
@@ -110,7 +109,6 @@ export class SubscriptionService {
       reason,
       externalRef,
       backUrlSuccess,
-      backUrlPending,
       backUrlFailure,
       providerCustomerId: providerCustomerId ?? null
     }
@@ -530,7 +528,6 @@ export class SubscriptionService {
         `Plano ${input.newPlanType}`,
         subscription.id.value,
         `${frontendUrl}/bootstrap/success`,
-        `${frontendUrl}/bootstrap/pending`,
         `${frontendUrl}/bootstrap/failure`,
         null
       )

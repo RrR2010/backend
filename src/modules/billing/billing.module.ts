@@ -16,7 +16,6 @@ import {
 import { PrismaModule } from '@shared/prisma/prisma.module'
 import { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import { FakeSubscriptionProvider } from '@billing/fake-subscription.provider'
-import { MercadopagoSubscriptionProvider } from '@billing/mercadopago-subscription.provider'
 import { AsaasSubscriptionProvider } from '@billing/asaas-subscription.provider'
 import { AsaasApiService } from '@billing/asaas-api.service'
 import { SubscriptionController } from '@billing/subscription.controller'
@@ -53,7 +52,6 @@ import { BootstrapModule } from '@bootstrap/bootstrap.module'
       useClass: PrismaSubscriptionEventRepository
     },
     FakeSubscriptionProvider,
-    MercadopagoSubscriptionProvider,
     AsaasSubscriptionProvider,
     AsaasApiService,
     {
@@ -61,26 +59,23 @@ import { BootstrapModule } from '@bootstrap/bootstrap.module'
       useFactory: (
         config: ConfigService,
         fake: FakeSubscriptionProvider,
-        mp: MercadopagoSubscriptionProvider,
         asaas: AsaasSubscriptionProvider
       ): SubscriptionProvider => {
         const provider = config.get<string>('SUBSCRIPTION_PROVIDER')
         if (!provider) {
           throw new Error(
-            'SUBSCRIPTION_PROVIDER is not configured. Set to "asaas", "mercadopago", or "fake" in .env.dev'
+            'SUBSCRIPTION_PROVIDER is not configured. Set to "asaas" or "fake" in .env.dev'
           )
         }
         if (provider === 'asaas') return asaas
-        if (provider === 'mercadopago') return mp
         if (provider === 'fake') return fake
         throw new Error(
-          `Invalid SUBSCRIPTION_PROVIDER: "${provider}". Must be "asaas", "mercadopago", or "fake"`
+          `Invalid SUBSCRIPTION_PROVIDER: "${provider}". Must be "asaas" or "fake"`
         )
       },
       inject: [
         ConfigService,
         FakeSubscriptionProvider,
-        MercadopagoSubscriptionProvider,
         AsaasSubscriptionProvider
       ]
     }

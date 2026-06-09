@@ -409,7 +409,6 @@ describe('BootstrapService.registerFreePlan', () => {
         expect.any(String),
         expect.any(String),
         expect.any(String),
-        expect.any(String),
         null
       )
     })
