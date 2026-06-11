@@ -34,6 +34,9 @@ import { TenantSiteRepository } from '@tenant-sites/tenant-site.repository'
 import { IdentityRepository } from '@identities/identity.repository'
 import { AuthProviderType } from '@authentication/authentication.types'
 import {
+  OwnerType,
+  AddressType,
+  PhoneType,
   RegistrationState,
   TenantSiteType,
   Gender,
@@ -46,6 +49,7 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { TenantRepository } from '@tenants/tenant.repository'
 import { UserRepository } from '@users/user.repository'
 import { Prisma } from '@prisma/client'
+import { Json } from '@shared/types'
 import type { Request, Response } from 'express'
 import { SubscriptionService } from '@billing/subscription.service'
 import { SubscriptionRepository } from '@billing/subscription.repository'
@@ -53,7 +57,7 @@ import { PlanService } from '@billing/plan.service'
 import { Subscription } from '@billing/subscription.entity'
 import type { SubscriptionProvider } from '@billing/subscription-provider.interface'
 import { SUBSCRIPTION_PROVIDER_TOKEN } from '@billing/billing.constants'
-import { AsaasApiService } from '@billing/asaas-api.service'
+import { AsaasApiService, AsaasCreateCustomerInput } from '@billing/asaas-api.service'
 
 @Injectable()
 export class BootstrapService {
@@ -110,6 +114,30 @@ export class BootstrapService {
     // 5. Build registration data
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30 min expiry
 
+    // 5a. Extract optional address/phone from DTO into JSON blobs
+    const addressData = dto.addressStreet || dto.addressCity
+      ? {
+          street: dto.addressStreet ?? null,
+          streetType: dto.addressStreetType ?? null,
+          number: dto.addressNumber ?? null,
+          complement: dto.addressComplement ?? null,
+          district: dto.addressDistrict ?? null,
+          city: dto.addressCity ?? null,
+          state: dto.addressState ?? null,
+          postalCode: dto.addressPostalCode ?? null,
+          country: dto.addressCountry ?? 'BR'
+        }
+      : null
+
+    const phoneData = dto.phoneNumber
+      ? {
+          countryCode: dto.phoneCountryCode ?? '55',
+          number: dto.phoneNumber,
+          extension: dto.phoneExtension ?? null,
+          isWhatsapp: dto.phoneIsWhatsapp ?? false
+        }
+      : null
+
     const registration = TenantRegistration.create({
       externalRef: crypto.randomUUID(),
       state: RegistrationState.PENDING,
@@ -149,15 +177,16 @@ export class BootstrapService {
         gender: dto.gender ?? null,
         photoUrl: null
       },
-      // TODO(EP-002/Wave4): Extract address/phone from BootstrapRegisterDto and store as JSON blobs
-      addressData: null,
-      phoneData: null,
+      addressData: addressData as Json | null,
+      phoneData: phoneData as Json | null,
       provisionedUserId: null,
       provisionedTenantId: null,
       provisionedMembershipId: null,
       provisionedProfileId: null,
       provisionedIdentityId: null,
       provisionedTenantSiteId: null,
+      provisionedAddressId: null,
+      provisionedPhoneId: null,
       paymentStatus: null,
       paymentStatusDetail: null,
       webhookProcessedAt: null,
@@ -187,13 +216,31 @@ export class BootstrapService {
     if (subscriptionProviderName === 'asaas') {
       const cpfCnpj = dto.cpf ?? normalizedTaxId
       try {
-        const asaasCustomer = await this.asaasApiService.createCustomer({
+        const customerInput: AsaasCreateCustomerInput = {
           name: dto.fullName.trim(),
           cpfCnpj,
           email: dto.email,
           company: dto.tenantSiteLegalName,
           externalReference: registration.id.value
-        })
+        }
+        // Conditionally add optional address/phone fields for Asaas enrichment
+        if (dto.phoneNumber) {
+          customerInput.phone = dto.phoneNumber
+          customerInput.mobilePhone = dto.phoneNumber
+        }
+        if (dto.addressStreetType && dto.addressStreet) {
+          customerInput.address = `${dto.addressStreetType} ${dto.addressStreet}`
+        } else if (dto.addressStreet) {
+          customerInput.address = dto.addressStreet
+        }
+        if (dto.addressNumber) customerInput.addressNumber = dto.addressNumber
+        if (dto.addressComplement) customerInput.complement = dto.addressComplement
+        if (dto.addressDistrict) customerInput.province = dto.addressDistrict
+        if (dto.addressPostalCode) customerInput.postalCode = dto.addressPostalCode
+        if (dto.addressCity) customerInput.city = dto.addressCity
+        if (dto.addressState) customerInput.state = dto.addressState
+        if (dto.addressCountry) customerInput.country = dto.addressCountry
+        const asaasCustomer = await this.asaasApiService.createCustomer(customerInput)
         registration.updateProviderCustomerId(asaasCustomer.id)
         await this.registrationRepo.save(registration, this.platformCtx)
         this.logger.log(
@@ -433,7 +480,9 @@ export class BootstrapService {
       membershipId: provisioningResult.membershipId,
       profileId: provisioningResult.profileId,
       identityId: provisioningResult.identityId,
-      tenantSiteId: provisioningResult.tenantSiteId
+      tenantSiteId: provisioningResult.tenantSiteId,
+      addressId: provisioningResult.addressId,
+      phoneId: provisioningResult.phoneId
     })
     await this.registrationRepo.save(registration, this.platformCtx)
 
@@ -567,6 +616,8 @@ export class BootstrapService {
             provisionedProfileId: result.profileId,
             provisionedIdentityId: result.identityId,
             provisionedTenantSiteId: result.tenantSiteId,
+            provisionedAddressId: result.addressId,
+            provisionedPhoneId: result.phoneId,
             provisionedAt: new Date(),
             updatedAt: new Date()
           }
@@ -877,13 +928,80 @@ export class BootstrapService {
       }
     }
 
+    // 7. Create Address from registration data (if present)
+    const regAddressData = registration.addressData as Record<string, unknown> | null
+    let provisionedAddressId: string | null = null
+    if (regAddressData && regAddressData.street) {
+      provisionedAddressId = crypto.randomUUID()
+      await prisma.address.create({
+        data: {
+          id: provisionedAddressId,
+          ownerId: tenantSiteId,
+          ownerType: OwnerType.TENANT_SITE,
+          tenantId,
+          type: AddressType.BILLING,
+          streetType: (regAddressData.streetType as string) ?? null,
+          street: regAddressData.street as string,
+          number: (regAddressData.number as string) ?? 'S/N',
+          complement: (regAddressData.complement as string) ?? null,
+          district: (regAddressData.district as string) ?? null,
+          city: (regAddressData.city as string) ?? '',
+          state: (regAddressData.state as string) ?? '',
+          postalCode: (regAddressData.postalCode as string) ?? '',
+          country: (regAddressData.country as string) ?? 'BR',
+          isDefault: true,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedAddressId, updatedAt: new Date() }
+        })
+      }
+    }
+
+    // 8. Create Phone from registration data (if present)
+    const regPhoneData = registration.phoneData as Record<string, unknown> | null
+    let provisionedPhoneId: string | null = null
+    if (regPhoneData && regPhoneData.number) {
+      provisionedPhoneId = crypto.randomUUID()
+      await prisma.phone.create({
+        data: {
+          id: provisionedPhoneId,
+          ownerId: tenantSiteId,
+          ownerType: OwnerType.TENANT_SITE,
+          tenantId,
+          type: PhoneType.WHATSAPP,
+          countryCode: (regPhoneData.countryCode as string) ?? '55',
+          number: regPhoneData.number as string,
+          extension: (regPhoneData.extension as string) ?? null,
+          isWhatsapp: (regPhoneData.isWhatsapp as boolean) ?? true,
+          isDefault: true,
+          systemState: SystemState.ACTIVE,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+      if (tx) {
+        await tx.tenantRegistration.update({
+          where: { id: registration.id.value },
+          data: { provisionedPhoneId, updatedAt: new Date() }
+        })
+      }
+    }
+
     return {
       userId,
       tenantId,
       membershipId,
       profileId,
       identityId,
-      tenantSiteId
+      tenantSiteId,
+      addressId: provisionedAddressId,
+      phoneId: provisionedPhoneId
     }
   }
 
@@ -939,6 +1057,8 @@ export class BootstrapService {
           provisionedProfileId: result.profileId,
           provisionedIdentityId: result.identityId,
           provisionedTenantSiteId: result.tenantSiteId,
+          provisionedAddressId: result.addressId,
+          provisionedPhoneId: result.phoneId,
           provisionedAt: new Date(),
           updatedAt: new Date()
         }

@@ -28,6 +28,8 @@ export type TenantRegistrationProps = AuditableProps & {
   provisionedProfileId: string | null
   provisionedIdentityId: string | null
   provisionedTenantSiteId: string | null
+  provisionedAddressId: string | null
+  provisionedPhoneId: string | null
   paymentStatus: string | null
   paymentStatusDetail: string | null
   webhookProcessedAt: Date | null
@@ -161,6 +163,14 @@ export class TenantRegistration extends Auditable(
     return this._props.provisionedTenantSiteId
   }
 
+  get provisionedAddressId(): string | null {
+    return this._props.provisionedAddressId
+  }
+
+  get provisionedPhoneId(): string | null {
+    return this._props.provisionedPhoneId
+  }
+
   get paymentStatus(): string | null {
     return this._props.paymentStatus
   }
@@ -213,6 +223,8 @@ export class TenantRegistration extends Auditable(
     profileId: string
     identityId: string
     tenantSiteId: string
+    addressId?: string | null
+    phoneId?: string | null
   }): void {
     this._props.provisionedUserId = ids.userId
     this._props.provisionedTenantId = ids.tenantId
@@ -220,6 +232,8 @@ export class TenantRegistration extends Auditable(
     this._props.provisionedProfileId = ids.profileId
     this._props.provisionedIdentityId = ids.identityId
     this._props.provisionedTenantSiteId = ids.tenantSiteId
+    this._props.provisionedAddressId = ids.addressId ?? null
+    this._props.provisionedPhoneId = ids.phoneId ?? null
     this._props.state = RegistrationState.PROVISIONED
     this._props.provisionedAt = new Date()
     this.touch()

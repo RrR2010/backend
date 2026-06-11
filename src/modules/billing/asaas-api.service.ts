@@ -15,6 +15,20 @@ export interface AsaasCustomer {
 export interface AsaasCreateCustomerInput {
   name: string
   cpfCnpj: string
+  email: string | null
+  company: string | null
+  externalReference: string | null
+  // Optional address/phone fields for Asaas customer enrichment
+  phone?: string
+  mobilePhone?: string
+  address?: string
+  addressNumber?: string
+  complement?: string
+  province?: string
+  postalCode?: string
+  city?: string
+  state?: string
+  country?: string
 }
 
 export interface AsaasCreateSubscriptionInput {
@@ -23,6 +37,7 @@ export interface AsaasCreateSubscriptionInput {
   value: number
   nextDueDate: string
   cycle: string
+  description: string | null
   externalReference?: string
   callback?: {
     successUrl: string
@@ -130,14 +145,36 @@ export class AsaasApiService {
   // Customers
   // ─────────────────────────────────────────────
 
-  async createCustomer(name: string, cpfCnpj: string): Promise<AsaasCustomer> {
-    this.logger.log(`Creating Asaas customer: ${name}`)
+  async createCustomer(
+    input: AsaasCreateCustomerInput
+  ): Promise<AsaasCustomer> {
+    this.logger.log(`Creating Asaas customer: ${input.name}`)
+
+    const payload: Record<string, unknown> = {
+      name: input.name,
+      cpfCnpj: input.cpfCnpj,
+      email: input.email,
+      company: input.company,
+      externalReference: input.externalReference
+    }
+
+    // Add optional address/phone fields
+    if (input.phone) payload.phone = input.phone
+    if (input.mobilePhone) payload.mobilePhone = input.mobilePhone
+    if (input.address) payload.address = input.address
+    if (input.addressNumber) payload.addressNumber = input.addressNumber
+    if (input.complement) payload.complement = input.complement
+    if (input.province) payload.province = input.province
+    if (input.postalCode) payload.postalCode = input.postalCode
+    if (input.city) payload.city = input.city
+    if (input.state) payload.state = input.state
+    if (input.country) payload.country = input.country
 
     try {
-      const response = await this.http.post<AsaasCustomer>('/v3/customers', {
-        name,
-        cpfCnpj
-      })
+      const response = await this.http.post<AsaasCustomer>(
+        '/v3/customers',
+        payload
+      )
       return response.data
     } catch (error) {
       throw this.wrapError(error, 'Failed to create Asaas customer')

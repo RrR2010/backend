@@ -456,6 +456,8 @@ model TenantRegistration {
   provisionedProfileId    String?
   provisionedIdentityId   String?
   provisionedTenantSiteId String?
+  provisionedAddressId    String?
+  provisionedPhoneId      String?
   paymentStatus           String?
   paymentStatusDetail     String?
   webhookProcessedAt      DateTime?

@@ -16,6 +16,8 @@ export interface ProvisioningResult {
   profileId: string
   identityId: string
   tenantSiteId: string
+  addressId: string | null
+  phoneId: string | null
 }
 
 export type TenantRegistrationFilter = {
