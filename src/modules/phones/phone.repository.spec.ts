@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common'
 import { PrismaPhoneRepository } from './phone.repository'
 import { Phone } from './phone.entity'
 import { OwnerType, PhoneType } from '@shared/enums'
@@ -12,6 +13,13 @@ describe('PrismaPhoneRepository', () => {
     userId: 'user-a',
     scope: UserScope.TENANT,
     tenantId: 'tenant-a',
+    roles: ['ADMIN']
+  }
+
+  const tenantBContext: RequestContext = {
+    userId: 'user-b',
+    scope: UserScope.TENANT,
+    tenantId: 'tenant-b',
     roles: ['ADMIN']
   }
 
@@ -64,6 +72,17 @@ describe('PrismaPhoneRepository', () => {
         where: { id: mockPhone.id.value, tenantId: 'tenant-a' }
       })
     })
+
+    it('should return null when findById with wrong tenantId', async () => {
+      prismaService.phone.findFirst.mockResolvedValue(null)
+
+      const result = await repository.findById('some-id', tenantBContext)
+
+      expect(result).toBeNull()
+      expect(prismaService.phone.findFirst).toHaveBeenCalledWith({
+        where: { id: 'some-id', tenantId: 'tenant-b' }
+      })
+    })
   })
 
   describe('findAll', () => {
@@ -104,7 +123,7 @@ describe('PrismaPhoneRepository', () => {
 
       await expect(
         repository.save(crossTenantPhone, tenantA)
-      ).rejects.toThrow()
+      ).rejects.toThrow(ForbiddenException)
     })
   })
 })

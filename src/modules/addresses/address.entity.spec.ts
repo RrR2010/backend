@@ -82,5 +82,47 @@ describe('Address Entity', () => {
       expect(address.formattedAddress).toContain('Nove de Julho')
       expect(address.formattedAddress).not.toContain('null')
     })
+
+    it('should return exact formatted address string with streetType', () => {
+      const address = Address.create(makeProps({
+        streetType: 'Rua',
+        street: 'Nove de Julho',
+        number: '123',
+        complement: null,
+        district: null,
+        city: 'São Paulo',
+        state: 'SP',
+        postalCode: '01310-000',
+        country: 'BR'
+      }))
+      expect(address.formattedAddress).toBe('Rua Nove de Julho, 123, São Paulo/SP, 01310-000, BR')
+    })
+  })
+
+  describe('rehydrate', () => {
+    it('should set and get tenantId on rehydrate', () => {
+      const now = new Date()
+      const rehydrated = Address.rehydrate({
+        id: expect.any(Object) as any,
+        createdAt: now,
+        updatedAt: now,
+        systemState: 'ACTIVE' as any,
+        ownerId: 'owner-1',
+        ownerType: OwnerType.TENANT_SITE,
+        tenantId: 'rehydrate-tenant-456',
+        type: AddressType.BILLING,
+        street: 'Nove de Julho',
+        streetType: null,
+        number: '123',
+        complement: null,
+        district: null,
+        city: 'São Paulo',
+        state: 'SP',
+        postalCode: '01310-000',
+        country: 'BR',
+        isDefault: true
+      } as any)
+      expect(rehydrated.tenantId).toBe('rehydrate-tenant-456')
+    })
   })
 })

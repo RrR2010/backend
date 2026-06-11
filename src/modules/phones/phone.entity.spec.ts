@@ -48,6 +48,28 @@ describe('Phone Entity', () => {
     })
   })
 
+  describe('rehydrate', () => {
+    it('should set and get tenantId on rehydrate', () => {
+      const now = new Date()
+      const rehydrated = Phone.rehydrate({
+        id: expect.any(Object) as any,
+        createdAt: now,
+        updatedAt: now,
+        systemState: 'ACTIVE' as any,
+        ownerId: 'owner-1',
+        ownerType: OwnerType.TENANT_SITE,
+        tenantId: 'rehydrate-tenant-789',
+        type: PhoneType.WHATSAPP,
+        countryCode: '55',
+        number: '11999998888',
+        extension: null,
+        isWhatsapp: true,
+        isDefault: true
+      } as any)
+      expect(rehydrated.tenantId).toBe('rehydrate-tenant-789')
+    })
+  })
+
   describe('fullNumber', () => {
     it('should include ramal when extension is set', () => {
       const phone = Phone.create(makeProps({

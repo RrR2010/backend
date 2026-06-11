@@ -5,7 +5,6 @@ import { AddressNotFoundError } from './address.errors'
 import { OwnerType, AddressType } from '@shared/enums'
 import { UserScope } from '@users/user.types'
 import type { RequestContext } from '@authorization/authorization.types'
-import * as tenantContextHelper from '@shared/helpers/tenant-context.helper'
 
 describe('AddressService', () => {
   let service: AddressService

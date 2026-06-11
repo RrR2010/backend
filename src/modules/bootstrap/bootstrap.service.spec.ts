@@ -48,6 +48,7 @@ describe('BootstrapService.registerFreePlan', () => {
   let userRepository: any
   let sessionService: any
   let subscriptionProvider: any
+  let asaasApiService: any
 
   const platformCtx: RequestContext = {
     userId: 'system',
@@ -225,7 +226,7 @@ describe('BootstrapService.registerFreePlan', () => {
       validateWebhookSignature: jest.fn()
     }
 
-    const asaasApiService = {
+    asaasApiService = {
       createCustomer: jest.fn(),
       createSubscription: jest.fn(),
       updateSubscription: jest.fn(),
@@ -462,6 +463,88 @@ describe('BootstrapService.registerFreePlan', () => {
     })
   })
 
+  // ============== Asaas customer creation with address/phone ==============
+
+  describe('register() with Asaas provider and address/phone', () => {
+    it('should create Asaas customer with address/phone when provided', async () => {
+      const dto = createPaidRegisterDto()
+      dto.addressStreet = 'Nove de Julho'
+      dto.addressStreetType = 'Rua'
+      dto.addressNumber = '123'
+      dto.addressComplement = 'Apto 42'
+      dto.addressDistrict = 'Centro'
+      dto.addressCity = 'São Paulo'
+      dto.addressState = 'SP'
+      dto.addressPostalCode = '01310-000'
+      dto.addressCountry = 'BR'
+      dto.phoneCountryCode = '55'
+      dto.phoneNumber = '11999998888'
+
+      // Switch provider to Asaas
+      subscriptionProvider.name = 'asaas'
+
+      // Mock Asaas customer creation
+      asaasApiService.createCustomer.mockResolvedValue({ id: 'asaas-cust-123' })
+
+      // Mock the onboarding subscription for paid plan
+      subscriptionService.createSubscriptionForOnboarding.mockResolvedValue({
+        providerResult: {
+          providerSubscriptionId: 'prov-123',
+          providerCustomerId: 'asaas-cust-123',
+          paymentUrl: 'http://example.com/pay',
+          status: 'PENDING' as any
+        },
+        priceSnapshot: {
+          basePrice: 9990,
+          additionalUserPrice: 5000,
+          includedUsers: 1,
+          additionalUsers: 0,
+          totalAdditionalCost: 0,
+          totalPrice: 9990
+        },
+        plan: Plan.rehydrate({
+          id: Id.generate(),
+          type: PlanType.BASIC,
+          name: 'Basic',
+          description: 'Basic plan',
+          basePrice: 9990,
+          currency: 'BRL',
+          includedUsers: 1,
+          additionalUserPrice: 5000,
+          maxProducts: 20,
+          maxRevisions: null,
+          features: [],
+          isPublic: true,
+          isActive: true,
+          allowsAdditionalUsers: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+      })
+
+      configService.get.mockReturnValue('http://localhost:3000')
+
+      await service.register(dto, null, null)
+
+      expect(asaasApiService.createCustomer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test User Paid',
+          email: 'test-paid@example.com',
+          address: 'Rua Nove de Julho',
+          addressNumber: '123',
+          complement: 'Apto 42',
+          province: 'Centro',
+          postalCode: '01310-000',
+          city: 'São Paulo',
+          state: 'SP',
+          country: 'BR',
+          phone: '11999998888',
+          mobilePhone: '11999998888'
+        })
+      )
+    })
+  })
+
   // ============== Address/Phone JSON blobs in register() ==============
 
   describe('register() with address/phone DTO fields', () => {
@@ -617,13 +700,19 @@ describe('BootstrapService.registerFreePlan', () => {
 
       await service.provisionRegistration(registration, platformCtx)
 
-      const mockUuid = 'mock-uuid-12345678-1234-1234-1234-123456789012'
+      // Capture tenantId from tenant creation and tenantSiteId from TenantSite creation
+      const tenantCreateCall = prisma.tenant.create.mock.calls[0][0]
+      const createdTenantId = tenantCreateCall.data.id
+      const tenantSiteCreateCall = prisma.tenantSite.create.mock.calls[0][0]
+      const createdTenantSiteId = tenantSiteCreateCall.data.id
+
+      const addressCreateCall = prisma.address.create.mock.calls[0][0]
+      expect(addressCreateCall.data.tenantId).toBe(createdTenantId)
+      expect(addressCreateCall.data.ownerId).toBe(createdTenantSiteId)
+      expect(addressCreateCall.data.ownerType).toBe('TenantSite')
       expect(prisma.address.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            ownerId: mockUuid,
-            ownerType: 'TenantSite',
-            tenantId: mockUuid,
             type: 'BILLING',
             street: 'Nove de Julho',
             streetType: 'Rua',
@@ -640,13 +729,19 @@ describe('BootstrapService.registerFreePlan', () => {
 
       await service.provisionRegistration(registration, platformCtx)
 
-      const mockUuid = 'mock-uuid-12345678-1234-1234-1234-123456789012'
+      // Capture tenantId and tenantSiteId from their creation calls
+      const tenantCreateCall = prisma.tenant.create.mock.calls[0][0]
+      const createdTenantId = tenantCreateCall.data.id
+      const tenantSiteCreateCall = prisma.tenantSite.create.mock.calls[0][0]
+      const createdTenantSiteId = tenantSiteCreateCall.data.id
+
+      const phoneCreateCall = prisma.phone.create.mock.calls[0][0]
+      expect(phoneCreateCall.data.tenantId).toBe(createdTenantId)
+      expect(phoneCreateCall.data.ownerId).toBe(createdTenantSiteId)
+      expect(phoneCreateCall.data.ownerType).toBe('TenantSite')
       expect(prisma.phone.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            ownerId: mockUuid,
-            ownerType: 'TenantSite',
-            tenantId: mockUuid,
             type: 'WHATSAPP',
             number: '11999998888',
             countryCode: '55'

@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common'
 import { PrismaAddressRepository } from './address.repository'
 import { Address } from './address.entity'
 import { OwnerType, AddressType } from '@shared/enums'
@@ -12,6 +13,13 @@ describe('PrismaAddressRepository', () => {
     userId: 'user-a',
     scope: UserScope.TENANT,
     tenantId: 'tenant-a',
+    roles: ['ADMIN']
+  }
+
+  const tenantBContext: RequestContext = {
+    userId: 'user-b',
+    scope: UserScope.TENANT,
+    tenantId: 'tenant-b',
     roles: ['ADMIN']
   }
 
@@ -74,6 +82,17 @@ describe('PrismaAddressRepository', () => {
         where: { id: mockAddress.id.value, tenantId: 'tenant-a' }
       })
     })
+
+    it('should return null when findById with wrong tenantId', async () => {
+      prismaService.address.findFirst.mockResolvedValue(null)
+
+      const result = await repository.findById('some-id', tenantBContext)
+
+      expect(result).toBeNull()
+      expect(prismaService.address.findFirst).toHaveBeenCalledWith({
+        where: { id: 'some-id', tenantId: 'tenant-b' }
+      })
+    })
   })
 
   describe('findAll', () => {
@@ -100,9 +119,6 @@ describe('PrismaAddressRepository', () => {
 
   describe('save tenant guard', () => {
     it('should throw ForbiddenException for cross-tenant upsert', async () => {
-      jest.spyOn(require('@shared/helpers/tenant-context.helper'), 'getEffectiveTenantId')
-        .mockReturnValue('tenant-b')
-
       const crossTenantAddress = Address.create({
         ownerId: 'owner-1',
         ownerType: OwnerType.TENANT_SITE,
@@ -122,7 +138,7 @@ describe('PrismaAddressRepository', () => {
 
       await expect(
         repository.save(crossTenantAddress, tenantA)
-      ).rejects.toThrow()
+      ).rejects.toThrow(ForbiddenException)
     })
   })
 })
