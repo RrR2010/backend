@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsOptional, IsString } from 'class-validator'
 import { Phone } from '@phones/phone.entity'
 import { OwnerType, PhoneType } from '@shared/enums'
 
@@ -14,6 +15,11 @@ export class CreatePhoneDto {
 
   @ApiProperty({ type: String })
   countryCode!: string
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  extension?: string | null
 
   @ApiProperty({ type: String })
   number!: string
@@ -35,11 +41,17 @@ export class CreatePhoneResponseDto {
   @ApiProperty({ enum: OwnerType })
   ownerType!: OwnerType
 
+  @ApiProperty()
+  tenantId!: string
+
   @ApiProperty({ enum: PhoneType })
   type!: PhoneType
 
   @ApiProperty()
   countryCode!: string
+
+  @ApiProperty({ nullable: true })
+  extension!: string | null
 
   @ApiProperty()
   number!: string
@@ -64,8 +76,10 @@ export class CreatePhoneResponseDto {
       id: phone.id.value,
       ownerId: phone.ownerId,
       ownerType: phone.ownerType,
+      tenantId: phone.tenantId,
       type: phone.type,
       countryCode: phone.countryCode,
+      extension: phone.extension,
       number: phone.number,
       isWhatsapp: phone.isWhatsapp,
       isDefault: phone.isDefault,
@@ -84,6 +98,11 @@ export class UpdatePhoneDto {
 
   @ApiProperty({ required: false })
   countryCode?: string
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  extension?: string | null
 
   @ApiProperty({ required: false })
   number?: string

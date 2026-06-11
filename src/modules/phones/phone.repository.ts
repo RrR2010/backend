@@ -8,7 +8,7 @@ import { Phone as PrismaPhone, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
 // EXCEÇÃO: Phone é polimórfico (pode pertencer a tenant ou a entidade global).
-// TODO: desenvolver abordagem de segurança cross-tenant para entidades polimórficas.
+// TODO(EP-002/Wave2): Add tenant filtering via getEffectiveTenantId(ctx) in findById(), findAll(), delete()
 
 export abstract class PhoneRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Phone | null>
@@ -85,8 +85,10 @@ class PrismaPhoneMapper {
         SystemState[prismaPhone.systemState as keyof typeof SystemState],
       ownerId: prismaPhone.ownerId,
       ownerType: prismaPhone.ownerType as OwnerType,
+      tenantId: prismaPhone.tenantId,
       type: prismaPhone.type as PhoneType,
       countryCode: prismaPhone.countryCode,
+      extension: prismaPhone.extension,
       number: prismaPhone.number,
       isWhatsapp: prismaPhone.isWhatsapp,
       isDefault: prismaPhone.isDefault
@@ -101,9 +103,11 @@ class PrismaPhoneMapper {
       systemState: phone.systemState,
       ownerId: phone.ownerId,
       ownerType: phone.ownerType,
+      tenantId: phone.tenantId,
       type: phone.type,
       countryCode: phone.countryCode,
       number: phone.number,
+      extension: phone.extension,
       isWhatsapp: phone.isWhatsapp,
       isDefault: phone.isDefault
     }

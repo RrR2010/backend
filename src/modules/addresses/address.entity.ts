@@ -13,8 +13,10 @@ export type AddressProps = AuditableProps &
     id: Id
     ownerId: string
     ownerType: OwnerType
+    tenantId: string
     type: AddressType
     street: string
+    streetType: string | null
     number: string
     complement: string | null
     district: string | null
@@ -67,6 +69,14 @@ export class Address extends Lockable(Auditable(Base<AddressProps>)) {
     return this._props.ownerType
   }
 
+  get tenantId(): string {
+    return this._props.tenantId
+  }
+
+  get streetType(): string | null {
+    return this._props.streetType
+  }
+
   get type(): AddressType {
     return this._props.type
   }
@@ -110,8 +120,11 @@ export class Address extends Lockable(Auditable(Base<AddressProps>)) {
   // --------------- Computed Getters ---------------
 
   get formattedAddress(): string {
+    const prefix = this.streetType
+      ? `${this.streetType} ${this.street}`
+      : this.street
     const parts = [
-      this.street,
+      prefix,
       this.number,
       this.complement,
       this.district,
@@ -140,6 +153,12 @@ export class Address extends Lockable(Auditable(Base<AddressProps>)) {
   changeStreet(street: string): void {
     this.ensureActivated('Address')
     this._props.street = street
+    this.touch()
+  }
+
+  changeStreetType(streetType: string | null): void {
+    this.ensureActivated('Address')
+    this._props.streetType = streetType
     this.touch()
   }
 

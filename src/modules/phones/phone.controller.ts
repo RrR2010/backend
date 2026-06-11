@@ -26,6 +26,7 @@ import { Phone } from '@phones/phone.entity'
 export class PhonesController {
   constructor(private readonly service: PhoneService) {}
 
+  // TODO(EP-002/Wave3): Replace null as any with @ReqContext() ctx: RequestContext
   @Post()
   @Authorize(Action.Create, Phone)
   @ApiConsumes('application/json')
@@ -34,9 +35,11 @@ export class PhonesController {
       {
         ownerId: dto.ownerId,
         ownerType: dto.ownerType,
+        tenantId: '', // TEMP: to be resolved from ctx in Wave 3
         type: dto.type,
         countryCode: dto.countryCode,
         number: dto.number,
+        extension: dto.extension ?? null,
         isWhatsapp: dto.isWhatsapp,
         isDefault: dto.isDefault
       },
@@ -73,6 +76,7 @@ export class PhonesController {
     if (dto.type) phone.changeType(dto.type)
     if (dto.countryCode) phone.changeCountryCode(dto.countryCode)
     if (dto.number) phone.changeNumber(dto.number)
+    if (dto.extension !== undefined) phone.changeExtension(dto.extension)
     if (dto.isWhatsapp === true) phone.setAsWhatsapp()
     else if (dto.isWhatsapp === false) phone.unsetWhatsapp()
     if (dto.isDefault === true) phone.setAsDefault()

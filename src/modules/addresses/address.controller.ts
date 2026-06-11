@@ -26,6 +26,7 @@ import { Address } from '@addresses/address.entity'
 export class AddressesController {
   constructor(private readonly service: AddressService) {}
 
+  // TODO(EP-002/Wave3): Replace null as any with @ReqContext() ctx: RequestContext
   @Post()
   @Authorize(Action.Create, Address)
   @ApiConsumes('application/json')
@@ -36,8 +37,10 @@ export class AddressesController {
       {
         ownerId: dto.ownerId,
         ownerType: dto.ownerType,
+        tenantId: '', // TEMP: to be resolved from ctx in Wave 3
         type: dto.type,
         street: dto.street,
+        streetType: dto.streetType ?? null,
         number: dto.number,
         complement: dto.complement ?? null,
         district: dto.district ?? null,
@@ -81,6 +84,7 @@ export class AddressesController {
     if (dto.number !== undefined) address.changeNumber(dto.number)
     if (dto.complement !== undefined) address.changeComplement(dto.complement)
     if (dto.district !== undefined) address.changeDistrict(dto.district)
+    if (dto.streetType !== undefined) address.changeStreetType(dto.streetType)
     if (dto.city) address.changeCity(dto.city)
     if (dto.state) address.changeState(dto.state)
     if (dto.postalCode) address.changePostalCode(dto.postalCode)

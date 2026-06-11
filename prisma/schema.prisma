@@ -314,9 +314,11 @@ model Address {
   // Polymorphic owner reference
   ownerId   String
   ownerType OwnerType
+  tenantId  String     @default("MIGRATION_PLACEHOLDER") // TODO(EP-002/Wave3): Remove @default after all code paths set tenantId explicitly
 
   // Address fields
   type       AddressType
+  streetType String?
   street     String
   number     String
   complement String?
@@ -330,6 +332,7 @@ model Address {
   // Constraints
   @@unique([ownerId, ownerType, type])
   @@index([ownerId, ownerType])
+  @@index([tenantId])
 }
 
 // ============== POLYMORPHIC PHONE ==============
@@ -343,17 +346,20 @@ model Phone {
   // Polymorphic owner reference
   ownerId   String
   ownerType OwnerType
+  tenantId  String     @default("MIGRATION_PLACEHOLDER") // TODO(EP-002/Wave3): Remove @default after all code paths set tenantId explicitly
 
   // Phone fields
   type        PhoneType
   countryCode String    @default("55")
   number      String
+  extension   String?
   isWhatsapp  Boolean   @default(false)
   isDefault   Boolean   @default(false)
 
   // Constraints
   @@unique([ownerId, ownerType, type])
   @@index([ownerId, ownerType])
+  @@index([tenantId])
 }
 
 // ============== MEMBER PROFILE ==============
@@ -442,6 +448,8 @@ model TenantRegistration {
   userData                Json
   identityData            Json
   profileData             Json
+  addressData             Json?
+  phoneData               Json?
   provisionedUserId       String?
   provisionedTenantId     String?
   provisionedMembershipId String?

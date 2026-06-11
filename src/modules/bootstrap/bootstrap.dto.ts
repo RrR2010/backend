@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsEnum,
   IsDateString,
+  IsBoolean,
   MinLength
 } from 'class-validator'
 import {
@@ -88,6 +89,73 @@ export class BootstrapRegisterDto {
   @MinLength(8)
   password!: string
 
+  // Address fields (all optional — registration can proceed without them)
+  @ApiProperty({ required: false, example: 'Rua Nove de Julho' })
+  @IsOptional()
+  @IsString()
+  addressStreet?: string
+
+  @ApiProperty({ required: false, example: 'Rua' })
+  @IsOptional()
+  @IsString()
+  addressStreetType?: string
+
+  @ApiProperty({ required: false, example: '123' })
+  @IsOptional()
+  @IsString()
+  addressNumber?: string
+
+  @ApiProperty({ required: false, example: 'Apto 42' })
+  @IsOptional()
+  @IsString()
+  addressComplement?: string
+
+  @ApiProperty({ required: false, example: 'Centro' })
+  @IsOptional()
+  @IsString()
+  addressDistrict?: string
+
+  @ApiProperty({ required: false, example: 'São Paulo' })
+  @IsOptional()
+  @IsString()
+  addressCity?: string
+
+  @ApiProperty({ required: false, example: 'SP' })
+  @IsOptional()
+  @IsString()
+  addressState?: string
+
+  @ApiProperty({ required: false, example: '01310-000' })
+  @IsOptional()
+  @IsString()
+  addressPostalCode?: string
+
+  @ApiProperty({ required: false, example: 'BR' })
+  @IsOptional()
+  @IsString()
+  addressCountry?: string
+
+  // Phone fields
+  @ApiProperty({ required: false, example: '55' })
+  @IsOptional()
+  @IsString()
+  phoneCountryCode?: string
+
+  @ApiProperty({ required: false, example: '11999998888' })
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string
+
+  @ApiProperty({ required: false, example: '200' })
+  @IsOptional()
+  @IsString()
+  phoneExtension?: string
+
+  @ApiProperty({ required: false, example: true })
+  @IsOptional()
+  @IsBoolean()
+  phoneIsWhatsapp?: boolean
+
   // NOTE (2026-05-20): planType is already part of the registration DTO.
   // FREE plan users will skip payment and provision immediately.
   // Paid plan users (BASIC/PREMIUM) go through Mercado Pago.
@@ -133,10 +201,16 @@ export class BootstrapStatusResponseDto {
   @ApiProperty({ enum: RegistrationState })
   state!: RegistrationState
 
-  @ApiProperty({ nullable: true, description: 'Tenant ID, available when state is PROVISIONED' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Tenant ID, available when state is PROVISIONED'
+  })
   tenantId!: string | null
 
-  static from(state: RegistrationState, tenantId: string | null = null): BootstrapStatusResponseDto {
+  static from(
+    state: RegistrationState,
+    tenantId: string | null = null
+  ): BootstrapStatusResponseDto {
     const dto = new BootstrapStatusResponseDto()
     dto.state = state
     dto.tenantId = tenantId

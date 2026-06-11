@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsOptional, IsString } from 'class-validator'
 import { Address } from '@addresses/address.entity'
 import { OwnerType, AddressType } from '@shared/enums'
 
@@ -14,6 +15,11 @@ export class CreateAddressDto {
 
   @ApiProperty({ type: String })
   street!: string
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  streetType?: string | null
 
   @ApiProperty({ type: String })
   number!: string
@@ -50,11 +56,17 @@ export class CreateAddressResponseDto {
   @ApiProperty({ enum: OwnerType })
   ownerType!: OwnerType
 
+  @ApiProperty()
+  tenantId!: string
+
   @ApiProperty({ enum: AddressType })
   type!: AddressType
 
   @ApiProperty()
   street!: string
+
+  @ApiProperty({ nullable: true })
+  streetType!: string | null
 
   @ApiProperty()
   number!: string
@@ -94,8 +106,10 @@ export class CreateAddressResponseDto {
       id: address.id.value,
       ownerId: address.ownerId,
       ownerType: address.ownerType,
+      tenantId: address.tenantId,
       type: address.type,
       street: address.street,
+      streetType: address.streetType,
       number: address.number,
       complement: address.complement,
       district: address.district,
@@ -116,6 +130,11 @@ export class AddressResponseDto extends CreateAddressResponseDto {}
 export class UpdateAddressDto {
   @ApiProperty({ required: false })
   street?: string
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  streetType?: string | null
 
   @ApiProperty({ required: false })
   number?: string

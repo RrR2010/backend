@@ -20,6 +20,8 @@ export type TenantRegistrationProps = AuditableProps & {
   userData: Json
   identityData: Json
   profileData: Json
+  addressData: Json | null
+  phoneData: Json | null
   provisionedUserId: string | null
   provisionedTenantId: string | null
   provisionedMembershipId: string | null
@@ -125,6 +127,14 @@ export class TenantRegistration extends Auditable(
 
   get profileData(): Json {
     return this._props.profileData
+  }
+
+  get addressData(): Json | null {
+    return this._props.addressData
+  }
+
+  get phoneData(): Json | null {
+    return this._props.phoneData
   }
 
   get provisionedUserId(): string | null {

@@ -13,9 +13,11 @@ export type PhoneProps = AuditableProps &
     id: Id
     ownerId: string
     ownerType: OwnerType
+    tenantId: string
     type: PhoneType
     countryCode: string
     number: string
+    extension: string | null
     isWhatsapp: boolean
     isDefault: boolean
   }
@@ -62,6 +64,14 @@ export class Phone extends Lockable(Auditable(Base<PhoneProps>)) {
     return this._props.ownerType
   }
 
+  get tenantId(): string {
+    return this._props.tenantId
+  }
+
+  get extension(): string | null {
+    return this._props.extension
+  }
+
   get type(): PhoneType {
     return this._props.type
   }
@@ -85,7 +95,11 @@ export class Phone extends Lockable(Auditable(Base<PhoneProps>)) {
   // --------------- Computed Getters ---------------
 
   get fullNumber(): string {
-    return `+${this.countryCode} ${this.number}`
+    let result = `+${this.countryCode} ${this.number}`
+    if (this.extension) {
+      result += ` ramal ${this.extension}`
+    }
+    return result
   }
 
   get formattedForWhatsapp(): string {
@@ -129,6 +143,12 @@ export class Phone extends Lockable(Auditable(Base<PhoneProps>)) {
   changeNumber(number: string): void {
     this.ensureActivated('Phone')
     this._props.number = number
+    this.touch()
+  }
+
+  changeExtension(extension: string | null): void {
+    this.ensureActivated('Phone')
+    this._props.extension = extension
     this.touch()
   }
 

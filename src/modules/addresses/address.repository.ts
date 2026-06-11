@@ -8,7 +8,7 @@ import { Id } from '@shared/value-objects'
 import { RequestContext } from '@authorization/authorization.types'
 
 // EXCEÇÃO: Address é polimórfico (pode pertencer a tenant ou a entidade global).
-// TODO: desenvolver abordagem de segurança cross-tenant para entidades polimórficas.
+// TODO(EP-002/Wave2): Add tenant filtering via getEffectiveTenantId(ctx) in findById(), findAll(), delete()
 
 export abstract class AddressRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Address | null>
@@ -89,8 +89,10 @@ class PrismaAddressMapper {
         SystemState[prismaAddress.systemState as keyof typeof SystemState],
       ownerId: prismaAddress.ownerId,
       ownerType: prismaAddress.ownerType as OwnerType,
+      tenantId: prismaAddress.tenantId,
       type: prismaAddress.type as AddressType,
       street: prismaAddress.street,
+      streetType: prismaAddress.streetType,
       number: prismaAddress.number,
       complement: prismaAddress.complement,
       district: prismaAddress.district,
@@ -110,8 +112,10 @@ class PrismaAddressMapper {
       systemState: address.systemState,
       ownerId: address.ownerId,
       ownerType: address.ownerType,
+      tenantId: address.tenantId,
       type: address.type,
       street: address.street,
+      streetType: address.streetType,
       number: address.number,
       complement: address.complement,
       district: address.district,

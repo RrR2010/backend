@@ -167,6 +167,8 @@ class PrismaTenantRegistrationMapper {
       userData: prismaRegistration.userData as Json,
       identityData: prismaRegistration.identityData as Json,
       profileData: prismaRegistration.profileData as Json,
+      addressData: prismaRegistration.addressData as Json | null,
+      phoneData: prismaRegistration.phoneData as Json | null,
       provisionedUserId: prismaRegistration.provisionedUserId,
       provisionedTenantId: prismaRegistration.provisionedTenantId,
       provisionedMembershipId: prismaRegistration.provisionedMembershipId,
@@ -204,6 +206,12 @@ class PrismaTenantRegistrationMapper {
       userData: registration.userData as Prisma.InputJsonValue,
       identityData: registration.identityData as Prisma.InputJsonValue,
       profileData: registration.profileData as Prisma.InputJsonValue,
+      addressData: registration.addressData
+        ? (registration.addressData as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
+      phoneData: registration.phoneData
+        ? (registration.phoneData as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
       provisionedUserId: registration.provisionedUserId,
       provisionedTenantId: registration.provisionedTenantId,
       provisionedMembershipId: registration.provisionedMembershipId,

@@ -149,6 +149,9 @@ export class BootstrapService {
         gender: dto.gender ?? null,
         photoUrl: null
       },
+      // TODO(EP-002/Wave4): Extract address/phone from BootstrapRegisterDto and store as JSON blobs
+      addressData: null,
+      phoneData: null,
       provisionedUserId: null,
       provisionedTenantId: null,
       provisionedMembershipId: null,
@@ -184,10 +187,13 @@ export class BootstrapService {
     if (subscriptionProviderName === 'asaas') {
       const cpfCnpj = dto.cpf ?? normalizedTaxId
       try {
-        const asaasCustomer = await this.asaasApiService.createCustomer(
-          dto.fullName.trim(),
-          cpfCnpj
-        )
+        const asaasCustomer = await this.asaasApiService.createCustomer({
+          name: dto.fullName.trim(),
+          cpfCnpj,
+          email: dto.email,
+          company: dto.tenantSiteLegalName,
+          externalReference: registration.id.value
+        })
         registration.updateProviderCustomerId(asaasCustomer.id)
         await this.registrationRepo.save(registration, this.platformCtx)
         this.logger.log(
@@ -1131,12 +1137,9 @@ export class BootstrapService {
     ) {
       registration.markExpired()
       await this.registrationRepo.save(registration, ctx)
-      this.logger.warn(
-        'Registration expired before payment confirmation',
-        {
-          registrationId: registration.id.value
-        }
-      )
+      this.logger.warn('Registration expired before payment confirmation', {
+        registrationId: registration.id.value
+      })
       return { processed: false }
     }
 
@@ -1290,7 +1293,9 @@ export class BootstrapService {
    * Used by the frontend after checkout redirect to poll for provisioning completion.
    * This endpoint is unauthenticated — externalRef serves as a one-time token.
    */
-  async getStatusByExternalRef(externalRef: string): Promise<BootstrapStatusResponseDto> {
+  async getStatusByExternalRef(
+    externalRef: string
+  ): Promise<BootstrapStatusResponseDto> {
     const ctx = this.platformCtx
 
     const registration = await this.registrationRepo.findByExternalRef(
