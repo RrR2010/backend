@@ -3,13 +3,18 @@ import { PhoneRepository, PhoneFilter } from '@phones/phone.repository'
 import { Phone, CreatePhoneProps } from '@phones/phone.entity'
 import { PhoneNotFoundError } from '@phones/phone.errors'
 import { RequestContext } from '@authorization/authorization.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 @Injectable()
 export class PhoneService {
   constructor(private readonly repository: PhoneRepository) {}
 
-  async create(props: CreatePhoneProps, ctx: RequestContext): Promise<Phone> {
-    const phone = Phone.create(props)
+  async create(
+    props: Omit<CreatePhoneProps, 'tenantId'>,
+    ctx: RequestContext
+  ): Promise<Phone> {
+    const tenantId = getEffectiveTenantId(ctx) ?? ''
+    const phone = Phone.create({ ...props, tenantId })
     return this.repository.save(phone, ctx)
   }
 

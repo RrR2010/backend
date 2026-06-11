@@ -6,8 +6,10 @@ import {
   Param,
   Delete,
   Patch,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Req
 } from '@nestjs/common'
+import type { Request } from 'express'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import {
   CreatePhoneDto,
@@ -26,16 +28,17 @@ import { Phone } from '@phones/phone.entity'
 export class PhonesController {
   constructor(private readonly service: PhoneService) {}
 
-  // TODO(EP-002/Wave3): Replace null as any with @ReqContext() ctx: RequestContext
   @Post()
   @Authorize(Action.Create, Phone)
   @ApiConsumes('application/json')
-  async create(@Body() dto: CreatePhoneDto): Promise<CreatePhoneResponseDto> {
+  async create(
+    @Body() dto: CreatePhoneDto,
+    @Req() request: Request
+  ): Promise<CreatePhoneResponseDto> {
     const phone = await this.service.create(
       {
         ownerId: dto.ownerId,
         ownerType: dto.ownerType,
-        tenantId: '', // TEMP: to be resolved from ctx in Wave 3
         type: dto.type,
         countryCode: dto.countryCode,
         number: dto.number,
@@ -43,24 +46,25 @@ export class PhonesController {
         isWhatsapp: dto.isWhatsapp,
         isDefault: dto.isDefault
       },
-      null as any
+      request.context
     )
     return CreatePhoneResponseDto.fromDomain(phone)
   }
 
   @Get()
   @Authorize(Action.Read, Phone)
-  async findAll(): Promise<PhoneResponseDto[]> {
-    const phones = await this.service.findAll({}, null as any)
+  async findAll(@Req() request: Request): Promise<PhoneResponseDto[]> {
+    const phones = await this.service.findAll({}, request.context)
     return phones.map(PhoneResponseDto.fromDomain)
   }
 
   @Get(':id')
   @Authorize(Action.Read, Phone)
   async findById(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<PhoneResponseDto> {
-    const phone = await this.service.findById(id, null as any)
+    const phone = await this.service.findById(id, request.context)
     return PhoneResponseDto.fromDomain(phone)
   }
 
@@ -69,9 +73,10 @@ export class PhonesController {
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdatePhoneDto
+    @Body() dto: UpdatePhoneDto,
+    @Req() request: Request
   ): Promise<PhoneResponseDto> {
-    const phone = await this.service.findById(id, null as any)
+    const phone = await this.service.findById(id, request.context)
 
     if (dto.type) phone.changeType(dto.type)
     if (dto.countryCode) phone.changeCountryCode(dto.countryCode)
@@ -82,31 +87,36 @@ export class PhonesController {
     if (dto.isDefault === true) phone.setAsDefault()
     else if (dto.isDefault === false) phone.unsetDefault()
 
-    const saved = await this.service.save(phone, null as any)
+    const saved = await this.service.save(phone, request.context)
     return PhoneResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
   @Authorize(Action.Delete, Phone)
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.service.delete(id, null as any)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<void> {
+    await this.service.delete(id, request.context)
   }
 
   @Post(':id/activate')
   @Authorize(Action.Update, Phone)
   async activate(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<PhoneResponseDto> {
-    const phone = await this.service.activate(id, null as any)
+    const phone = await this.service.activate(id, request.context)
     return PhoneResponseDto.fromDomain(phone)
   }
 
   @Post(':id/lock')
   @Authorize(Action.Update, Phone)
   async lock(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
   ): Promise<PhoneResponseDto> {
-    const phone = await this.service.lock(id, null as any)
+    const phone = await this.service.lock(id, request.context)
     return PhoneResponseDto.fromDomain(phone)
   }
 }

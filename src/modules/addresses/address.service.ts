@@ -3,16 +3,18 @@ import { AddressRepository, AddressFilter } from '@addresses/address.repository'
 import { Address, CreateAddressProps } from '@addresses/address.entity'
 import { AddressNotFoundError } from '@addresses/address.errors'
 import { RequestContext } from '@authorization/authorization.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 @Injectable()
 export class AddressService {
   constructor(private readonly repository: AddressRepository) {}
 
   async create(
-    props: CreateAddressProps,
+    props: Omit<CreateAddressProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<Address> {
-    const address = Address.create(props)
+    const tenantId = getEffectiveTenantId(ctx) ?? ''
+    const address = Address.create({ ...props, tenantId })
     return this.repository.save(address, ctx)
   }
 

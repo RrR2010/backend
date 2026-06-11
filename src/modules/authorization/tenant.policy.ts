@@ -21,6 +21,8 @@ import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.en
 import { IngredientTenantAllergen } from '@ingredients/ingredient-tenant-allergen.entity'
 import { IngredientTenantNutrient } from '@ingredients/ingredient-tenant-nutrient.entity'
 import { Identity } from '@identities/identity.entity'
+import { Address } from '@addresses/address.entity'
+import { Phone } from '@phones/phone.entity'
 
 type TenantContext = Extract<RequestContext, { scope: UserScope.TENANT }> & {
   isOwner: boolean
@@ -119,6 +121,16 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
 
     // Can read identities within their tenant
     can(Action.Read, Identity, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage Address within their tenant
+    can(Action.Manage, Address, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage Phone within their tenant
+    can(Action.Manage, Phone, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 
