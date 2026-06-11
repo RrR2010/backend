@@ -223,8 +223,8 @@ export class TenantRegistration extends Auditable(
     profileId: string
     identityId: string
     tenantSiteId: string
-    addressId?: string | null
-    phoneId?: string | null
+    addressId: string | null
+    phoneId: string | null
   }): void {
     this._props.provisionedUserId = ids.userId
     this._props.provisionedTenantId = ids.tenantId

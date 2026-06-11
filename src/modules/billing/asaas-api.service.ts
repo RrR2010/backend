@@ -19,16 +19,16 @@ export interface AsaasCreateCustomerInput {
   company: string | null
   externalReference: string | null
   // Optional address/phone fields for Asaas customer enrichment
-  phone?: string
-  mobilePhone?: string
-  address?: string
-  addressNumber?: string
-  complement?: string
-  province?: string
-  postalCode?: string
-  city?: string
-  state?: string
-  country?: string
+  phone: string | null
+  mobilePhone: string | null
+  address: string | null
+  addressNumber: string | null
+  complement: string | null
+  province: string | null
+  postalCode: string | null
+  city: string | null
+  state: string | null
+  country: string | null
 }
 
 export interface AsaasCreateSubscriptionInput {
@@ -158,17 +158,17 @@ export class AsaasApiService {
       externalReference: input.externalReference
     }
 
-    // Add optional address/phone fields
-    if (input.phone) payload.phone = input.phone
-    if (input.mobilePhone) payload.mobilePhone = input.mobilePhone
-    if (input.address) payload.address = input.address
-    if (input.addressNumber) payload.addressNumber = input.addressNumber
-    if (input.complement) payload.complement = input.complement
-    if (input.province) payload.province = input.province
-    if (input.postalCode) payload.postalCode = input.postalCode
-    if (input.city) payload.city = input.city
-    if (input.state) payload.state = input.state
-    if (input.country) payload.country = input.country
+    // Add optional address/phone fields (skip null values)
+    if (input.phone != null) payload.phone = input.phone
+    if (input.mobilePhone != null) payload.mobilePhone = input.mobilePhone
+    if (input.address != null) payload.address = input.address
+    if (input.addressNumber != null) payload.addressNumber = input.addressNumber
+    if (input.complement != null) payload.complement = input.complement
+    if (input.province != null) payload.province = input.province
+    if (input.postalCode != null) payload.postalCode = input.postalCode
+    if (input.city != null) payload.city = input.city
+    if (input.state != null) payload.state = input.state
+    if (input.country != null) payload.country = input.country
 
     try {
       const response = await this.http.post<AsaasCustomer>(

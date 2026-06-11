@@ -138,6 +138,16 @@ export class BootstrapService {
         }
       : null
 
+    // Validate: if address data is provided, street is required
+    if (addressData && !addressData.street) {
+      throw new Error('Street is required when address data is provided')
+    }
+
+    // Validate: if phone data is provided, number is required
+    if (phoneData && !phoneData.number) {
+      throw new Error('Phone number is required when phone data is provided')
+    }
+
     const registration = TenantRegistration.create({
       externalRef: crypto.randomUUID(),
       state: RegistrationState.PENDING,
@@ -221,25 +231,20 @@ export class BootstrapService {
           cpfCnpj,
           email: dto.email,
           company: dto.tenantSiteLegalName,
-          externalReference: registration.id.value
+          externalReference: registration.id.value,
+          phone: dto.phoneNumber ?? null,
+          mobilePhone: dto.phoneNumber ?? null,
+          address: dto.addressStreetType && dto.addressStreet
+            ? `${dto.addressStreetType} ${dto.addressStreet}`
+            : (dto.addressStreet ?? null),
+          addressNumber: dto.addressNumber ?? null,
+          complement: dto.addressComplement ?? null,
+          province: dto.addressDistrict ?? null,
+          postalCode: dto.addressPostalCode ?? null,
+          city: dto.addressCity ?? null,
+          state: dto.addressState ?? null,
+          country: dto.addressCountry ?? null
         }
-        // Conditionally add optional address/phone fields for Asaas enrichment
-        if (dto.phoneNumber) {
-          customerInput.phone = dto.phoneNumber
-          customerInput.mobilePhone = dto.phoneNumber
-        }
-        if (dto.addressStreetType && dto.addressStreet) {
-          customerInput.address = `${dto.addressStreetType} ${dto.addressStreet}`
-        } else if (dto.addressStreet) {
-          customerInput.address = dto.addressStreet
-        }
-        if (dto.addressNumber) customerInput.addressNumber = dto.addressNumber
-        if (dto.addressComplement) customerInput.complement = dto.addressComplement
-        if (dto.addressDistrict) customerInput.province = dto.addressDistrict
-        if (dto.addressPostalCode) customerInput.postalCode = dto.addressPostalCode
-        if (dto.addressCity) customerInput.city = dto.addressCity
-        if (dto.addressState) customerInput.state = dto.addressState
-        if (dto.addressCountry) customerInput.country = dto.addressCountry
         const asaasCustomer = await this.asaasApiService.createCustomer(customerInput)
         registration.updateProviderCustomerId(asaasCustomer.id)
         await this.registrationRepo.save(registration, this.platformCtx)
@@ -931,7 +936,7 @@ export class BootstrapService {
     // 7. Create Address from registration data (if present)
     const regAddressData = registration.addressData as Record<string, unknown> | null
     let provisionedAddressId: string | null = null
-    if (regAddressData && regAddressData.street) {
+    if (regAddressData) {
       provisionedAddressId = crypto.randomUUID()
       await prisma.address.create({
         data: {
@@ -966,7 +971,7 @@ export class BootstrapService {
     // 8. Create Phone from registration data (if present)
     const regPhoneData = registration.phoneData as Record<string, unknown> | null
     let provisionedPhoneId: string | null = null
-    if (regPhoneData && regPhoneData.number) {
+    if (regPhoneData) {
       provisionedPhoneId = crypto.randomUUID()
       await prisma.phone.create({
         data: {
