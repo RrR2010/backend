@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { AddressRepository, AddressFilter } from '@addresses/address.repository'
 import { Address, CreateAddressProps } from '@addresses/address.entity'
 import { AddressNotFoundError } from '@addresses/address.errors'
@@ -13,7 +13,12 @@ export class AddressService {
     props: Omit<CreateAddressProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<Address> {
-    const tenantId = getEffectiveTenantId(ctx) ?? ''
+    const tenantId = getEffectiveTenantId(ctx)
+    if (!tenantId) {
+      throw new ForbiddenException(
+        'Cannot create Address: tenant context is required. Ensure the request has a valid tenant scope.'
+      )
+    }
     const address = Address.create({ ...props, tenantId })
     return this.repository.save(address, ctx)
   }

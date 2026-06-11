@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PhoneRepository, PhoneFilter } from '@phones/phone.repository'
 import { Phone, CreatePhoneProps } from '@phones/phone.entity'
 import { PhoneNotFoundError } from '@phones/phone.errors'
@@ -13,7 +13,12 @@ export class PhoneService {
     props: Omit<CreatePhoneProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<Phone> {
-    const tenantId = getEffectiveTenantId(ctx) ?? ''
+    const tenantId = getEffectiveTenantId(ctx)
+    if (!tenantId) {
+      throw new ForbiddenException(
+        'Cannot create Phone: tenant context is required. Ensure the request has a valid tenant scope.'
+      )
+    }
     const phone = Phone.create({ ...props, tenantId })
     return this.repository.save(phone, ctx)
   }

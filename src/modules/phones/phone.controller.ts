@@ -42,7 +42,7 @@ export class PhonesController {
         type: dto.type,
         countryCode: dto.countryCode,
         number: dto.number,
-        extension: dto.extension ?? null,
+        extension: dto.extension,
         isWhatsapp: dto.isWhatsapp,
         isDefault: dto.isDefault
       },
@@ -78,9 +78,9 @@ export class PhonesController {
   ): Promise<PhoneResponseDto> {
     const phone = await this.service.findById(id, request.context)
 
-    if (dto.type) phone.changeType(dto.type)
-    if (dto.countryCode) phone.changeCountryCode(dto.countryCode)
-    if (dto.number) phone.changeNumber(dto.number)
+    if (dto.type !== undefined) phone.changeType(dto.type)
+    if (dto.countryCode !== undefined) phone.changeCountryCode(dto.countryCode)
+    if (dto.number !== undefined) phone.changeNumber(dto.number)
     if (dto.extension !== undefined) phone.changeExtension(dto.extension)
     if (dto.isWhatsapp === true) phone.setAsWhatsapp()
     else if (dto.isWhatsapp === false) phone.unsetWhatsapp()

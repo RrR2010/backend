@@ -124,13 +124,13 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 
-    // Can manage Address within their tenant
-    can(Action.Manage, Address, {
+    // TODO(EP-002): Evaluate permission level — currently Read-only for USER role.
+    // May need Create/Update for self-service address management.
+    can(Action.Read, Address, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 
-    // Can manage Phone within their tenant
-    can(Action.Manage, Phone, {
+    can(Action.Read, Phone, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 

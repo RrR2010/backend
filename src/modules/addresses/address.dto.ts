@@ -19,16 +19,20 @@ export class CreateAddressDto {
   @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
-  streetType?: string | null
+  streetType: string | null = null
 
   @ApiProperty({ type: String })
   number!: string
 
-  @ApiProperty({ required: false })
-  complement?: string
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  complement: string | null = null
 
-  @ApiProperty({ required: false })
-  district?: string
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  district: string | null = null
 
   @ApiProperty({ type: String })
   city!: string
@@ -72,10 +76,10 @@ export class CreateAddressResponseDto {
   number!: string
 
   @ApiProperty({ type: String, nullable: true, required: false })
-  complement?: string | null
+  complement!: string | null
 
   @ApiProperty({ type: String, nullable: true, required: false })
-  district?: string | null
+  district!: string | null
 
   @ApiProperty()
   city!: string

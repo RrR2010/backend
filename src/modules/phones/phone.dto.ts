@@ -19,7 +19,7 @@ export class CreatePhoneDto {
   @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
-  extension?: string | null
+  extension: string | null = null
 
   @ApiProperty({ type: String })
   number!: string
@@ -102,7 +102,7 @@ export class UpdatePhoneDto {
   @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
-  extension?: string | null
+  extension: string | null = null
 
   @ApiProperty({ required: false })
   number?: string

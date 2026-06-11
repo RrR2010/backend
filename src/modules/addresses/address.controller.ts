@@ -41,10 +41,10 @@ export class AddressesController {
         ownerType: dto.ownerType,
         type: dto.type,
         street: dto.street,
-        streetType: dto.streetType ?? null,
+        streetType: dto.streetType,
         number: dto.number,
-        complement: dto.complement ?? null,
-        district: dto.district ?? null,
+        complement: dto.complement,
+        district: dto.district,
         city: dto.city,
         state: dto.state,
         postalCode: dto.postalCode,
@@ -83,16 +83,16 @@ export class AddressesController {
   ): Promise<AddressResponseDto> {
     const address = await this.service.findById(id, request.context)
 
-    if (dto.street) address.changeStreet(dto.street)
+    if (dto.street !== undefined) address.changeStreet(dto.street)
     if (dto.number !== undefined) address.changeNumber(dto.number)
     if (dto.complement !== undefined) address.changeComplement(dto.complement)
     if (dto.district !== undefined) address.changeDistrict(dto.district)
     if (dto.streetType !== undefined) address.changeStreetType(dto.streetType)
-    if (dto.city) address.changeCity(dto.city)
-    if (dto.state) address.changeState(dto.state)
-    if (dto.postalCode) address.changePostalCode(dto.postalCode)
-    if (dto.country) address.changeCountry(dto.country)
-    if (dto.type) address.changeType(dto.type)
+    if (dto.city !== undefined) address.changeCity(dto.city)
+    if (dto.state !== undefined) address.changeState(dto.state)
+    if (dto.postalCode !== undefined) address.changePostalCode(dto.postalCode)
+    if (dto.country !== undefined) address.changeCountry(dto.country)
+    if (dto.type !== undefined) address.changeType(dto.type)
     if (dto.isDefault === true) address.setAsDefault()
     else if (dto.isDefault === false) address.unsetDefault()
 
