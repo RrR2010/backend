@@ -9,7 +9,7 @@ import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
-// EXCEÇÃO: Address é polimórfico (pode pertencer a tenant ou a entidade global).
+// Address is tenant-scoped (tenantId NOT NULL). Polymorphism is via ownerType (TenantSite, MemberProfile).
 
 export abstract class AddressRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Address | null>
@@ -80,6 +80,18 @@ export class PrismaAddressRepository implements AddressRepository {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaAddress = PrismaAddressMapper.toPersistence(address)
+
+    // Guard: verify existing record belongs to the same tenant before upsert.
+    // Prevents hijacking a record from another tenant via id collision.
+    if (ctx.scope === UserScope.TENANT) {
+      const existing = await this.prismaService.address.findFirst({
+        where: { id: address.id.value }
+      })
+      if (existing && existing.tenantId !== address.tenantId) {
+        throw new ForbiddenException('Cannot modify resource outside your tenant')
+      }
+    }
+
     await this.prismaService.address.upsert({
       where: { id: prismaAddress.id },
       update: prismaAddress,

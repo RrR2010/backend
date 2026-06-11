@@ -9,7 +9,7 @@ import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
-// EXCEÇÃO: Phone é polimórfico (pode pertencer a tenant ou a entidade global).
+// Phone is tenant-scoped (tenantId NOT NULL). Polymorphism is via ownerType (TenantSite, MemberProfile).
 
 export abstract class PhoneRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Phone | null>
@@ -76,6 +76,18 @@ export class PrismaPhoneRepository implements PhoneRepository {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const prismaPhone = PrismaPhoneMapper.toPersistence(phone)
+
+    // Guard: verify existing record belongs to the same tenant before upsert.
+    // Prevents hijacking a record from another tenant via id collision.
+    if (ctx.scope === UserScope.TENANT) {
+      const existing = await this.prismaService.phone.findFirst({
+        where: { id: phone.id.value }
+      })
+      if (existing && existing.tenantId !== phone.tenantId) {
+        throw new ForbiddenException('Cannot modify resource outside your tenant')
+      }
+    }
+
     await this.prismaService.phone.upsert({
       where: { id: phone.id.value },
       update: prismaPhone,
