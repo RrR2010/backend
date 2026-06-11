@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { Address } from '@addresses/address.entity'
 import { OwnerType, AddressType } from '@shared/enums'
@@ -6,9 +6,10 @@ import { SystemState } from '@shared/behaviours/lockable'
 import { Address as PrismaAddress, Prisma } from '@prisma/client'
 import { Id } from '@shared/value-objects'
 import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 // EXCEÇÃO: Address é polimórfico (pode pertencer a tenant ou a entidade global).
-// TODO(EP-002/Wave2): Add tenant filtering via getEffectiveTenantId(ctx) in findById(), findAll(), delete()
 
 export abstract class AddressRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Address | null>
@@ -32,8 +33,13 @@ export class PrismaAddressRepository implements AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findById(id: string, ctx: RequestContext): Promise<Address | null> {
-    const prismaAddress = await this.prismaService.address.findUnique({
-      where: { id }
+    const where: Prisma.AddressWhereInput = { id }
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
+      where.tenantId = tenantId
+    }
+    const prismaAddress = await this.prismaService.address.findFirst({
+      where
     })
     if (!prismaAddress) return null
     return PrismaAddressMapper.toDomain(prismaAddress)
@@ -58,6 +64,11 @@ export class PrismaAddressRepository implements AddressRepository {
       where.isDefault = filter.isDefault
     }
 
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
+      where.tenantId = tenantId
+    }
+
     const prismaAddresses = await this.prismaService.address.findMany({ where })
     return prismaAddresses.map((prismaAddress) =>
       PrismaAddressMapper.toDomain(prismaAddress)
@@ -65,6 +76,9 @@ export class PrismaAddressRepository implements AddressRepository {
   }
 
   async save(address: Address, ctx: RequestContext): Promise<Address> {
+    if (ctx.scope === UserScope.TENANT && address.tenantId !== ctx.tenantId) {
+      throw new ForbiddenException('Cannot modify resource outside your tenant')
+    }
     const prismaAddress = PrismaAddressMapper.toPersistence(address)
     await this.prismaService.address.upsert({
       where: { id: prismaAddress.id },
@@ -75,7 +89,14 @@ export class PrismaAddressRepository implements AddressRepository {
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    await this.prismaService.address.delete({ where: { id } })
+    const where: Prisma.AddressWhereInput = { id }
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
+      where.tenantId = tenantId
+    }
+    await this.prismaService.address.deleteMany({
+      where
+    })
   }
 }
 

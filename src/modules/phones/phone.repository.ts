@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import { Phone } from '@phones/phone.entity'
 import { OwnerType, PhoneType } from '@shared/enums'
@@ -6,9 +6,10 @@ import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import { Phone as PrismaPhone, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
+import { UserScope } from '@users/user.types'
+import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 
 // EXCEÇÃO: Phone é polimórfico (pode pertencer a tenant ou a entidade global).
-// TODO(EP-002/Wave2): Add tenant filtering via getEffectiveTenantId(ctx) in findById(), findAll(), delete()
 
 export abstract class PhoneRepository {
   abstract findById(id: string, ctx: RequestContext): Promise<Phone | null>
@@ -30,8 +31,13 @@ export class PrismaPhoneRepository implements PhoneRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findById(id: string, ctx: RequestContext): Promise<Phone | null> {
-    const prismaPhone = await this.prismaService.phone.findUnique({
-      where: { id }
+    const where: Prisma.PhoneWhereInput = { id }
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
+      where.tenantId = tenantId
+    }
+    const prismaPhone = await this.prismaService.phone.findFirst({
+      where
     })
     if (!prismaPhone) return null
     return PrismaPhoneMapper.toDomain(prismaPhone)
@@ -56,11 +62,19 @@ export class PrismaPhoneRepository implements PhoneRepository {
       where.isWhatsapp = filter.isWhatsapp
     }
 
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
+      where.tenantId = tenantId
+    }
+
     const prismaPhones = await this.prismaService.phone.findMany({ where })
     return prismaPhones.map((p) => PrismaPhoneMapper.toDomain(p))
   }
 
   async save(phone: Phone, ctx: RequestContext): Promise<Phone> {
+    if (ctx.scope === UserScope.TENANT && phone.tenantId !== ctx.tenantId) {
+      throw new ForbiddenException('Cannot modify resource outside your tenant')
+    }
     const prismaPhone = PrismaPhoneMapper.toPersistence(phone)
     await this.prismaService.phone.upsert({
       where: { id: phone.id.value },
@@ -71,7 +85,14 @@ export class PrismaPhoneRepository implements PhoneRepository {
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    await this.prismaService.phone.delete({ where: { id } })
+    const where: Prisma.PhoneWhereInput = { id }
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
+      where.tenantId = tenantId
+    }
+    await this.prismaService.phone.deleteMany({
+      where
+    })
   }
 }
 
