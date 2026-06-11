@@ -91,7 +91,9 @@ describe('BootstrapService.registerFreePlan', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn()
-      }
+      },
+      address: { create: jest.fn() },
+      phone: { create: jest.fn() }
     }
 
     subscriptionService = {
@@ -457,6 +459,265 @@ describe('BootstrapService.registerFreePlan', () => {
       // subscriptionRepository.save should NOT be called for PAID plan
       // (it gets created by finalizeOnboardingSubscription after payment)
       expect(subscriptionRepository.save).not.toHaveBeenCalled()
+    })
+  })
+
+  // ============== Address/Phone JSON blobs in register() ==============
+
+  describe('register() with address/phone DTO fields', () => {
+    function createDtoWithAddress(): BootstrapRegisterDto {
+      const dto = createFreeRegisterDto()
+      dto.addressStreet = 'Nove de Julho'
+      dto.addressStreetType = 'Rua'
+      dto.addressNumber = '123'
+      dto.addressComplement = 'Apto 42'
+      dto.addressDistrict = 'Centro'
+      dto.addressCity = 'São Paulo'
+      dto.addressState = 'SP'
+      dto.addressPostalCode = '01310-000'
+      dto.addressCountry = 'BR'
+      dto.phoneCountryCode = '55'
+      dto.phoneNumber = '11999998888'
+      dto.phoneExtension = '200'
+      dto.phoneIsWhatsapp = true
+      return dto
+    }
+
+    it('should store address/phone JSON blobs when DTO has address/phone fields', async () => {
+      const dto = createDtoWithAddress()
+
+      await service.register(dto, null, null)
+
+      // The first save should have addressData and phoneData set
+      expect(registrationRepo.save).toHaveBeenCalled()
+      const firstSaveCall = (registrationRepo.save as jest.Mock).mock.calls[0][0] as TenantRegistration
+      expect(firstSaveCall.addressData).not.toBeNull()
+      expect(firstSaveCall.phoneData).not.toBeNull()
+      if (firstSaveCall.addressData) {
+        const addr = firstSaveCall.addressData as Record<string, unknown>
+        expect(addr.street).toBe('Nove de Julho')
+        expect(addr.city).toBe('São Paulo')
+      }
+      if (firstSaveCall.phoneData) {
+        const ph = firstSaveCall.phoneData as Record<string, unknown>
+        expect(ph.number).toBe('11999998888')
+      }
+    })
+
+    it('should store null addressData/phoneData when DTO has no address/phone', async () => {
+      const dto = createFreeRegisterDto()
+
+      await service.register(dto, null, null)
+
+      expect(registrationRepo.save).toHaveBeenCalled()
+      const firstSaveCall = (registrationRepo.save as jest.Mock).mock.calls[0][0] as TenantRegistration
+      expect(firstSaveCall.addressData).toBeNull()
+      expect(firstSaveCall.phoneData).toBeNull()
+    })
+  })
+
+  // ============== Provisioning with Address/Phone ==============
+
+  describe('provisionRegistration()', () => {
+    function createRegistrationWithAddress(): TenantRegistration {
+      const now = new Date()
+      return TenantRegistration.create({
+        externalRef: 'ref-1',
+        state: RegistrationState.PENDING,
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        handoffTokenHash: 'hash',
+        handoffTokenExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        handoffTokenUsedAt: null,
+        paymentId: null,
+        subscriptionId: null,
+        providerCustomerId: null,
+        tenantData: { name: 'Test', locale: 'pt-BR', timezone: 'America/Sao_Paulo', language: 'pt', planType: PlanType.FREE },
+        tenantSiteData: { name: 'Site', legalName: 'Legal', taxId: '123', siteType: 'FACTORY', isHeadquarters: true },
+        userData: { scope: 'TENANT' },
+        identityData: { provider: 'EMAIL', identifier: 'test@test.com', secretHash: 'hash' },
+        profileData: { fullName: 'User', displayName: null, dateOfBirth: null, gender: null, photoUrl: null },
+        addressData: {
+          street: 'Nove de Julho',
+          streetType: 'Rua',
+          number: '123',
+          complement: null,
+          district: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          postalCode: '01310-000',
+          country: 'BR'
+        },
+        phoneData: {
+          countryCode: '55',
+          number: '11999998888',
+          extension: null,
+          isWhatsapp: true
+        },
+        provisionedUserId: null,
+        provisionedTenantId: null,
+        provisionedMembershipId: null,
+        provisionedProfileId: null,
+        provisionedIdentityId: null,
+        provisionedTenantSiteId: null,
+        provisionedAddressId: null,
+        provisionedPhoneId: null,
+        paymentStatus: null,
+        paymentStatusDetail: null,
+        webhookProcessedAt: null,
+        approvedAt: null,
+        provisionedAt: null,
+        rejectedAt: null,
+        expiredAt: null
+      })
+    }
+
+    function createRegistrationWithoutAddress(): TenantRegistration {
+      const reg = createRegistrationWithAddress()
+      // Override to have null address/phone data
+      const nullReg = TenantRegistration.create({
+        externalRef: 'ref-2',
+        state: RegistrationState.PENDING,
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        handoffTokenHash: 'hash2',
+        handoffTokenExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        handoffTokenUsedAt: null,
+        paymentId: null,
+        subscriptionId: null,
+        providerCustomerId: null,
+        tenantData: { name: 'Test', locale: 'pt-BR', timezone: 'America/Sao_Paulo', language: 'pt', planType: PlanType.FREE },
+        tenantSiteData: { name: 'Site', legalName: 'Legal', taxId: '123', siteType: 'FACTORY', isHeadquarters: true },
+        userData: { scope: 'TENANT' },
+        identityData: { provider: 'EMAIL', identifier: 'test@test.com', secretHash: 'hash' },
+        profileData: { fullName: 'User', displayName: null, dateOfBirth: null, gender: null, photoUrl: null },
+        addressData: null,
+        phoneData: null,
+        provisionedUserId: null,
+        provisionedTenantId: null,
+        provisionedMembershipId: null,
+        provisionedProfileId: null,
+        provisionedIdentityId: null,
+        provisionedTenantSiteId: null,
+        provisionedAddressId: null,
+        provisionedPhoneId: null,
+        paymentStatus: null,
+        paymentStatusDetail: null,
+        webhookProcessedAt: null,
+        approvedAt: null,
+        provisionedAt: null,
+        rejectedAt: null,
+        expiredAt: null
+      })
+      return nullReg
+    }
+
+    it('should create Address entity when addressData is present', async () => {
+      const registration = createRegistrationWithAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      await service.provisionRegistration(registration, platformCtx)
+
+      const mockUuid = 'mock-uuid-12345678-1234-1234-1234-123456789012'
+      expect(prisma.address.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ownerId: mockUuid,
+            ownerType: 'TenantSite',
+            tenantId: mockUuid,
+            type: 'BILLING',
+            street: 'Nove de Julho',
+            streetType: 'Rua',
+            number: '123'
+          })
+        })
+      )
+    })
+
+    it('should create Phone entity when phoneData is present', async () => {
+      const registration = createRegistrationWithAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      await service.provisionRegistration(registration, platformCtx)
+
+      const mockUuid = 'mock-uuid-12345678-1234-1234-1234-123456789012'
+      expect(prisma.phone.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ownerId: mockUuid,
+            ownerType: 'TenantSite',
+            tenantId: mockUuid,
+            type: 'WHATSAPP',
+            number: '11999998888',
+            countryCode: '55'
+          })
+        })
+      )
+    })
+
+    it('should use OwnerType.TENANT_SITE for created Address and Phone', async () => {
+      const registration = createRegistrationWithAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      await service.provisionRegistration(registration, platformCtx)
+
+      expect(prisma.address.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ownerType: 'TenantSite'
+          })
+        })
+      )
+      expect(prisma.phone.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ownerType: 'TenantSite'
+          })
+        })
+      )
+    })
+
+    it('should NOT create Address when addressData is null', async () => {
+      const registration = createRegistrationWithoutAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      await service.provisionRegistration(registration, platformCtx)
+
+      expect(prisma.address.create).not.toHaveBeenCalled()
+    })
+
+    it('should NOT create Phone when phoneData is null', async () => {
+      const registration = createRegistrationWithoutAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      await service.provisionRegistration(registration, platformCtx)
+
+      expect(prisma.phone.create).not.toHaveBeenCalled()
+    })
+
+    it('should return provisionedAddressId and provisionedPhoneId in result', async () => {
+      const registration = createRegistrationWithAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      const result = await service.provisionRegistration(registration, platformCtx)
+
+      expect(result.addressId).not.toBeNull()
+      expect(result.phoneId).not.toBeNull()
+    })
+
+    it('should return null addressId and phoneId when no address/phone data', async () => {
+      const registration = createRegistrationWithoutAddress()
+      prisma.user.findUnique.mockResolvedValue(null)
+      prisma.tenant.findUnique.mockResolvedValue(null)
+
+      const result = await service.provisionRegistration(registration, platformCtx)
+
+      expect(result.addressId).toBeNull()
+      expect(result.phoneId).toBeNull()
     })
   })
 })
