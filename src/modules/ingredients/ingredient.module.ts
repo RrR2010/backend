@@ -39,6 +39,48 @@ import {
 import { DeclarationFlag_PLService } from '@ingredients/declaration-flag-pl.service'
 import { DeclarationFlag_PLController } from '@ingredients/declaration-flag-pl.controller'
 
+import {
+  OgmDonorSpecies_PLRepository,
+  PrismaOgmDonorSpecies_PLRepository
+} from '@ingredients/ogm-donor-species-pl.repository'
+import { OgmDonorSpecies_PLService } from '@ingredients/ogm-donor-species-pl.service'
+import { OgmDonorSpecies_PLController } from '@ingredients/ogm-donor-species-pl.controller'
+
+import {
+  TechnicalSourceType_PLRepository,
+  PrismaTechnicalSourceType_PLRepository
+} from '@ingredients/technical-source-type-pl.repository'
+import { TechnicalSourceType_PLService } from '@ingredients/technical-source-type-pl.service'
+import { TechnicalSourceType_PLController } from '@ingredients/technical-source-type-pl.controller'
+
+import {
+  RegulatoryBody_PLRepository,
+  PrismaRegulatoryBody_PLRepository
+} from '@ingredients/regulatory-body-pl.repository'
+import { RegulatoryBody_PLService } from '@ingredients/regulatory-body-pl.service'
+import { RegulatoryBody_PLController } from '@ingredients/regulatory-body-pl.controller'
+
+import {
+  RegulationType_PLRepository,
+  PrismaRegulationType_PLRepository
+} from '@ingredients/regulation-type-pl.repository'
+import { RegulationType_PLService } from '@ingredients/regulation-type-pl.service'
+import { RegulationType_PLController } from '@ingredients/regulation-type-pl.controller'
+
+import {
+  Regulation_PLRepository,
+  PrismaRegulation_PLRepository
+} from '@ingredients/regulation-pl.repository'
+import { Regulation_PLService } from '@ingredients/regulation-pl.service'
+import { Regulation_PLController } from '@ingredients/regulation-pl.controller'
+
+import {
+  ComplianceRule_PLRepository,
+  PrismaComplianceRule_PLRepository
+} from '@ingredients/compliance-rule-pl.repository'
+import { ComplianceRule_PLService } from '@ingredients/compliance-rule-pl.service'
+import { ComplianceRule_PLController } from '@ingredients/compliance-rule-pl.controller'
+
 // Tenant-scoped catalogs
 import {
   TenantAllergenRepository,
@@ -61,6 +103,13 @@ import {
 } from '@ingredients/functional-group.repository'
 import { FunctionalGroupService } from '@ingredients/functional-group.service'
 import { FunctionalGroupsController } from '@ingredients/functional-group.controller'
+
+import {
+  TechnicalSourceType_TE_Repository,
+  PrismaTechnicalSourceType_TE_Repository
+} from '@ingredients/technical-source-type-te.repository'
+import { TechnicalSourceType_TEService } from '@ingredients/technical-source-type-te.service'
+import { TechnicalSourceTypesController } from '@ingredients/technical-source-type-te.controller'
 
 import {
   CompanyRepository,
@@ -146,6 +195,7 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     FunctionalGroupsController,
     CompaniesController,
     TechnicalInfoSourcesController,
+    TechnicalSourceTypesController,
     IngredientsController,
     IngredientTenantAllergensController,
     IngredientTenantNutrientsController,
@@ -157,7 +207,13 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     // Platform-scoped catalogs (PL)
     Allergen_PLController,
     Nutrient_PLController,
-    DeclarationFlag_PLController
+    DeclarationFlag_PLController,
+    OgmDonorSpecies_PLController,
+    TechnicalSourceType_PLController,
+    RegulatoryBody_PLController,
+    RegulationType_PLController,
+    Regulation_PLController,
+    ComplianceRule_PLController
   ],
   providers: [
     // Base catalogs
@@ -192,6 +248,12 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     {
       provide: FunctionalGroupRepository,
       useExisting: PrismaFunctionalGroupRepository
+    },
+    TechnicalSourceType_TEService,
+    PrismaTechnicalSourceType_TE_Repository,
+    {
+      provide: TechnicalSourceType_TE_Repository,
+      useExisting: PrismaTechnicalSourceType_TE_Repository
     },
     CompanyService,
     PrismaCompanyRepository,
@@ -269,6 +331,44 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     {
       provide: DeclarationFlag_PLRepository,
       useExisting: PrismaDeclarationFlag_PLRepository
+    },
+    OgmDonorSpecies_PLService,
+    PrismaOgmDonorSpecies_PLRepository,
+    {
+      provide: OgmDonorSpecies_PLRepository,
+      useExisting: PrismaOgmDonorSpecies_PLRepository
+    },
+    TechnicalSourceType_PLService,
+    PrismaTechnicalSourceType_PLRepository,
+    {
+      provide: TechnicalSourceType_PLRepository,
+      useExisting: PrismaTechnicalSourceType_PLRepository
+    },
+
+    // Regulatory platform-scoped catalogs (PL)
+    RegulatoryBody_PLService,
+    PrismaRegulatoryBody_PLRepository,
+    {
+      provide: RegulatoryBody_PLRepository,
+      useExisting: PrismaRegulatoryBody_PLRepository
+    },
+    RegulationType_PLService,
+    PrismaRegulationType_PLRepository,
+    {
+      provide: RegulationType_PLRepository,
+      useExisting: PrismaRegulationType_PLRepository
+    },
+    Regulation_PLService,
+    PrismaRegulation_PLRepository,
+    {
+      provide: Regulation_PLRepository,
+      useExisting: PrismaRegulation_PLRepository
+    },
+    ComplianceRule_PLService,
+    PrismaComplianceRule_PLRepository,
+    {
+      provide: ComplianceRule_PLRepository,
+      useExisting: PrismaComplianceRule_PLRepository
     }
   ],
   exports: [
@@ -282,6 +382,8 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     TenantNutrientService,
     FunctionalGroupRepository,
     FunctionalGroupService,
+    TechnicalSourceType_TE_Repository,
+    TechnicalSourceType_TEService,
     CompanyRepository,
     CompanyService,
     TechnicalInfoSourceRepository,
@@ -311,7 +413,21 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     Nutrient_PLRepository,
     Nutrient_PLService,
     DeclarationFlag_PLRepository,
-    DeclarationFlag_PLService
+    DeclarationFlag_PLService,
+    OgmDonorSpecies_PLRepository,
+    OgmDonorSpecies_PLService,
+    TechnicalSourceType_PLRepository,
+    TechnicalSourceType_PLService,
+
+    // Regulatory platform-scoped catalogs (PL)
+    RegulatoryBody_PLRepository,
+    RegulatoryBody_PLService,
+    RegulationType_PLRepository,
+    RegulationType_PLService,
+    Regulation_PLRepository,
+    Regulation_PLService,
+    ComplianceRule_PLRepository,
+    ComplianceRule_PLService
   ]
 })
 export class IngredientModule {}
