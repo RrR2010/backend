@@ -170,7 +170,7 @@ The ingredient compliance module manages:
 | IngredientLabelingProfile | Tenant | Added sugars, fats, front-of-pack declarations |
 | IngredientTechnicalProfile | Tenant | PAC, POD, total solids, ash content |
 
-All entities support **soft-delete** via `systemState` (`ACTIVE` / `LOCKED` / `HIDDEN`).
+All entities support **soft-delete** via `systemState` (`ACTIVE` / `LOCKED` / `DELETED`).
 
 ## Billing & Subscription
 

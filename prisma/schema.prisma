@@ -221,20 +221,35 @@ model Tenant {
   subscription Subscription?
 
   // Products domain
-  products_TE            Product_TE[]
-  productFamilies_TE     ProductFamily_TE[]
-  commercialLines_TE     CommercialLine_TE[]
-  claims_TE              Claim_TE[]
-  formulationVersions_TE FormulationVersion_TE[]
+  products_TE                Product_TE[]
+  productFamilies_TE         ProductFamily_TE[]
+  commercialLines_TE         CommercialLine_TE[]
+  claims_TE                  Claim_TE[]
+  formulationVersions_TE     FormulationVersion_TE[]
+  productLabelFields_TE      ProductLabelField_TE[]
+  productPanels_TE           ProductPanel_TE[]
+  productNutrientOverrides_TE ProductNutrientOverride_TE[]
+  productClaims_TE           ProductClaim_TE[]
 
   // Ingredient domain - tenant catalogs
-  technicalSourceTypes_TE TechnicalSourceType_TE[]
+  technicalSourceTypes_TE    TechnicalSourceType_TE[]
 
   // Ingredient domain
-  functionalGroups_TE    FunctionalGroup_TE[]
-  companies_TE           Company_TE[]
-  technicalSources_TE    TechnicalSource_TE[]
-  ingredients_TE         Ingredient_TE[]
+  functionalGroups_TE        FunctionalGroup_TE[]
+  companies_TE               Company_TE[]
+  technicalSources_TE        TechnicalSource_TE[]
+  ingredients_TE             Ingredient_TE[]
+  ingredientAllergens_TE     IngredientAllergen_TE[]
+  ingredientNutrients_TE     IngredientNutrient_TE[]
+  ingredientFlags_TE         IngredientFlag_TE[]
+  ingredientCosts_TE         IngredientCost_TE[]
+
+  // Formulation domain
+  formulationRevisions_TE           FormulationRevision_TE[]
+  formulationRegulatoryDeclarations_TE FormulationRegulatoryDeclaration_TE[]
+  formulationAllergens_TE           FormulationAllergen_TE[]
+  formulationNutritions_TE          FormulationNutrition_TE[]
+  formulationOgmDonors_TE           FormulationOgmDonor_TE[]
 }
 
 // ============== USER ==============
@@ -650,6 +665,7 @@ model Product_TE {
   productNutrientOverrides_TE ProductNutrientOverride_TE[]
   productClaims_TE         ProductClaim_TE[]
 
+  @@map("Product")
   @@unique([tenantId, code])
   @@unique([tenantId, internalName])
   @@index([tenantId, externalCode])
@@ -668,13 +684,17 @@ model ProductLabelField_TE {
   tenantId        String
   productId       String
   labelFieldId    String
+  labelField      LabelField_PL @relation(fields: [labelFieldId], references: [id])
   designerValue   String?
   gerencialValue  String?
 
   product     Product_TE  @relation(fields: [productId], references: [id])
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
 
+  // Nota: tenantId não incluso no unique — UUIDs são globalmente únicos
   @@unique([productId, labelFieldId])
   @@index([tenantId])
+  @@index([labelFieldId])
 }
 
 model ProductPanel_TE {
@@ -685,10 +705,13 @@ model ProductPanel_TE {
   updatedBy             String?
   systemState           SystemState       @default(ACTIVE)
   tenantId              String
+  tenant                Tenant      @relation(fields: [tenantId], references: [id])
   productId             String
   panelNumber           Int
   type                  ProductPanelType
   geometricFormatTypeId String?
+  geometricFormatType   PanelGeometricFormatType_PL? @relation(fields: [geometricFormatTypeId], references: [id])
+  geometricFormatValues Json?
 
   product     Product_TE  @relation(fields: [productId], references: [id])
 
@@ -704,14 +727,19 @@ model ProductNutrientOverride_TE {
   updatedBy         String?
   systemState       SystemState @default(ACTIVE)
   tenantId          String
+  tenant            Tenant      @relation(fields: [tenantId], references: [id])
   productId         String
   nutrientId        String
+  overrideNutrient  Nutrient_PL @relation(fields: [nutrientId], references: [id])
   overriddenValue   Decimal @db.Decimal(12,6)
+  notes             String?
 
   product     Product_TE @relation(fields: [productId], references: [id])
 
+  // Nota: tenantId não incluso no unique — UUIDs são globalmente únicos
   @@unique([productId, nutrientId])
   @@index([tenantId])
+  @@index([nutrientId])
 }
 
 model ProductClaim_TE {
@@ -722,15 +750,19 @@ model ProductClaim_TE {
   updatedBy   String?
   systemState SystemState @default(ACTIVE)
   tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
   productId   String
   claimId     String
   isActive    Boolean     @default(true)
   sortOrder   Int         @default(0)
 
   product     Product_TE  @relation(fields: [productId], references: [id])
+  claim       Claim_TE    @relation(fields: [claimId], references: [id])
 
+  // Nota: tenantId não incluso no unique — UUIDs são globalmente únicos
   @@unique([productId, claimId])
   @@index([tenantId])
+  @@index([claimId])
 }
 
 // ============== FORMULATIONS DOMAIN ==============
@@ -751,6 +783,7 @@ model FormulationVersion_TE {
 
   revisions_TE FormulationRevision_TE[]
 
+  @@map("FormulationVersion")
   @@unique([productId, version])
   @@index([tenantId])
   @@index([productId])
@@ -764,6 +797,7 @@ model FormulationRevision_TE {
   updatedBy             String?
   systemState           SystemState              @default(ACTIVE)
   tenantId              String
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
   formulationVersionId  String
   formulationVersion_TE FormulationVersion_TE    @relation(fields: [formulationVersionId], references: [id])
   revision              Int
@@ -771,7 +805,7 @@ model FormulationRevision_TE {
   approverId            String?
   approvedBy            String?
   approvedAt            DateTime?
-  drift                 Decimal? @db.Decimal(12,6)
+  drift                 Boolean @default(false)
   notes                 String?
 
   items_TE                    FormulationItem_TE[]
@@ -780,6 +814,7 @@ model FormulationRevision_TE {
   nutritionValues_TE          FormulationNutrition_TE[]
   ogmDonors_TE                FormulationOgmDonor_TE[]
 
+  @@map("FormulationRevision")
   @@unique([formulationVersionId, revision])
   @@index([tenantId])
   @@index([formulationVersionId])
@@ -797,12 +832,14 @@ model FormulationItem_TE {
   ingredient_TE         Ingredient_TE           @relation(fields: [ingredientId], references: [id])
   quantity              Decimal @db.Decimal(12,6)
   unitId                String
+  unitOfMeasure         UnitOfMeasure_PL        @relation(fields: [unitId], references: [id])
   tenantId              String
   usageCategory         String?
   componentGroup        String?
   sortOrder             Int                     @default(0)
   notes                 String?
 
+  @@map("FormulationItem")
   @@index([tenantId])
   @@index([formulationRevisionId])
   @@index([ingredientId])
@@ -818,12 +855,15 @@ model FormulationRegulatoryDeclaration_TE {
   updatedBy             String?
   systemState           SystemState @default(ACTIVE)
   tenantId              String
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
   formulationRevisionId String
   formulationRevision_TE FormulationRevision_TE @relation(fields: [formulationRevisionId], references: [id])
   flagId                String
+  flagDeclaration       DeclarationFlag_PL     @relation(fields: [flagId], references: [id])
   flagValue             Boolean     @default(true)
   notes                 String?
 
+  @@unique([formulationRevisionId, flagId])
   @@index([tenantId])
   @@index([formulationRevisionId])
 }
@@ -836,6 +876,7 @@ model FormulationAllergen_TE {
   updatedBy             String?
   systemState           SystemState @default(ACTIVE)
   tenantId              String
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
   formulationRevisionId String      @unique
   formulationRevision_TE FormulationRevision_TE @relation(fields: [formulationRevisionId], references: [id])
   allergenDeclaration   String?
@@ -852,9 +893,11 @@ model FormulationNutrition_TE {
   updatedBy             String?
   systemState           SystemState     @default(ACTIVE)
   tenantId              String
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
   formulationRevisionId String
   formulationRevision_TE FormulationRevision_TE @relation(fields: [formulationRevisionId], references: [id])
   nutrientId            String
+  nutrient              Nutrient_PL            @relation(fields: [nutrientId], references: [id])
   declaredValue         Decimal? @db.Decimal(12,6)
   calculatedValue       Decimal? @db.Decimal(12,6)
   refValue              Decimal? @db.Decimal(12,6)
@@ -872,15 +915,18 @@ model FormulationOgmDonor_TE {
   updatedBy             String?
   systemState           SystemState @default(ACTIVE)
   tenantId              String
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
   formulationRevisionId String
   formulationRevision_TE FormulationRevision_TE @relation(fields: [formulationRevisionId], references: [id])
   ogmDonorSpeciesId     String
+  ogmDonorSpecies       OgmDonorSpecies_PL      @relation(fields: [ogmDonorSpeciesId], references: [id])
 
   @@unique([formulationRevisionId, ogmDonorSpeciesId])
   @@index([tenantId])
   @@index([ogmDonorSpeciesId])
 }
 
+// Nota: campos extras vs DBML são intencionais — code+name é pattern do projeto
 // ============== CORED PLATFORM CATALOGS (Platform-Scoped) ==============
 
 model Allergen_PL {
@@ -894,6 +940,10 @@ model Allergen_PL {
   category      String?
   regulatoryRef String?
   sortOrder     Int         @default(0)
+
+  ingredientAllergens_TE IngredientAllergen_TE[]
+
+  @@map("BaseAllergen")
 }
 
 model Nutrient_PL {
@@ -913,6 +963,12 @@ model Nutrient_PL {
 
   parent    Nutrient_PL?  @relation("NutrientHierarchy", fields: [parentId], references: [id])
   children  Nutrient_PL[] @relation("NutrientHierarchy")
+
+  formulationNutritions_TE     FormulationNutrition_TE[]
+  ingredientNutrients_TE       IngredientNutrient_TE[]
+  productNutrientOverrides_TE  ProductNutrientOverride_TE[]
+
+  @@map("BaseNutrient")
 }
 
 model OgmDonorSpecies_PL {
@@ -925,6 +981,8 @@ model OgmDonorSpecies_PL {
   scientificName String      @unique
   commonName     String?
   category       String?
+
+  formulationOgmDonors_TE FormulationOgmDonor_TE[]
 }
 
 model UnitOfMeasure_PL {
@@ -933,12 +991,19 @@ model UnitOfMeasure_PL {
   symbol            String?
   measurementType   MeasurementType
   measurementSystem MeasurementSystem
+
+  formulationItems_TE      FormulationItem_TE[]
+  ingredientCosts_TE       IngredientCost_TE[]
+  unitConversionsFrom_TE   UnitConversion_PL[] @relation("UnitConversionFromUnit")
+  unitConversionsTo_TE     UnitConversion_PL[] @relation("UnitConversionToUnit")
 }
 
 model UnitConversion_PL {
   id          String  @id @default(uuid())
   fromUnitId  String
+  fromUnit    UnitOfMeasure_PL @relation("UnitConversionFromUnit", fields: [fromUnitId], references: [id])
   toUnitId    String
+  toUnit      UnitOfMeasure_PL @relation("UnitConversionToUnit", fields: [toUnitId], references: [id])
   factor      Decimal @db.Decimal(12,6)
 
   @@unique([fromUnitId, toUnitId])
@@ -949,12 +1014,17 @@ model UnitConversion_PL {
 model DeclarationFlag_PL {
   id          String               @id @unique @default(uuid())
   createdAt   DateTime             @default(now()) @db.Timestamptz(3)
+  createdBy   String?
   updatedAt   DateTime             @updatedAt @db.Timestamptz(3)
+  updatedBy   String?
   systemState SystemState          @default(ACTIVE)
   code        String               @unique
   name        String
   description String?
   appliesTo   DeclarationFlagScope @default(BOTH)
+
+  formulationRegulatoryDeclarations_TE FormulationRegulatoryDeclaration_TE[]
+  ingredientFlags_TE                   IngredientFlag_TE[]
 
   @@index([code])
 }
@@ -966,6 +1036,8 @@ model LabelField_PL {
   systemState SystemState @default(ACTIVE)
   fieldName String @unique
   sortOrder Int    @default(0)
+
+  productLabelFields_TE ProductLabelField_TE[]
 
   @@index([fieldName])
 }
@@ -1020,6 +1092,8 @@ model PanelGeometricFormatType_PL {
   formatName        String   @unique
   valueFields       Json?
   calculationFormula String?
+
+  productPanels_TE ProductPanel_TE[]
 }
 
 // ============== REGULATORY CATALOGS (Platform-Scoped) ==============
@@ -1099,13 +1173,17 @@ model ComplianceRule_PL {
 model Claim_TE {
   id          String      @id @unique @default(uuid())
   createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  createdBy   String?
   updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  updatedBy   String?
   systemState SystemState @default(ACTIVE)
   tenantId    String
   tenant      Tenant      @relation(fields: [tenantId], references: [id])
   code        String
   name        String
   description String?
+
+  productClaims_TE ProductClaim_TE[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1114,7 +1192,9 @@ model Claim_TE {
 model ProductFamily_TE {
   id          String      @id @unique @default(uuid())
   createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  createdBy   String?
   updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  updatedBy   String?
   systemState SystemState @default(ACTIVE)
   tenantId    String
   tenant      Tenant      @relation(fields: [tenantId], references: [id])
@@ -1130,7 +1210,9 @@ model ProductFamily_TE {
 model CommercialLine_TE {
   id          String      @id @unique @default(uuid())
   createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  createdBy   String?
   updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  updatedBy   String?
   systemState SystemState @default(ACTIVE)
   tenantId    String
   tenant      Tenant      @relation(fields: [tenantId], references: [id])
@@ -1148,7 +1230,9 @@ model CommercialLine_TE {
 model TechnicalSourceType_TE {
   id          String      @id @unique @default(uuid())
   createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  createdBy   String?
   updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  updatedBy   String?
   systemState SystemState @default(ACTIVE)
   tenantId    String
   tenant      Tenant      @relation(fields: [tenantId], references: [id])
@@ -1177,6 +1261,7 @@ model FunctionalGroup_TE {
 
   ingredients_TE Ingredient_TE[]
 
+  @@map("FunctionalGroup")
   @@unique([tenantId, name])
   @@index([tenantId])
 }
@@ -1195,9 +1280,11 @@ model Company_TE {
   contactInfo String?
   taxId       String?
 
-  manufacturedIngredients_TE Ingredient_TE[] @relation("ManufacturerIngredients")
-  suppliedIngredients_TE     Ingredient_TE[] @relation("SupplierIngredients")
+  manufacturedIngredients_TE Ingredient_TE[]   @relation("ManufacturerIngredients")
+  suppliedIngredients_TE     Ingredient_TE[]   @relation("SupplierIngredients")
+  ingredientCosts_TE         IngredientCost_TE[]
 
+  @@map("Company")
   @@unique([tenantId, taxId])
   @@index([tenantId])
 }
@@ -1218,8 +1305,10 @@ model TechnicalSource_TE {
   documentRef     String?
   notes           String?
 
-  ingredients_TE Ingredient_TE[]
+  ingredients_TE         Ingredient_TE[]
+  ingredientNutrients_TE IngredientNutrient_TE[]
 
+  @@map("TechnicalInfoSource")
   @@index([tenantId])
 }
 
@@ -1284,6 +1373,7 @@ model Ingredient_TE {
   costRecords_TE        IngredientCost_TE[]
   formulationItems_TE   FormulationItem_TE[]
 
+  @@map("Ingredient")
   @@unique([tenantId, code])
   @@unique([tenantId, internalName])
   @@index([tenantId, externalCode])
@@ -1301,14 +1391,19 @@ model IngredientAllergen_TE {
   updatedAt     DateTime             @updatedAt @db.Timestamptz(3)
   updatedBy     String?
   tenantId      String
+  tenant        Tenant               @relation(fields: [tenantId], references: [id])
   ingredientId  String
   ingredient_TE Ingredient_TE        @relation(fields: [ingredientId], references: [id])
   allergenId    String
+  allergen      Allergen_PL          @relation(fields: [allergenId], references: [id])
   relationType  AllergenRelationType
 
+  @@map("IngredientTenantAllergen")
+  // Nota: tenantId não incluso no unique — UUIDs são globalmente únicos
   @@unique([ingredientId, allergenId])
   @@index([tenantId])
   @@index([ingredientId])
+  @@index([allergenId])
 }
 
 model IngredientNutrient_TE {
@@ -1318,16 +1413,22 @@ model IngredientNutrient_TE {
   updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
   updatedBy     String?
   tenantId      String
+  tenant        Tenant               @relation(fields: [tenantId], references: [id])
   ingredientId  String
-  ingredient_TE Ingredient_TE   @relation(fields: [ingredientId], references: [id])
-  nutrientId    String
-  value         Decimal? @db.Decimal(12,6)
-  sourceId      String?
+  ingredient_TE   Ingredient_TE       @relation(fields: [ingredientId], references: [id])
+  nutrientId      String
+  nutrient        Nutrient_PL         @relation(fields: [nutrientId], references: [id])
+  value           Decimal? @db.Decimal(12,6)
+  sourceId        String?
+  technicalSource TechnicalSource_TE? @relation(fields: [sourceId], references: [id])
 
+  @@map("IngredientTenantNutrient")
+  // Nota: tenantId não incluso no unique — UUIDs são globalmente únicos
   @@unique([ingredientId, nutrientId])
   @@index([tenantId])
   @@index([ingredientId])
   @@index([sourceId])
+  @@index([nutrientId])
 }
 
 model IngredientFlag_TE {
@@ -1338,15 +1439,19 @@ model IngredientFlag_TE {
   updatedBy     String?
   systemState   SystemState @default(ACTIVE)
   tenantId      String
+  tenant        Tenant               @relation(fields: [tenantId], references: [id])
   ingredientId  String
-  ingredient_TE Ingredient_TE @relation(fields: [ingredientId], references: [id])
-  flagId        String
-  flagValue     Boolean     @default(true)
+  ingredient_TE   Ingredient_TE       @relation(fields: [ingredientId], references: [id])
+  flagId          String
+  flagDeclaration DeclarationFlag_PL  @relation(fields: [flagId], references: [id])
+  flagValue       Boolean     @default(true)
   notes         String?
 
+  // Nota: tenantId não incluso no unique — UUIDs são globalmente únicos
   @@unique([ingredientId, flagId])
   @@index([tenantId])
   @@index([ingredientId])
+  @@index([flagId])
 }
 
 model IngredientCost_TE {
@@ -1357,15 +1462,21 @@ model IngredientCost_TE {
   updatedBy       String?
   systemState     SystemState     @default(ACTIVE)
   tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
   ingredientId    String
   ingredient_TE   Ingredient_TE   @relation(fields: [ingredientId], references: [id])
   supplierId      String?
+  supplier        Company_TE?     @relation(fields: [supplierId], references: [id])
   unitPrice       Decimal @db.Decimal(12,6)
   currencyCode    String
   unitOfMeasureId String
+  unitOfMeasure   UnitOfMeasure_PL @relation(fields: [unitOfMeasureId], references: [id])
   effectiveDate   DateTime
   notes           String?
 
+  @@unique([tenantId, ingredientId, effectiveDate])
   @@index([tenantId])
   @@index([ingredientId])
+  @@index([unitOfMeasureId])
+  @@index([tenantId, ingredientId])
 }
