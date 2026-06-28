@@ -747,6 +747,217 @@ model BaseNutrient {
   ingredientNutrients IngredientBaseNutrient[]
 }
 
+// ============== PLATFORM CATALOGS (Platform-Scoped) ==============
+
+model DeclarationFlag_PL {
+  id          String               @id @unique @default(uuid())
+  createdAt   DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime             @updatedAt @db.Timestamptz(3)
+  systemState SystemState          @default(ACTIVE)
+  code        String               @unique
+  name        String
+  description String?
+  appliesTo   DeclarationFlagScope @default(BOTH)
+
+  @@index([code])
+}
+
+model LabelField_PL {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  fieldName String @unique
+  sortOrder Int    @default(0)
+
+  @@index([fieldName])
+}
+
+model TechnicalSourceType_PL {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  code        String      @unique
+  name        String
+  description String?
+
+  @@index([code])
+}
+
+model ProductCategory_PL {
+  id          String              @id @unique @default(uuid())
+  createdAt   DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime            @updatedAt @db.Timestamptz(3)
+  systemState SystemState         @default(ACTIVE)
+  code        String              @unique
+  name        String
+  description String?
+  sequentialNumber Int
+
+  subcategories ProductSubcategory_PL[]
+
+  @@index([code])
+}
+
+model ProductSubcategory_PL {
+  id                String             @id @unique @default(uuid())
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+  systemState       SystemState        @default(ACTIVE)
+  categoryId        String
+  category          ProductCategory_PL @relation(fields: [categoryId], references: [id])
+  code              String
+  name              String
+  sequentialNumber  Int
+
+  @@unique([categoryId, sequentialNumber])
+  @@index([categoryId])
+}
+
+model PanelGeometricFormatType_PL {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  formatName        String   @unique
+  valueFields       Json?
+  calculationFormula String?
+}
+
+// ============== REGULATORY CATALOGS (Platform-Scoped) ==============
+
+model RegulatoryBody_PL {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  code        String      @unique
+  name        String
+  description String?
+  abbreviation String?
+
+  regulations Regulation_PL[]
+
+  @@index([code])
+}
+
+model RegulationType_PL {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  code        String      @unique
+  name        String
+  description String?
+  abbreviation String
+
+  regulations Regulation_PL[]
+
+  @@index([code])
+}
+
+model Regulation_PL {
+  id                String             @id @unique @default(uuid())
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+  systemState       SystemState        @default(ACTIVE)
+  number            String
+  year              Int
+  title             String?
+  regulatoryBodyId  String
+  regulatoryBody    RegulatoryBody_PL  @relation(fields: [regulatoryBodyId], references: [id])
+  regulationTypeId  String
+  regulationType    RegulationType_PL  @relation(fields: [regulationTypeId], references: [id])
+  publishedAt       DateTime?          @db.Timestamptz(3)
+
+  complianceRules ComplianceRule_PL[]
+
+  @@unique([regulatoryBodyId, regulationTypeId, number, year])
+  @@index([regulatoryBodyId])
+  @@index([regulationTypeId])
+}
+
+model ComplianceRule_PL {
+  id              String       @id @unique @default(uuid())
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
+  systemState     SystemState  @default(ACTIVE)
+  code            String       @unique
+  category        String
+  ruleType        String
+  description     String
+  condition       Json?
+  severity        String       @default("ERROR")
+  regulationId    String
+  regulation      Regulation_PL @relation(fields: [regulationId], references: [id])
+  nutrientId      String?      // FK → Nutrient_PL (will be resolved after rename)
+
+  @@index([regulationId])
+  @@index([nutrientId])
+}
+
+// ============== TENANT CATALOGS (Product domain) ==============
+
+model Claim_TE {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  code        String
+  name        String
+  description String?
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model ProductFamily_TE {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model CommercialLine_TE {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+// ============== TENANT CATALOGS (Ingredient domain) ==============
+
+model TechnicalSourceType_TE {
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  systemState SystemState @default(ACTIVE)
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
 // ============== INGREDIENT DOMAIN ==============
 
 model TenantAllergen {
