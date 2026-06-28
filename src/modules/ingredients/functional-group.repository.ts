@@ -52,7 +52,7 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     if (
       prismaGroup &&
       effectiveTenantId &&
-      prismaGroup.systemState === SystemState.HIDDEN
+      prismaGroup.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -78,7 +78,7 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
       where.tenantId = effectiveTenantId
     }
     if (effectiveTenantId) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaGroups = await this.prisma.functionalGroup.findMany({
       where,
@@ -114,7 +114,7 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     }
     await this.prisma.functionalGroup.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

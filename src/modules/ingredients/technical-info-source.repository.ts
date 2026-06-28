@@ -5,15 +5,14 @@ import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import {
   TechnicalInfoSource as PrismaTechnicalInfoSource,
-  Prisma,
-  TechnicalInfoSourceType
+  Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 
 export type TechnicalInfoSourceFilter = {
   referenceName?: string
-  sourceType?: TechnicalInfoSourceType
+  sourceType?: string
   systemState?: SystemState
 }
 
@@ -52,7 +51,7 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
     if (
       prismaSource &&
       ctx.scope === UserScope.TENANT &&
-      prismaSource.systemState === SystemState.HIDDEN
+      prismaSource.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -74,7 +73,7 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
       where.tenantId = ctx.tenantId
     }
     if (ctx.scope === UserScope.TENANT) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaSources = await this.prisma.technicalInfoSource.findMany({
       where,
@@ -109,7 +108,7 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
     }
     await this.prisma.technicalInfoSource.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

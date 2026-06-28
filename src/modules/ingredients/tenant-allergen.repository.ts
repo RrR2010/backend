@@ -50,7 +50,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     if (
       prismaAllergen &&
       effectiveTenantId &&
-      prismaAllergen.systemState === SystemState.HIDDEN
+      prismaAllergen.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -76,7 +76,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
       where.tenantId = effectiveTenantId
     }
     if (effectiveTenantId) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaAllergens = await this.prisma.tenantAllergen.findMany({
       where,
@@ -113,7 +113,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     }
     await this.prisma.tenantAllergen.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

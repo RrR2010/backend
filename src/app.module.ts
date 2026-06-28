@@ -26,6 +26,7 @@ import { BootstrapModule } from '@bootstrap/bootstrap.module'
 import { BillingModule } from '@billing/billing.module'
 import { IngredientModule } from '@ingredients/ingredient.module'
 import { ImpersonationModule } from '@impersonation/impersonation.module'
+import { ProductsModule } from '@products/product.module'
 import { WebhookModule } from '@webhook/webhook.module'
 
 @Module({
@@ -51,6 +52,7 @@ import { WebhookModule } from '@webhook/webhook.module'
     BillingModule,
     IngredientModule,
     ImpersonationModule,
+    ProductsModule,
     WebhookModule
     // CaslModule.forRoot({
     //   superuserRole: PlatformRole.ADMIN,

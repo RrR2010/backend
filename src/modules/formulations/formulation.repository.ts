@@ -43,7 +43,7 @@ export class PrismaFormulationVersionRepository implements FormulationVersionRep
     const tid = getEffectiveTenantId(ctx)
     if (tid) where.tenantId = tid
     const data = await this.prisma.formulationVersion.findUnique({ where })
-    if (!data || data.systemState === 'HIDDEN') return null
+    if (!data || data.systemState === 'DELETED') return null
     return PrismaFormulationVersionMapper.toDomain(data)
   }
 
@@ -79,7 +79,7 @@ export class PrismaFormulationVersionRepository implements FormulationVersionRep
     const where: Prisma.FormulationVersionWhereUniqueInput = { id }
     const tid = getEffectiveTenantId(ctx)
     if (tid) where.tenantId = tid
-    await this.prisma.formulationVersion.update({ where, data: { systemState: 'HIDDEN', updatedAt: new Date() } })
+    await this.prisma.formulationVersion.update({ where, data: { systemState: 'DELETED', updatedAt: new Date() } })
   }
 }
 
@@ -92,7 +92,7 @@ export class PrismaFormulationRevisionRepository implements FormulationRevisionR
     const where: Prisma.FormulationRevisionWhereUniqueInput = { id }
     if (tid) where.formulationVersion = { tenantId: tid }
     const data = await this.prisma.formulationRevision.findUnique({ where })
-    if (!data || data.systemState === 'HIDDEN') return null
+    if (!data || data.systemState === 'DELETED') return null
     return PrismaFormulationRevisionMapper.toDomain(data)
   }
 
@@ -128,7 +128,7 @@ export class PrismaFormulationRevisionRepository implements FormulationRevisionR
       })
       if (!revision || revision.formulationVersion.tenantId !== tid) throw new ForbiddenException()
     }
-    await this.prisma.formulationRevision.update({ where: { id }, data: { systemState: 'HIDDEN', updatedAt: new Date() } })
+    await this.prisma.formulationRevision.update({ where: { id }, data: { systemState: 'DELETED', updatedAt: new Date() } })
   }
 }
 

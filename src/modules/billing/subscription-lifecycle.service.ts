@@ -76,7 +76,7 @@ export class SubscriptionLifecycleService {
     // Idempotency: already locked or hidden
     if (
       tenant.systemState === SystemState.LOCKED ||
-      tenant.systemState === SystemState.HIDDEN
+      tenant.systemState === SystemState.DELETED
     ) {
       this.logger.log(
         `Tenant ${tenantId} is already in state ${tenant.systemState}, skipping cleanup`

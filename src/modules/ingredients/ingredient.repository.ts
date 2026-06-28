@@ -52,7 +52,7 @@ export class PrismaIngredientRepository implements IngredientRepository {
     if (
       prismaIngredient &&
       effectiveTenantId &&
-      prismaIngredient.systemState === SystemState.HIDDEN
+      prismaIngredient.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -97,7 +97,7 @@ export class PrismaIngredientRepository implements IngredientRepository {
       where.tenantId = effectiveTenantId
     }
     if (effectiveTenantId) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaIngredients = await this.prisma.ingredient.findMany({
       where,
@@ -131,7 +131,7 @@ export class PrismaIngredientRepository implements IngredientRepository {
     }
     await this.prisma.ingredient.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

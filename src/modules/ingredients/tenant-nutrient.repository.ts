@@ -56,7 +56,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
     if (
       prismaNutrient &&
       effectiveTenantId &&
-      prismaNutrient.systemState === SystemState.HIDDEN
+      prismaNutrient.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -81,7 +81,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
       where.tenantId = effectiveTenantId
     }
     if (effectiveTenantId) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaNutrients = await this.prisma.tenantNutrient.findMany({
       where,
@@ -118,7 +118,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
     }
     await this.prisma.tenantNutrient.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

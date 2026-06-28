@@ -56,7 +56,7 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     if (!prismaProfile) return null
     if (
       effectiveTenantId &&
-      prismaProfile.systemState === SystemState.HIDDEN
+      prismaProfile.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -79,7 +79,7 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     if (!prismaProfile) return null
     if (
       effectiveTenantId &&
-      prismaProfile.systemState === SystemState.HIDDEN
+      prismaProfile.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -108,7 +108,7 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaProfiles = await this.prisma.ingredientLabelingProfile.findMany(
       { where }
@@ -145,7 +145,7 @@ export class PrismaIngredientLabelingProfileRepository implements IngredientLabe
     }
     await this.prisma.ingredientLabelingProfile.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

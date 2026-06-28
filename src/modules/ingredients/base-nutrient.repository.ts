@@ -49,7 +49,7 @@ export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
       where: { id }
     })
     if (!prismaBaseNutrient) return null
-    if (prismaBaseNutrient.systemState === 'HIDDEN') {
+    if (prismaBaseNutrient.systemState === 'DELETED') {
       return null
     }
     return PrismaBaseNutrientMapper.toDomain(prismaBaseNutrient)
@@ -70,7 +70,7 @@ export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
       where.systemState = filter.systemState
     }
     if (!filter.systemState) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaBaseNutrients = await this.prisma.baseNutrient.findMany({
       where,
@@ -100,7 +100,7 @@ export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
     const where: Prisma.BaseNutrientWhereUniqueInput = { id }
     await this.prisma.baseNutrient.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

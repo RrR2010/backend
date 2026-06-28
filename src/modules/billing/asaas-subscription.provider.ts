@@ -80,6 +80,7 @@ export class AsaasSubscriptionProvider implements SubscriptionProvider {
       value: input.amount / 100,
       nextDueDate: nextDueDateStr,
       cycle: 'MONTHLY',
+      description: null,
       externalReference: input.externalRef,
       callback: {
         successUrl: input.backUrlSuccess,

@@ -43,7 +43,7 @@ export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
       where: { id }
     })
     if (!prismaBaseAllergen) return null
-    if (prismaBaseAllergen.systemState === 'HIDDEN') {
+    if (prismaBaseAllergen.systemState === 'DELETED') {
       return null
     }
     return PrismaBaseAllergenMapper.toDomain(prismaBaseAllergen)
@@ -61,7 +61,7 @@ export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
       where.systemState = filter.systemState
     }
     if (!filter.systemState) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaBaseAllergens = await this.prisma.baseAllergen.findMany({
       where,
@@ -91,7 +91,7 @@ export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
     const where: Prisma.BaseAllergenWhereUniqueInput = { id }
     await this.prisma.baseAllergen.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

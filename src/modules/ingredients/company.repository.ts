@@ -40,7 +40,7 @@ export class PrismaCompanyRepository implements CompanyRepository {
     if (
       prismaCompany &&
       effectiveTenantId &&
-      prismaCompany.systemState === SystemState.HIDDEN
+      prismaCompany.systemState === SystemState.DELETED
     ) {
       return null
     }
@@ -66,7 +66,7 @@ export class PrismaCompanyRepository implements CompanyRepository {
       where.tenantId = effectiveTenantId
     }
     if (effectiveTenantId) {
-      where.systemState = { not: SystemState.HIDDEN }
+      where.systemState = { not: SystemState.DELETED }
     }
     const prismaCompanies = await this.prisma.company.findMany({
       where,
@@ -99,7 +99,7 @@ export class PrismaCompanyRepository implements CompanyRepository {
     }
     await this.prisma.company.update({
       where,
-      data: { systemState: SystemState.HIDDEN, updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

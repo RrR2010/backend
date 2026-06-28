@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
-import { TechnicalInfoSourceType } from '@prisma/client'
+
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
@@ -8,8 +8,8 @@ export class CreateTechnicalInfoSourceDto {
   @ApiProperty({ type: String })
   tenantId!: string
 
-  @ApiProperty({ enum: TechnicalInfoSourceType })
-  sourceType!: TechnicalInfoSourceType
+  @ApiProperty({ type: String })
+  sourceType!: string
 
   @ApiProperty({ type: String })
   referenceName!: string
@@ -28,8 +28,8 @@ export class CreateTechnicalInfoSourceResponseDto {
   @ApiProperty()
   tenantId!: string
 
-  @ApiProperty({ enum: TechnicalInfoSourceType })
-  sourceType!: TechnicalInfoSourceType
+  @ApiProperty({ type: String })
+  sourceType!: string
 
   @ApiProperty()
   referenceName!: string
@@ -69,8 +69,8 @@ export class CreateTechnicalInfoSourceResponseDto {
 export class TechnicalInfoSourceResponseDto extends CreateTechnicalInfoSourceResponseDto {}
 
 export class UpdateTechnicalInfoSourceDto {
-  @ApiProperty({ enum: TechnicalInfoSourceType, required: false })
-  sourceType?: TechnicalInfoSourceType
+  @ApiProperty({ type: String, required: false })
+  sourceType?: string
 
   @ApiProperty({ type: String, required: false })
   referenceName?: string

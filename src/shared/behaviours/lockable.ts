@@ -8,7 +8,7 @@ import {
 export enum SystemState {
   ACTIVE = 'ACTIVE', // visible and can be modified
   LOCKED = 'LOCKED', // cannot be changed but is visible (audit purpose)
-  HIDDEN = 'HIDDEN'
+  DELETED = 'DELETED'
 }
 
 /**
@@ -78,7 +78,7 @@ export function Lockable<
     }
 
     delete(): void {
-      this._props.systemState = SystemState.HIDDEN
+      this._props.systemState = SystemState.DELETED
       this.touch?.()
     }
 
@@ -95,7 +95,7 @@ export function Lockable<
         throw new EntityLockedError(entityType)
       }
 
-      if (this.systemState === SystemState.HIDDEN) {
+      if (this.systemState === SystemState.DELETED) {
         throw new EntityDeletedError(entityType)
       }
     }

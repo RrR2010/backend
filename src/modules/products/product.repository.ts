@@ -30,7 +30,7 @@ export class PrismaProductRepository implements ProductRepository {
     if (effectiveTenantId) where.tenantId = effectiveTenantId
     const data = await this.prisma.product.findUnique({ where })
     if (!data) return null
-    if (data.systemState === 'HIDDEN') return null
+    if (data.systemState === 'DELETED') return null
     return PrismaProductMapper.toDomain(data)
   }
 
@@ -60,7 +60,7 @@ export class PrismaProductRepository implements ProductRepository {
     if (effectiveTenantId) where.tenantId = effectiveTenantId
     await this.prisma.product.update({
       where,
-      data: { systemState: 'HIDDEN', updatedAt: new Date() },
+      data: { systemState: 'DELETED', updatedAt: new Date() },
     })
   }
 }

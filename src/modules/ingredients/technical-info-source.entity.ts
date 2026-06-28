@@ -7,13 +7,11 @@ import {
   type LockableProps
 } from '@shared/behaviours/lockable'
 
-import { TechnicalInfoSourceType } from '@prisma/client'
-
 export type TechnicalInfoSourceProps = AuditableProps &
   LockableProps & {
     id: Id
     tenantId: string
-    sourceType: TechnicalInfoSourceType
+    sourceType: string
     referenceName: string
     url: string | null
     documentRef: string | null
@@ -60,7 +58,7 @@ export class TechnicalInfoSource extends Lockable(
     return this._props.tenantId
   }
 
-  get sourceType(): TechnicalInfoSourceType {
+  get sourceType(): string {
     return this._props.sourceType
   }
 
@@ -78,7 +76,7 @@ export class TechnicalInfoSource extends Lockable(
 
   // --------------- Behaviors ---------------
 
-  changeSourceType(sourceType: TechnicalInfoSourceType): void {
+  changeSourceType(sourceType: string): void {
     this.ensureActivated('TechnicalInfoSource')
     this._props.sourceType = sourceType
     this.touch()
