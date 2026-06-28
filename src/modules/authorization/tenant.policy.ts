@@ -16,6 +16,13 @@ import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
 import { BaseNutrient } from '@ingredients/base-nutrient.entity'
+import { Allergen_PL } from '@ingredients/allergen-pl.entity'
+import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
+import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
+import { LabelField_PL } from '@products/label-field-pl.entity'
+import { ProductCategory_PL } from '@products/product-category-pl.entity'
+import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
+import { PanelGeometricFormatType_PL } from '@products/panel-geometric-format-type-pl.entity'
 import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
 import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
 import { IngredientTenantAllergen } from '@ingredients/ingredient-tenant-allergen.entity'
@@ -98,6 +105,13 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     // Can read global base catalogs (no tenantId — shared reference data)
     can(Action.Read, BaseAllergen)
     can(Action.Read, BaseNutrient)
+    can(Action.Read, Allergen_PL)
+    can(Action.Read, Nutrient_PL)
+    can(Action.Read, DeclarationFlag_PL)
+    can(Action.Read, LabelField_PL)
+    can(Action.Read, ProductCategory_PL)
+    can(Action.Read, ProductSubcategory_PL)
+    can(Action.Read, PanelGeometricFormatType_PL)
 
     // Can manage ingredient-base-allergen junctions within their tenant
     can(Action.Manage, IngredientBaseAllergen, {

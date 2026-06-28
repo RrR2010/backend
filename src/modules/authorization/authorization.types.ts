@@ -11,8 +11,15 @@ import { IngredientLabelingProfile } from '@ingredients/ingredient-labeling-prof
 import { IngredientTechnicalProfile } from '@ingredients/ingredient-technical-profile.entity'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
 import { BaseNutrient } from '@ingredients/base-nutrient.entity'
+import { Allergen_PL } from '@ingredients/allergen-pl.entity'
+import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
+import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
 import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
 import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
+import { LabelField_PL } from '@products/label-field-pl.entity'
+import { ProductCategory_PL } from '@products/product-category-pl.entity'
+import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
+import { PanelGeometricFormatType_PL } from '@products/panel-geometric-format-type-pl.entity'
 import { Tenant } from '@tenants/tenant.entity'
 import { User } from '@users/user.entity'
 import { TenantMembership } from '@tenant-memberships/tenant-membership.entity'
@@ -59,6 +66,9 @@ export type Subjects =
       | typeof IngredientTechnicalProfile
       | typeof BaseAllergen
       | typeof BaseNutrient
+      | typeof Allergen_PL
+      | typeof Nutrient_PL
+      | typeof DeclarationFlag_PL
       | typeof IngredientBaseAllergen
       | typeof IngredientBaseNutrient
       | typeof Identity
@@ -73,6 +83,10 @@ export type Subjects =
       | typeof Product
       | typeof ProductNutritionalInfo
       | typeof LabelProfile
+      | typeof LabelField_PL
+      | typeof ProductCategory_PL
+      | typeof ProductSubcategory_PL
+      | typeof PanelGeometricFormatType_PL
       | typeof FormulationVersion
       | typeof FormulationRevision
       | typeof FormulationItem

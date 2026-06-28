@@ -17,6 +17,28 @@ import {
 import { BaseNutrientService } from '@ingredients/base-nutrient.service'
 import { BaseNutrientController } from '@ingredients/base-nutrient.controller'
 
+// Platform-scoped catalogs (PL)
+import {
+  Allergen_PLRepository,
+  PrismaAllergen_PLRepository
+} from '@ingredients/allergen-pl.repository'
+import { Allergen_PLService } from '@ingredients/allergen-pl.service'
+import { Allergen_PLController } from '@ingredients/allergen-pl.controller'
+
+import {
+  Nutrient_PLRepository,
+  PrismaNutrient_PLRepository
+} from '@ingredients/nutrient-pl.repository'
+import { Nutrient_PLService } from '@ingredients/nutrient-pl.service'
+import { Nutrient_PLController } from '@ingredients/nutrient-pl.controller'
+
+import {
+  DeclarationFlag_PLRepository,
+  PrismaDeclarationFlag_PLRepository
+} from '@ingredients/declaration-flag-pl.repository'
+import { DeclarationFlag_PLService } from '@ingredients/declaration-flag-pl.service'
+import { DeclarationFlag_PLController } from '@ingredients/declaration-flag-pl.controller'
+
 // Tenant-scoped catalogs
 import {
   TenantAllergenRepository,
@@ -131,7 +153,11 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     IngredientBaseNutrientsController,
     IngredientRegulatoryProfilesController,
     IngredientLabelingProfilesController,
-    IngredientTechnicalProfilesController
+    IngredientTechnicalProfilesController,
+    // Platform-scoped catalogs (PL)
+    Allergen_PLController,
+    Nutrient_PLController,
+    DeclarationFlag_PLController
   ],
   providers: [
     // Base catalogs
@@ -224,6 +250,25 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     {
       provide: IngredientTechnicalProfileRepository,
       useExisting: PrismaIngredientTechnicalProfileRepository
+    },
+    // Platform-scoped catalogs (PL)
+    Allergen_PLService,
+    PrismaAllergen_PLRepository,
+    {
+      provide: Allergen_PLRepository,
+      useExisting: PrismaAllergen_PLRepository
+    },
+    Nutrient_PLService,
+    PrismaNutrient_PLRepository,
+    {
+      provide: Nutrient_PLRepository,
+      useExisting: PrismaNutrient_PLRepository
+    },
+    DeclarationFlag_PLService,
+    PrismaDeclarationFlag_PLRepository,
+    {
+      provide: DeclarationFlag_PLRepository,
+      useExisting: PrismaDeclarationFlag_PLRepository
     }
   ],
   exports: [
@@ -259,7 +304,14 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     IngredientLabelingProfileRepository,
     IngredientLabelingProfileService,
     IngredientTechnicalProfileRepository,
-    IngredientTechnicalProfileService
+    IngredientTechnicalProfileService,
+    // Platform-scoped catalogs (PL)
+    Allergen_PLRepository,
+    Allergen_PLService,
+    Nutrient_PLRepository,
+    Nutrient_PLService,
+    DeclarationFlag_PLRepository,
+    DeclarationFlag_PLService
   ]
 })
 export class IngredientModule {}

@@ -9,6 +9,13 @@ import {
 import { User } from '@users/user.entity'
 import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
 import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
+import { Allergen_PL } from '@ingredients/allergen-pl.entity'
+import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
+import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
+import { LabelField_PL } from '@products/label-field-pl.entity'
+import { ProductCategory_PL } from '@products/product-category-pl.entity'
+import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
+import { PanelGeometricFormatType_PL } from '@products/panel-geometric-format-type-pl.entity'
 
 type PlatformContext = Extract<RequestContext, { scope: UserScope.PLATFORM }>
 
@@ -34,6 +41,15 @@ export function definePlatformAbility(ctx: PlatformContext): AppAbility {
     // If impersonating, add tenant-scoped permissions
     // The actual tenantId filtering happens at the repository level
     // via getEffectiveTenantId(), not in CASL conditions
+    // Platform-scoped catalogs are readable by PLATFORM USER
+    can(Action.Read, Allergen_PL)
+    can(Action.Read, Nutrient_PL)
+    can(Action.Read, DeclarationFlag_PL)
+    can(Action.Read, LabelField_PL)
+    can(Action.Read, ProductCategory_PL)
+    can(Action.Read, ProductSubcategory_PL)
+    can(Action.Read, PanelGeometricFormatType_PL)
+
     if (ctx.impersonatedTenantId) {
       // Allow reading tenant-scoped entities when impersonating
       can(Action.Read, TenantNutrient)
