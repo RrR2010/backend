@@ -176,11 +176,11 @@ const allergens: SeedAllergen[] = [
 
 async function main() {
   // Delete existing base allergens first
-  await prisma.baseAllergen.deleteMany()
+  await prisma.allergen_PL.deleteMany()
   console.log('Cleared existing base allergens')
 
   for (const allergen of allergens) {
-    await prisma.baseAllergen.create({ data: allergen })
+    await prisma.allergen_PL.create({ data: allergen })
     console.log(`Created base allergen: ${allergen.name}`)
   }
 

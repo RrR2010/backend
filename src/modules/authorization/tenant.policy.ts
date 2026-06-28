@@ -19,7 +19,19 @@ import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
 import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
+import { OgmDonorSpecies_PL } from '@ingredients/ogm-donor-species-pl.entity'
+import { TechnicalSourceType_PL } from '@ingredients/technical-source-type-pl.entity'
+import { RegulatoryBody_PL } from '@ingredients/regulatory-body-pl.entity'
+import { RegulationType_PL } from '@ingredients/regulation-type-pl.entity'
+import { Regulation_PL } from '@ingredients/regulation-pl.entity'
+import { ComplianceRule_PL } from '@ingredients/compliance-rule-pl.entity'
 import { LabelField_PL } from '@products/label-field-pl.entity'
+import { Claim_TE } from '@products/claim-te.entity'
+import { ProductFamily_TE } from '@products/product-family-te.entity'
+import { CommercialLine_TE } from '@products/commercial-line-te.entity'
+import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
+import { UnitOfMeasure_PL } from '@formulations/unit-of-measure-pl.entity'
+import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
 import { ProductCategory_PL } from '@products/product-category-pl.entity'
 import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
 import { PanelGeometricFormatType_PL } from '@products/panel-geometric-format-type-pl.entity'
@@ -101,6 +113,18 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Manage, TechnicalInfoSource, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
+    can(Action.Manage, Claim_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, ProductFamily_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, CommercialLine_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, TechnicalSourceType_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can read global base catalogs (no tenantId — shared reference data)
     can(Action.Read, BaseAllergen)
@@ -108,10 +132,18 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Read, Allergen_PL)
     can(Action.Read, Nutrient_PL)
     can(Action.Read, DeclarationFlag_PL)
+    can(Action.Read, OgmDonorSpecies_PL)
+    can(Action.Read, TechnicalSourceType_PL)
+    can(Action.Read, RegulatoryBody_PL)
+    can(Action.Read, RegulationType_PL)
+    can(Action.Read, Regulation_PL)
+    can(Action.Read, ComplianceRule_PL)
     can(Action.Read, LabelField_PL)
     can(Action.Read, ProductCategory_PL)
     can(Action.Read, ProductSubcategory_PL)
     can(Action.Read, PanelGeometricFormatType_PL)
+    can(Action.Read, UnitOfMeasure_PL)
+    can(Action.Read, UnitConversion_PL)
 
     // Can manage ingredient-base-allergen junctions within their tenant
     can(Action.Manage, IngredientBaseAllergen, {

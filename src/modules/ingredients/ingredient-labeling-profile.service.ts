@@ -80,7 +80,7 @@ export class IngredientLabelingProfileService {
       if (ctx.scope === UserScope.TENANT) {
         tenantId = ctx.tenantId
       } else {
-        const ingredient = await this.prisma.ingredient.findUnique({
+        const ingredient = await this.prisma.ingredient_TE.findUnique({
           where: { id: ingredientId }
         })
         if (!ingredient) throw new NotFoundException('Ingredient not found')

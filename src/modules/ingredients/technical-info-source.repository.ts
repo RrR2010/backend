@@ -4,7 +4,7 @@ import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import {
-  TechnicalInfoSource as PrismaTechnicalInfoSource,
+  TechnicalSource_TE as PrismaTechnicalSource_TE,
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
@@ -33,18 +33,18 @@ export abstract class TechnicalInfoSourceRepository {
 }
 
 @Injectable()
-export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceRepository {
+export class PrismaTechnicalSource_TERepository implements TechnicalInfoSourceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     ctx: RequestContext
   ): Promise<TechnicalInfoSource | null> {
-    const where: Prisma.TechnicalInfoSourceWhereUniqueInput = { id }
+    const where: Prisma.TechnicalSource_TEWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    const prismaSource = await this.prisma.technicalInfoSource.findUnique({
+    const prismaSource = await this.prisma.technicalSource_TE.findUnique({
       where
     })
     if (!prismaSource) return null
@@ -55,14 +55,14 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
     ) {
       return null
     }
-    return PrismaTechnicalInfoSourceMapper.toDomain(prismaSource)
+    return PrismaTechnicalSource_TEMapper.toDomain(prismaSource)
   }
 
   async findAll(
     filter: TechnicalInfoSourceFilter,
     ctx: RequestContext
   ): Promise<TechnicalInfoSource[]> {
-    const where: Prisma.TechnicalInfoSourceWhereInput = {
+    const where: Prisma.TechnicalSource_TEWhereInput = {
       ...(filter.referenceName && {
         referenceName: { contains: filter.referenceName, mode: 'insensitive' }
       }),
@@ -75,12 +75,12 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
     if (ctx.scope === UserScope.TENANT) {
       where.systemState = { not: SystemState.DELETED }
     }
-    const prismaSources = await this.prisma.technicalInfoSource.findMany({
+    const prismaSources = await this.prisma.technicalSource_TE.findMany({
       where,
       orderBy: { referenceName: 'asc' }
     })
     return prismaSources.map((source) =>
-      PrismaTechnicalInfoSourceMapper.toDomain(source)
+      PrismaTechnicalSource_TEMapper.toDomain(source)
     )
   }
 
@@ -92,8 +92,8 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = source.id.value
-    const prismaSource = PrismaTechnicalInfoSourceMapper.toPersistence(source)
-    await this.prisma.technicalInfoSource.upsert({
+    const prismaSource = PrismaTechnicalSource_TEMapper.toPersistence(source)
+    await this.prisma.technicalSource_TE.upsert({
       where: { id },
       update: prismaSource,
       create: prismaSource
@@ -102,20 +102,20 @@ export class PrismaTechnicalInfoSourceRepository implements TechnicalInfoSourceR
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.TechnicalInfoSourceWhereUniqueInput = { id }
+    const where: Prisma.TechnicalSource_TEWhereUniqueInput = { id }
     if (ctx.scope === UserScope.TENANT) {
       where.tenantId = ctx.tenantId
     }
-    await this.prisma.technicalInfoSource.update({
+    await this.prisma.technicalSource_TE.update({
       where,
       data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaTechnicalInfoSourceMapper {
+class PrismaTechnicalSource_TEMapper {
   static toDomain(
-    prismaSource: PrismaTechnicalInfoSource
+    prismaSource: PrismaTechnicalSource_TE
   ): TechnicalInfoSource {
     const systemState =
       SystemState[prismaSource.systemState as keyof typeof SystemState]
@@ -128,7 +128,7 @@ class PrismaTechnicalInfoSourceMapper {
       updatedAt: prismaSource.updatedAt,
       systemState,
       tenantId: prismaSource.tenantId,
-      sourceType: prismaSource.sourceType,
+      sourceType: prismaSource.sourceTypePlId ?? prismaSource.sourceTypeTeId ?? '',
       referenceName: prismaSource.referenceName,
       url: prismaSource.url,
       documentRef: prismaSource.documentRef
@@ -137,14 +137,14 @@ class PrismaTechnicalInfoSourceMapper {
 
   static toPersistence(
     source: TechnicalInfoSource
-  ): Prisma.TechnicalInfoSourceUncheckedCreateInput {
+  ): Prisma.TechnicalSource_TEUncheckedCreateInput {
     return {
       id: source.id.value,
       createdAt: source.createdAt,
       updatedAt: source.updatedAt,
       systemState: source.systemState,
       tenantId: source.tenantId,
-      sourceType: source.sourceType,
+      sourceTypePlId: source.sourceType || null,
       referenceName: source.referenceName,
       url: source.url,
       documentRef: source.documentRef

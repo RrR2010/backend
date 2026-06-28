@@ -3,7 +3,7 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
 import { Id } from '@shared/value-objects'
 import {
-  IngredientBaseNutrient as PrismaIngredientBaseNutrient,
+  IngredientNutrient_TE as PrismaIngredientNutrient_TE,
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
@@ -30,24 +30,24 @@ export abstract class IngredientBaseNutrientRepository {
 }
 
 @Injectable()
-export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNutrientRepository {
+export class PrismaIngredientNutrient_TERepository implements IngredientBaseNutrientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findByIngredientId(
     ingredientId: string,
     ctx: RequestContext
   ): Promise<IngredientBaseNutrient[]> {
-    const where: Prisma.IngredientBaseNutrientWhereInput = {
+    const where: Prisma.IngredientNutrient_TEWhereInput = {
       ingredientId
     }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    const entries = await this.prisma.ingredientBaseNutrient.findMany({
+    const entries = await this.prisma.ingredientNutrient_TE.findMany({
       where
     })
-    return entries.map((e) => PrismaIngredientBaseNutrientMapper.toDomain(e))
+    return entries.map((e) => PrismaIngredientNutrient_TEMapper.toDomain(e))
   }
 
   async create(
@@ -59,11 +59,11 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     entry.touch()
-    const prismaData = PrismaIngredientBaseNutrientMapper.toPersistence(entry)
-    const created = await this.prisma.ingredientBaseNutrient.create({
+    const prismaData = PrismaIngredientNutrient_TEMapper.toPersistence(entry)
+    const created = await this.prisma.ingredientNutrient_TE.create({
       data: prismaData
     })
-    return PrismaIngredientBaseNutrientMapper.toDomain(created)
+    return PrismaIngredientNutrient_TEMapper.toDomain(created)
   }
 
   async createMany(
@@ -81,61 +81,61 @@ export class PrismaIngredientBaseNutrientRepository implements IngredientBaseNut
       entry.touch()
     }
     const prismaData = entries.map((e) =>
-      PrismaIngredientBaseNutrientMapper.toPersistence(e)
+      PrismaIngredientNutrient_TEMapper.toPersistence(e)
     )
-    await this.prisma.ingredientBaseNutrient.createMany({
+    await this.prisma.ingredientNutrient_TE.createMany({
       data: prismaData
     })
     return entries
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.IngredientBaseNutrientWhereUniqueInput = { id }
+    const where: Prisma.IngredientNutrient_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.ingredientBaseNutrient.delete({ where })
+    await this.prisma.ingredientNutrient_TE.delete({ where })
   }
 
   async deleteManyByIngredientId(
     ingredientId: string,
     ctx: RequestContext
   ): Promise<void> {
-    const where: Prisma.IngredientBaseNutrientWhereInput = {
+    const where: Prisma.IngredientNutrient_TEWhereInput = {
       ingredientId
     }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.ingredientBaseNutrient.deleteMany({ where })
+    await this.prisma.ingredientNutrient_TE.deleteMany({ where })
   }
 }
 
-class PrismaIngredientBaseNutrientMapper {
-  static toDomain(e: PrismaIngredientBaseNutrient): IngredientBaseNutrient {
+class PrismaIngredientNutrient_TEMapper {
+  static toDomain(e: PrismaIngredientNutrient_TE): IngredientBaseNutrient {
     return IngredientBaseNutrient.rehydrate({
       id: Id.from(e.id),
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
       tenantId: e.tenantId,
       ingredientId: e.ingredientId,
-      baseNutrientId: e.baseNutrientId,
+      baseNutrientId: e.nutrientId,
       value: e.value?.toNumber() ?? null
     })
   }
 
   static toPersistence(
     entry: IngredientBaseNutrient
-  ): Prisma.IngredientBaseNutrientUncheckedCreateInput {
+  ): Prisma.IngredientNutrient_TEUncheckedCreateInput {
     return {
       id: entry.id.value,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
       tenantId: entry.tenantId,
       ingredientId: entry.ingredientId,
-      baseNutrientId: entry.baseNutrientId,
+      nutrientId: entry.baseNutrientId,
       value: entry.value !== null ? new Prisma.Decimal(entry.value) : null
     }
   }

@@ -3,7 +3,7 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/behaviours/lockable'
-import { BaseAllergen as PrismaBaseAllergen, Prisma } from '@prisma/client'
+import { Allergen_PL as PrismaAllergen_PL, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 
 // EXCEÇÃO: BaseAllergen é entidade platform-scoped (sem tenantId).
@@ -32,28 +32,28 @@ export abstract class BaseAllergenRepository {
 }
 
 @Injectable()
-export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
+export class PrismaAllergen_PLRepository implements BaseAllergenRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     _ctx: RequestContext
   ): Promise<BaseAllergen | null> {
-    const prismaBaseAllergen = await this.prisma.baseAllergen.findUnique({
+    const prismaBaseAllergen = await this.prisma.allergen_PL.findUnique({
       where: { id }
     })
     if (!prismaBaseAllergen) return null
     if (prismaBaseAllergen.systemState === 'DELETED') {
       return null
     }
-    return PrismaBaseAllergenMapper.toDomain(prismaBaseAllergen)
+    return PrismaAllergen_PLMapper.toDomain(prismaBaseAllergen)
   }
 
   async findAll(
     filter: BaseAllergenFilter,
     _ctx: RequestContext
   ): Promise<BaseAllergen[]> {
-    const where: Prisma.BaseAllergenWhereInput = {}
+    const where: Prisma.Allergen_PLWhereInput = {}
     if (filter.category) {
       where.category = { contains: filter.category, mode: 'insensitive' }
     }
@@ -63,12 +63,12 @@ export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
     if (!filter.systemState) {
       where.systemState = { not: SystemState.DELETED }
     }
-    const prismaBaseAllergens = await this.prisma.baseAllergen.findMany({
+    const prismaBaseAllergens = await this.prisma.allergen_PL.findMany({
       where,
       orderBy: { sortOrder: 'asc' }
     })
     return prismaBaseAllergens.map((allergen) =>
-      PrismaBaseAllergenMapper.toDomain(allergen)
+      PrismaAllergen_PLMapper.toDomain(allergen)
     )
   }
 
@@ -78,8 +78,8 @@ export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
   ): Promise<BaseAllergen> {
     const id = baseAllergen.id.value
     const prismaBaseAllergen =
-      PrismaBaseAllergenMapper.toPersistence(baseAllergen)
-    await this.prisma.baseAllergen.upsert({
+      PrismaAllergen_PLMapper.toPersistence(baseAllergen)
+    await this.prisma.allergen_PL.upsert({
       where: { id },
       update: prismaBaseAllergen,
       create: prismaBaseAllergen
@@ -88,16 +88,16 @@ export class PrismaBaseAllergenRepository implements BaseAllergenRepository {
   }
 
   async delete(id: string, _ctx: RequestContext): Promise<void> {
-    const where: Prisma.BaseAllergenWhereUniqueInput = { id }
-    await this.prisma.baseAllergen.update({
+    const where: Prisma.Allergen_PLWhereUniqueInput = { id }
+    await this.prisma.allergen_PL.update({
       where,
       data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaBaseAllergenMapper {
-  static toDomain(prismaBaseAllergen: PrismaBaseAllergen): BaseAllergen {
+class PrismaAllergen_PLMapper {
+  static toDomain(prismaBaseAllergen: PrismaAllergen_PL): BaseAllergen {
     return BaseAllergen.rehydrate({
       id: Id.from(prismaBaseAllergen.id),
       createdAt: prismaBaseAllergen.createdAt,
@@ -113,7 +113,7 @@ class PrismaBaseAllergenMapper {
 
   static toPersistence(
     baseAllergen: BaseAllergen
-  ): Prisma.BaseAllergenCreateInput {
+  ): Prisma.Allergen_PLCreateInput {
     return {
       id: baseAllergen.id.value,
       createdAt: baseAllergen.createdAt,

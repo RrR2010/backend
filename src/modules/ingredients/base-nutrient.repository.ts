@@ -4,7 +4,7 @@ import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/behaviours/lockable'
 import {
-  BaseNutrient as PrismaBaseNutrient,
+  Nutrient_PL as PrismaNutrient_PL,
   Prisma,
   NutrientUnit,
   NutrientCategory
@@ -38,28 +38,28 @@ export abstract class BaseNutrientRepository {
 }
 
 @Injectable()
-export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
+export class PrismaNutrient_PLRepository implements BaseNutrientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     _ctx: RequestContext
   ): Promise<BaseNutrient | null> {
-    const prismaBaseNutrient = await this.prisma.baseNutrient.findUnique({
+    const prismaBaseNutrient = await this.prisma.nutrient_PL.findUnique({
       where: { id }
     })
     if (!prismaBaseNutrient) return null
     if (prismaBaseNutrient.systemState === 'DELETED') {
       return null
     }
-    return PrismaBaseNutrientMapper.toDomain(prismaBaseNutrient)
+    return PrismaNutrient_PLMapper.toDomain(prismaBaseNutrient)
   }
 
   async findAll(
     filter: BaseNutrientFilter,
     _ctx: RequestContext
   ): Promise<BaseNutrient[]> {
-    const where: Prisma.BaseNutrientWhereInput = {}
+    const where: Prisma.Nutrient_PLWhereInput = {}
     if (filter.unit) {
       where.unit = filter.unit as NutrientUnit
     }
@@ -72,12 +72,12 @@ export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
     if (!filter.systemState) {
       where.systemState = { not: SystemState.DELETED }
     }
-    const prismaBaseNutrients = await this.prisma.baseNutrient.findMany({
+    const prismaBaseNutrients = await this.prisma.nutrient_PL.findMany({
       where,
       orderBy: { sortOrder: 'asc' }
     })
     return prismaBaseNutrients.map((nutrient) =>
-      PrismaBaseNutrientMapper.toDomain(nutrient)
+      PrismaNutrient_PLMapper.toDomain(nutrient)
     )
   }
 
@@ -87,8 +87,8 @@ export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
   ): Promise<BaseNutrient> {
     const id = baseNutrient.id.value
     const prismaBaseNutrient =
-      PrismaBaseNutrientMapper.toPersistence(baseNutrient)
-    await this.prisma.baseNutrient.upsert({
+      PrismaNutrient_PLMapper.toPersistence(baseNutrient)
+    await this.prisma.nutrient_PL.upsert({
       where: { id },
       update: prismaBaseNutrient,
       create: prismaBaseNutrient
@@ -97,16 +97,16 @@ export class PrismaBaseNutrientRepository implements BaseNutrientRepository {
   }
 
   async delete(id: string, _ctx: RequestContext): Promise<void> {
-    const where: Prisma.BaseNutrientWhereUniqueInput = { id }
-    await this.prisma.baseNutrient.update({
+    const where: Prisma.Nutrient_PLWhereUniqueInput = { id }
+    await this.prisma.nutrient_PL.update({
       where,
       data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaBaseNutrientMapper {
-  static toDomain(prismaBaseNutrient: PrismaBaseNutrient): BaseNutrient {
+class PrismaNutrient_PLMapper {
+  static toDomain(prismaBaseNutrient: PrismaNutrient_PL): BaseNutrient {
     return BaseNutrient.rehydrate({
       id: Id.from(prismaBaseNutrient.id),
       createdAt: prismaBaseNutrient.createdAt,
@@ -122,7 +122,7 @@ class PrismaBaseNutrientMapper {
 
   static toPersistence(
     baseNutrient: BaseNutrient
-  ): Prisma.BaseNutrientCreateInput {
+  ): Prisma.Nutrient_PLCreateInput {
     return {
       id: baseNutrient.id.value,
       createdAt: baseNutrient.createdAt,

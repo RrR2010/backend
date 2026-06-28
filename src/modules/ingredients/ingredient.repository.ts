@@ -4,7 +4,7 @@ import { Ingredient } from '@ingredients/ingredient.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import {
-  Ingredient as PrismaIngredient,
+  Ingredient_TE as PrismaIngredient_TE,
   Prisma,
   IngredientFunctionType
 } from '@prisma/client'
@@ -38,16 +38,16 @@ export abstract class IngredientRepository {
 }
 
 @Injectable()
-export class PrismaIngredientRepository implements IngredientRepository {
+export class PrismaIngredient_TERepository implements IngredientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string, ctx: RequestContext): Promise<Ingredient | null> {
-    const where: Prisma.IngredientWhereUniqueInput = { id }
+    const where: Prisma.Ingredient_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    const prismaIngredient = await this.prisma.ingredient.findUnique({ where })
+    const prismaIngredient = await this.prisma.ingredient_TE.findUnique({ where })
     if (!prismaIngredient) return null
     if (
       prismaIngredient &&
@@ -56,14 +56,14 @@ export class PrismaIngredientRepository implements IngredientRepository {
     ) {
       return null
     }
-    return PrismaIngredientMapper.toDomain(prismaIngredient)
+    return PrismaIngredient_TEMapper.toDomain(prismaIngredient)
   }
 
   async findAll(
     filter: IngredientFilter,
     ctx: RequestContext
   ): Promise<Ingredient[]> {
-    const where: Prisma.IngredientWhereInput = {
+    const where: Prisma.Ingredient_TEWhereInput = {
       ...(filter.code && {
         code: { contains: filter.code, mode: 'insensitive' }
       }),
@@ -99,12 +99,12 @@ export class PrismaIngredientRepository implements IngredientRepository {
     if (effectiveTenantId) {
       where.systemState = { not: SystemState.DELETED }
     }
-    const prismaIngredients = await this.prisma.ingredient.findMany({
+    const prismaIngredients = await this.prisma.ingredient_TE.findMany({
       where,
       orderBy: { internalName: 'asc' }
     })
     return prismaIngredients.map((ingredient) =>
-      PrismaIngredientMapper.toDomain(ingredient)
+      PrismaIngredient_TEMapper.toDomain(ingredient)
     )
   }
 
@@ -114,8 +114,8 @@ export class PrismaIngredientRepository implements IngredientRepository {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = ingredient.id.value
-    const prismaIngredient = PrismaIngredientMapper.toPersistence(ingredient)
-    await this.prisma.ingredient.upsert({
+    const prismaIngredient = PrismaIngredient_TEMapper.toPersistence(ingredient)
+    await this.prisma.ingredient_TE.upsert({
       where: { id },
       update: prismaIngredient,
       create: prismaIngredient
@@ -124,20 +124,20 @@ export class PrismaIngredientRepository implements IngredientRepository {
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.IngredientWhereUniqueInput = { id }
+    const where: Prisma.Ingredient_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.ingredient.update({
+    await this.prisma.ingredient_TE.update({
       where,
       data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaIngredientMapper {
-  static toDomain(prismaIngredient: PrismaIngredient): Ingredient {
+class PrismaIngredient_TEMapper {
+  static toDomain(prismaIngredient: PrismaIngredient_TE): Ingredient {
     const systemState =
       SystemState[prismaIngredient.systemState as keyof typeof SystemState]
     if (!systemState) {
@@ -169,7 +169,7 @@ class PrismaIngredientMapper {
 
   static toPersistence(
     ingredient: Ingredient
-  ): Prisma.IngredientUncheckedCreateInput {
+  ): Prisma.Ingredient_TEUncheckedCreateInput {
     return {
       id: ingredient.id.value,
       createdAt: ingredient.createdAt,

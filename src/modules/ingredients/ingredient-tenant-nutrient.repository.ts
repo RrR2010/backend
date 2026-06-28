@@ -3,7 +3,7 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { IngredientTenantNutrient } from '@ingredients/ingredient-tenant-nutrient.entity'
 import { Id } from '@shared/value-objects'
 import {
-  IngredientTenantNutrient as PrismaIngredientTenantNutrient,
+  IngredientNutrient_TE as PrismaIngredientNutrient_TE,
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
@@ -26,22 +26,22 @@ export abstract class IngredientTenantNutrientRepository {
 }
 
 @Injectable()
-export class PrismaIngredientTenantNutrientRepository implements IngredientTenantNutrientRepository {
+export class PrismaIngredientNutrient_TERepository implements IngredientTenantNutrientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findByIngredientId(
     ingredientId: string,
     ctx: RequestContext
   ): Promise<IngredientTenantNutrient[]> {
-    const where: Prisma.IngredientTenantNutrientWhereInput = { ingredientId }
+    const where: Prisma.IngredientNutrient_TEWhereInput = { ingredientId }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    const entries = await this.prisma.ingredientTenantNutrient.findMany({
+    const entries = await this.prisma.ingredientNutrient_TE.findMany({
       where
     })
-    return entries.map((e) => PrismaIngredientTenantNutrientMapper.toDomain(e))
+    return entries.map((e) => PrismaIngredientNutrient_TEMapper.toDomain(e))
   }
 
   async add(
@@ -53,8 +53,8 @@ export class PrismaIngredientTenantNutrientRepository implements IngredientTenan
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     entry.touch()
-    const prismaData = PrismaIngredientTenantNutrientMapper.toPersistence(entry)
-    await this.prisma.ingredientTenantNutrient.upsert({
+    const prismaData = PrismaIngredientNutrient_TEMapper.toPersistence(entry)
+    await this.prisma.ingredientNutrient_TE.upsert({
       where: { id: entry.id.value },
       update: prismaData,
       create: prismaData
@@ -63,29 +63,29 @@ export class PrismaIngredientTenantNutrientRepository implements IngredientTenan
   }
 
   async remove(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.IngredientTenantNutrientWhereUniqueInput = { id }
+    const where: Prisma.IngredientNutrient_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.ingredientTenantNutrient.delete({ where })
+    await this.prisma.ingredientNutrient_TE.delete({ where })
   }
 
   async removeAllForIngredient(
     ingredientId: string,
     ctx: RequestContext
   ): Promise<void> {
-    const where: Prisma.IngredientTenantNutrientWhereInput = { ingredientId }
+    const where: Prisma.IngredientNutrient_TEWhereInput = { ingredientId }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.ingredientTenantNutrient.deleteMany({ where })
+    await this.prisma.ingredientNutrient_TE.deleteMany({ where })
   }
 }
 
-class PrismaIngredientTenantNutrientMapper {
-  static toDomain(e: PrismaIngredientTenantNutrient): IngredientTenantNutrient {
+class PrismaIngredientNutrient_TEMapper {
+  static toDomain(e: PrismaIngredientNutrient_TE): IngredientTenantNutrient {
     return IngredientTenantNutrient.rehydrate({
       id: Id.from(e.id),
       createdAt: e.createdAt,
@@ -99,7 +99,7 @@ class PrismaIngredientTenantNutrientMapper {
 
   static toPersistence(
     entry: IngredientTenantNutrient
-  ): Prisma.IngredientTenantNutrientUncheckedCreateInput {
+  ): Prisma.IngredientNutrient_TEUncheckedCreateInput {
     return {
       id: entry.id.value,
       createdAt: entry.createdAt,

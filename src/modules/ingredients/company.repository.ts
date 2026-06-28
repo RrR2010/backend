@@ -3,7 +3,7 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { Company } from '@ingredients/company.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
-import { Company as PrismaCompany, Prisma } from '@prisma/client'
+import { Company_TE as PrismaCompany_TE, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
@@ -26,16 +26,16 @@ export abstract class CompanyRepository {
 }
 
 @Injectable()
-export class PrismaCompanyRepository implements CompanyRepository {
+export class PrismaCompany_TERepository implements CompanyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string, ctx: RequestContext): Promise<Company | null> {
-    const where: Prisma.CompanyWhereUniqueInput = { id }
+    const where: Prisma.Company_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    const prismaCompany = await this.prisma.company.findUnique({ where })
+    const prismaCompany = await this.prisma.company_TE.findUnique({ where })
     if (!prismaCompany) return null
     if (
       prismaCompany &&
@@ -44,14 +44,14 @@ export class PrismaCompanyRepository implements CompanyRepository {
     ) {
       return null
     }
-    return PrismaCompanyMapper.toDomain(prismaCompany)
+    return PrismaCompany_TEMapper.toDomain(prismaCompany)
   }
 
   async findAll(
     filter: CompanyFilter,
     ctx: RequestContext
   ): Promise<Company[]> {
-    const where: Prisma.CompanyWhereInput = {
+    const where: Prisma.Company_TEWhereInput = {
       ...(filter.name && {
         name: { contains: filter.name, mode: 'insensitive' }
       }),
@@ -68,12 +68,12 @@ export class PrismaCompanyRepository implements CompanyRepository {
     if (effectiveTenantId) {
       where.systemState = { not: SystemState.DELETED }
     }
-    const prismaCompanies = await this.prisma.company.findMany({
+    const prismaCompanies = await this.prisma.company_TE.findMany({
       where,
       orderBy: { name: 'asc' }
     })
     return prismaCompanies.map((company) =>
-      PrismaCompanyMapper.toDomain(company)
+      PrismaCompany_TEMapper.toDomain(company)
     )
   }
 
@@ -82,8 +82,8 @@ export class PrismaCompanyRepository implements CompanyRepository {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = company.id.value
-    const prismaCompany = PrismaCompanyMapper.toPersistence(company)
-    await this.prisma.company.upsert({
+    const prismaCompany = PrismaCompany_TEMapper.toPersistence(company)
+    await this.prisma.company_TE.upsert({
       where: { id },
       update: prismaCompany,
       create: prismaCompany
@@ -92,20 +92,20 @@ export class PrismaCompanyRepository implements CompanyRepository {
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.CompanyWhereUniqueInput = { id }
+    const where: Prisma.Company_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.company.update({
+    await this.prisma.company_TE.update({
       where,
       data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaCompanyMapper {
-  static toDomain(prismaCompany: PrismaCompany): Company {
+class PrismaCompany_TEMapper {
+  static toDomain(prismaCompany: PrismaCompany_TE): Company {
     const systemState =
       SystemState[prismaCompany.systemState as keyof typeof SystemState]
     if (!systemState) {
@@ -124,7 +124,7 @@ class PrismaCompanyMapper {
     })
   }
 
-  static toPersistence(company: Company): Prisma.CompanyUncheckedCreateInput {
+  static toPersistence(company: Company): Prisma.Company_TEUncheckedCreateInput {
     return {
       id: company.id.value,
       createdAt: company.createdAt,

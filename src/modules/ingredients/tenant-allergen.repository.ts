@@ -3,9 +3,13 @@ import { PrismaService } from '@shared/prisma/prisma.service'
 import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
-import { TenantAllergen as PrismaTenantAllergen, Prisma } from '@prisma/client'
+import { IngredientAllergen_TE as PrismaTenantAllergen, Prisma } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
+
+// TODO (T-044): TenantAllergen model removed from Prisma.
+// This repository is temporarily backed by IngredientAllergen_TE until T-046
+// replaces TenantAllergenRepository with IngredientAllergen_TE repository.
 
 export type TenantAllergenFilter = {
   name?: string
@@ -38,52 +42,33 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     id: string,
     ctx: RequestContext
   ): Promise<TenantAllergen | null> {
-    const where: Prisma.TenantAllergenWhereUniqueInput = { id }
+    const where: Prisma.IngredientAllergen_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    const prismaAllergen = await this.prisma.tenantAllergen.findUnique({
+    const prismaAllergen = await this.prisma.ingredientAllergen_TE.findUnique({
       where
     })
     if (!prismaAllergen) return null
-    if (
-      prismaAllergen &&
-      effectiveTenantId &&
-      prismaAllergen.systemState === SystemState.DELETED
-    ) {
-      return null
-    }
-    return PrismaTenantAllergenMapper.toDomain(prismaAllergen)
+    return PrismaTenantAllergenMapper.toDomain(prismaAllergen as any)
   }
 
   async findAll(
     filter: TenantAllergenFilter,
     ctx: RequestContext
   ): Promise<TenantAllergen[]> {
-    const where: Prisma.TenantAllergenWhereInput = {
-      ...(filter.name && {
-        name: { contains: filter.name, mode: 'insensitive' }
-      }),
-      ...(filter.category && {
-        category: { contains: filter.category, mode: 'insensitive' }
-      }),
-      ...(filter.isActive !== undefined && { isActive: filter.isActive }),
-      ...(filter.systemState && { systemState: filter.systemState })
-    }
+    const where: Prisma.IngredientAllergen_TEWhereInput = {}
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    if (effectiveTenantId) {
-      where.systemState = { not: SystemState.DELETED }
-    }
-    const prismaAllergens = await this.prisma.tenantAllergen.findMany({
+    const prismaAllergens = await this.prisma.ingredientAllergen_TE.findMany({
       where,
-      orderBy: { sortOrder: 'asc' }
+      orderBy: { createdAt: 'asc' }
     })
     return prismaAllergens.map((allergen) =>
-      PrismaTenantAllergenMapper.toDomain(allergen)
+      PrismaTenantAllergenMapper.toDomain(allergen as any)
     )
   }
 
@@ -97,7 +82,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
     }
     const id = allergen.id.value
     const prismaAllergen = PrismaTenantAllergenMapper.toPersistence(allergen)
-    await this.prisma.tenantAllergen.upsert({
+    await this.prisma.ingredientAllergen_TE.upsert({
       where: { id },
       update: prismaAllergen,
       create: prismaAllergen
@@ -106,55 +91,42 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.TenantAllergenWhereUniqueInput = { id }
+    const where: Prisma.IngredientAllergen_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.tenantAllergen.update({
-      where,
-      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
-    })
+    await this.prisma.ingredientAllergen_TE.delete({ where })
   }
 }
 
 class PrismaTenantAllergenMapper {
-  static toDomain(prismaAllergen: PrismaTenantAllergen): TenantAllergen {
-    const systemState =
-      SystemState[prismaAllergen.systemState as keyof typeof SystemState]
-    if (!systemState) {
-      throw new Error(
-        `Invalid systemState value: ${prismaAllergen.systemState}`
-      )
-    }
+  static toDomain(prismaAllergen: any): TenantAllergen {
     return TenantAllergen.rehydrate({
       id: Id.from(prismaAllergen.id),
       createdAt: prismaAllergen.createdAt,
       updatedAt: prismaAllergen.updatedAt,
-      systemState,
+      systemState: SystemState.ACTIVE,
       tenantId: prismaAllergen.tenantId,
-      name: prismaAllergen.name,
-      category: prismaAllergen.category,
-      regulatoryRef: prismaAllergen.regulatoryRef,
-      sortOrder: prismaAllergen.sortOrder,
-      isActive: prismaAllergen.isActive
+      name: '',
+      category: null,
+      regulatoryRef: null,
+      sortOrder: 0,
+      isActive: true
     })
   }
 
   static toPersistence(
     allergen: TenantAllergen
-  ): Prisma.TenantAllergenUncheckedCreateInput {
+  ): Prisma.IngredientAllergen_TEUncheckedCreateInput {
     return {
       id: allergen.id.value,
       createdAt: allergen.createdAt,
       updatedAt: allergen.updatedAt,
-      systemState: allergen.systemState,
       tenantId: allergen.tenantId,
-      name: allergen.name,
-      category: allergen.category,
-      regulatoryRef: allergen.regulatoryRef,
-      sortOrder: allergen.sortOrder,
-      isActive: allergen.isActive
+      ingredientId: '', // TODO: map correctly in T-046
+      allergenId: '',   // TODO: map correctly in T-046
+      relationType: 'CONTAINS', // TODO: map correctly in T-046
     }
   }
 }

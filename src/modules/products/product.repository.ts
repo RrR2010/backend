@@ -25,22 +25,22 @@ export class PrismaProductRepository implements ProductRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string, ctx: RequestContext): Promise<Product | null> {
-    const where: Prisma.ProductWhereUniqueInput = { id }
+    const where: Prisma.Product_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) where.tenantId = effectiveTenantId
-    const data = await this.prisma.product.findUnique({ where })
+    const data = await this.prisma.product_TE.findUnique({ where })
     if (!data) return null
     if (data.systemState === 'DELETED') return null
     return PrismaProductMapper.toDomain(data)
   }
 
   async findAll(filter: ProductFilter, ctx: RequestContext): Promise<Product[]> {
-    const where: Prisma.ProductWhereInput = {}
+    const where: Prisma.Product_TEWhereInput = {}
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) where.tenantId = effectiveTenantId
     if (filter.status) where.status = filter.status as any
     where.systemState = 'ACTIVE'
-    const data = await this.prisma.product.findMany({ where, orderBy: { name: 'asc' } })
+    const data = await this.prisma.product_TE.findMany({ where, orderBy: { internalName: 'asc' } })
     return data.map(PrismaProductMapper.toDomain)
   }
 
@@ -50,15 +50,15 @@ export class PrismaProductRepository implements ProductRepository {
     }
     const id = product.id.value
     const data = PrismaProductMapper.toPersistence(product)
-    await this.prisma.product.upsert({ where: { id }, update: data, create: data })
+    await this.prisma.product_TE.upsert({ where: { id }, update: data, create: data })
     return product
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.ProductWhereUniqueInput = { id }
+    const where: Prisma.Product_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) where.tenantId = effectiveTenantId
-    await this.prisma.product.update({
+    await this.prisma.product_TE.update({
       where,
       data: { systemState: 'DELETED', updatedAt: new Date() },
     })
@@ -70,7 +70,7 @@ class PrismaProductMapper {
     return Product.rehydrate({
       id: Id.from(data.id),
       tenantId: data.tenantId,
-      name: data.name,
+      name: data.internalName,
       code: data.code,
       status: data.status,
       commercialName: data.commercialName ?? null,
@@ -88,15 +88,15 @@ class PrismaProductMapper {
     })
   }
 
-  static toPersistence(product: Product): Prisma.ProductUncheckedCreateInput {
+  static toPersistence(product: Product): Prisma.Product_TEUncheckedCreateInput {
     return {
       id: product.id.value,
       tenantId: product.tenantId,
-      name: product.name,
+      internalName: product.name,
       code: product.code,
       status: product.status,
       commercialName: product.commercialName,
-      denomination: product.denomination,
+      saleDenomination: product.denomination,
       productType: product.productType,
       notes: product.notes,
       barcodeGtin: product.barcodeGtin,

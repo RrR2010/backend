@@ -1320,7 +1320,7 @@ export class SubscriptionService {
     currentRevisions: number
   }> {
     const [currentProducts, currentActiveUsers] = await Promise.all([
-      this.prisma.product.count({
+      this.prisma.product_TE.count({
         where: {
           tenantId,
           systemState: 'ACTIVE'
@@ -1337,9 +1337,9 @@ export class SubscriptionService {
     // Revision counts are optional — count them if the model exists
     let currentRevisions = 0
     try {
-      currentRevisions = await this.prisma.formulationRevision.count({
+      currentRevisions = await this.prisma.formulationRevision_TE.count({
         where: {
-          formulationVersion: {
+          formulationVersion_TE: {
             tenantId
           }
         }

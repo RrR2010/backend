@@ -5,14 +5,14 @@ import { AuditLogModule } from '@audit-logs/audit-log.module'
 // Base catalogs
 import {
   BaseAllergenRepository,
-  PrismaBaseAllergenRepository
+  PrismaAllergen_PLRepository as PrismaBaseAllergenRepository
 } from '@ingredients/base-allergen.repository'
 import { BaseAllergenService } from '@ingredients/base-allergen.service'
 import { BaseAllergenController } from '@ingredients/base-allergen.controller'
 
 import {
   BaseNutrientRepository,
-  PrismaBaseNutrientRepository
+  PrismaNutrient_PLRepository as PrismaBaseNutrientRepository
 } from '@ingredients/base-nutrient.repository'
 import { BaseNutrientService } from '@ingredients/base-nutrient.service'
 import { BaseNutrientController } from '@ingredients/base-nutrient.controller'
@@ -99,7 +99,7 @@ import { TenantNutrientsController } from '@ingredients/tenant-nutrient.controll
 // Additional tenant-scoped catalogs
 import {
   FunctionalGroupRepository,
-  PrismaFunctionalGroupRepository
+  PrismaFunctionalGroup_TERepository
 } from '@ingredients/functional-group.repository'
 import { FunctionalGroupService } from '@ingredients/functional-group.service'
 import { FunctionalGroupsController } from '@ingredients/functional-group.controller'
@@ -113,14 +113,14 @@ import { TechnicalSourceTypesController } from '@ingredients/technical-source-ty
 
 import {
   CompanyRepository,
-  PrismaCompanyRepository
+  PrismaCompany_TERepository
 } from '@ingredients/company.repository'
 import { CompanyService } from '@ingredients/company.service'
 import { CompaniesController } from '@ingredients/company.controller'
 
 import {
   TechnicalInfoSourceRepository,
-  PrismaTechnicalInfoSourceRepository
+  PrismaTechnicalSource_TERepository
 } from '@ingredients/technical-info-source.repository'
 import { TechnicalInfoSourceService } from '@ingredients/technical-info-source.service'
 import { TechnicalInfoSourcesController } from '@ingredients/technical-info-source.controller'
@@ -128,7 +128,7 @@ import { TechnicalInfoSourcesController } from '@ingredients/technical-info-sour
 // Ingredient core entity
 import {
   IngredientRepository,
-  PrismaIngredientRepository
+  PrismaIngredient_TERepository
 } from '@ingredients/ingredient.repository'
 import { IngredientService } from '@ingredients/ingredient.service'
 import { IngredientsController } from '@ingredients/ingredient.controller'
@@ -136,14 +136,14 @@ import { IngredientsController } from '@ingredients/ingredient.controller'
 // Junction tables
 import {
   IngredientTenantAllergenRepository,
-  PrismaIngredientTenantAllergenRepository
+  PrismaIngredientAllergen_TERepository
 } from '@ingredients/ingredient-tenant-allergen.repository'
 import { IngredientTenantAllergenService } from '@ingredients/ingredient-tenant-allergen.service'
 import { IngredientTenantAllergensController } from '@ingredients/ingredient-tenant-allergen.controller'
 
 import {
   IngredientTenantNutrientRepository,
-  PrismaIngredientTenantNutrientRepository
+  PrismaIngredientNutrient_TERepository
 } from '@ingredients/ingredient-tenant-nutrient.repository'
 import { IngredientTenantNutrientService } from '@ingredients/ingredient-tenant-nutrient.service'
 import { IngredientTenantNutrientsController } from '@ingredients/ingredient-tenant-nutrient.controller'
@@ -151,14 +151,14 @@ import { IngredientTenantNutrientsController } from '@ingredients/ingredient-ten
 // Base junction tables
 import {
   IngredientBaseAllergenRepository,
-  PrismaIngredientBaseAllergenRepository
+  PrismaIngredientAllergen_TERepository as PrismaIngredientBaseAllergenRepository
 } from '@ingredients/ingredient-base-allergen.repository'
 import { IngredientBaseAllergenService } from '@ingredients/ingredient-base-allergen.service'
 import { IngredientBaseAllergensController } from '@ingredients/ingredient-base-allergen.controller'
 
 import {
   IngredientBaseNutrientRepository,
-  PrismaIngredientBaseNutrientRepository
+  PrismaIngredientNutrient_TERepository as PrismaIngredientBaseNutrientRepository
 } from '@ingredients/ingredient-base-nutrient.repository'
 import { IngredientBaseNutrientService } from '@ingredients/ingredient-base-nutrient.service'
 import { IngredientBaseNutrientsController } from '@ingredients/ingredient-base-nutrient.controller'
@@ -244,10 +244,10 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     },
     // Additional tenant-scoped catalogs
     FunctionalGroupService,
-    PrismaFunctionalGroupRepository,
+    PrismaFunctionalGroup_TERepository,
     {
       provide: FunctionalGroupRepository,
-      useExisting: PrismaFunctionalGroupRepository
+      useExisting: PrismaFunctionalGroup_TERepository
     },
     TechnicalSourceType_TEService,
     PrismaTechnicalSourceType_TE_Repository,
@@ -256,30 +256,30 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
       useExisting: PrismaTechnicalSourceType_TE_Repository
     },
     CompanyService,
-    PrismaCompanyRepository,
-    { provide: CompanyRepository, useExisting: PrismaCompanyRepository },
+    PrismaCompany_TERepository,
+    { provide: CompanyRepository, useExisting: PrismaCompany_TERepository },
     TechnicalInfoSourceService,
-    PrismaTechnicalInfoSourceRepository,
+    PrismaTechnicalSource_TERepository,
     {
       provide: TechnicalInfoSourceRepository,
-      useExisting: PrismaTechnicalInfoSourceRepository
+      useExisting: PrismaTechnicalSource_TERepository
     },
     // Ingredient core entity
     IngredientService,
-    PrismaIngredientRepository,
-    { provide: IngredientRepository, useExisting: PrismaIngredientRepository },
+    PrismaIngredient_TERepository,
+    { provide: IngredientRepository, useExisting: PrismaIngredient_TERepository },
     // Junction tables
     IngredientTenantAllergenService,
-    PrismaIngredientTenantAllergenRepository,
+    PrismaIngredientAllergen_TERepository,
     {
       provide: IngredientTenantAllergenRepository,
-      useExisting: PrismaIngredientTenantAllergenRepository
+      useExisting: PrismaIngredientAllergen_TERepository
     },
     IngredientTenantNutrientService,
-    PrismaIngredientTenantNutrientRepository,
+    PrismaIngredientNutrient_TERepository,
     {
       provide: IngredientTenantNutrientRepository,
-      useExisting: PrismaIngredientTenantNutrientRepository
+      useExisting: PrismaIngredientNutrient_TERepository
     },
     // Base junction tables
     IngredientBaseAllergenService,

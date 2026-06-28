@@ -986,7 +986,12 @@ model OgmDonorSpecies_PL {
 }
 
 model UnitOfMeasure_PL {
-  id                String          @id @default(uuid())
+  id                String          @id @unique @default(uuid())
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  createdBy         String?
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+  updatedBy         String?
+  systemState       SystemState     @default(ACTIVE)
   code              String          @unique
   symbol            String?
   measurementType   MeasurementType
@@ -996,15 +1001,22 @@ model UnitOfMeasure_PL {
   ingredientCosts_TE       IngredientCost_TE[]
   unitConversionsFrom_TE   UnitConversion_PL[] @relation("UnitConversionFromUnit")
   unitConversionsTo_TE     UnitConversion_PL[] @relation("UnitConversionToUnit")
+
+  @@index([code])
 }
 
 model UnitConversion_PL {
-  id          String  @id @default(uuid())
+  id          String      @id @unique @default(uuid())
+  createdAt   DateTime    @default(now()) @db.Timestamptz(3)
+  createdBy   String?
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(3)
+  updatedBy   String?
+  systemState SystemState @default(ACTIVE)
   fromUnitId  String
   fromUnit    UnitOfMeasure_PL @relation("UnitConversionFromUnit", fields: [fromUnitId], references: [id])
   toUnitId    String
   toUnit      UnitOfMeasure_PL @relation("UnitConversionToUnit", fields: [toUnitId], references: [id])
-  factor      Decimal @db.Decimal(12,6)
+  factor      Decimal     @db.Decimal(12,6)
 
   @@unique([fromUnitId, toUnitId])
 }

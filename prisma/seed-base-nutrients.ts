@@ -96,11 +96,11 @@ const nutrients: SeedNutrient[] = [
 
 async function main() {
   // Delete existing base nutrients first
-  await prisma.baseNutrient.deleteMany()
+  await prisma.nutrient_PL.deleteMany()
   console.log('Cleared existing base nutrients')
 
   for (const nutrient of nutrients) {
-    await prisma.baseNutrient.create({ data: nutrient })
+    await prisma.nutrient_PL.create({ data: nutrient })
     console.log(`Created base nutrient: ${nutrient.name}`)
   }
 

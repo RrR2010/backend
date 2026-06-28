@@ -14,6 +14,12 @@ import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
 import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
+import { OgmDonorSpecies_PL } from '@ingredients/ogm-donor-species-pl.entity'
+import { TechnicalSourceType_PL } from '@ingredients/technical-source-type-pl.entity'
+import { RegulatoryBody_PL } from '@ingredients/regulatory-body-pl.entity'
+import { RegulationType_PL } from '@ingredients/regulation-type-pl.entity'
+import { Regulation_PL } from '@ingredients/regulation-pl.entity'
+import { ComplianceRule_PL } from '@ingredients/compliance-rule-pl.entity'
 import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
 import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
 import { LabelField_PL } from '@products/label-field-pl.entity'
@@ -32,10 +38,16 @@ import { MemberProfileDocument } from '@member-profile-documents/member-profile-
 import { Product } from '@products/product.entity'
 import { ProductNutritionalInfo } from '@products/product-nutritional-info.entity'
 import { LabelProfile } from '@products/label-profile.entity'
+import { Claim_TE } from '@products/claim-te.entity'
+import { ProductFamily_TE } from '@products/product-family-te.entity'
+import { CommercialLine_TE } from '@products/commercial-line-te.entity'
+import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
 import { FormulationVersion } from '@formulations/formulation-version.entity'
 import { FormulationRevision } from '@formulations/formulation-revision.entity'
 import { FormulationItem } from '@formulations/formulation-item.entity'
 import { AuditLog } from '@audit-logs/audit-log.entity'
+import { UnitOfMeasure_PL } from '@formulations/unit-of-measure-pl.entity'
+import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
 import { UserScope, PlatformRole, TenantRole } from '@users/user.types'
 
 export enum Action {
@@ -69,6 +81,12 @@ export type Subjects =
       | typeof Allergen_PL
       | typeof Nutrient_PL
       | typeof DeclarationFlag_PL
+      | typeof OgmDonorSpecies_PL
+      | typeof TechnicalSourceType_PL
+      | typeof RegulatoryBody_PL
+      | typeof RegulationType_PL
+      | typeof Regulation_PL
+      | typeof ComplianceRule_PL
       | typeof IngredientBaseAllergen
       | typeof IngredientBaseNutrient
       | typeof Identity
@@ -90,6 +108,14 @@ export type Subjects =
       | typeof FormulationVersion
       | typeof FormulationRevision
       | typeof FormulationItem
+      | typeof UnitOfMeasure_PL
+      | typeof UnitConversion_PL
+      // Tenant-scoped product catalogs
+      | typeof Claim_TE
+      | typeof ProductFamily_TE
+      | typeof CommercialLine_TE
+      // Tenant-scoped ingredient catalogs
+      | typeof TechnicalSourceType_TE
       | AnyClass
     >
   | 'all'

@@ -4,7 +4,7 @@ import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import {
-  FunctionalGroup as PrismaFunctionalGroup,
+  FunctionalGroup_TE as PrismaFunctionalGroup_TE,
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
@@ -35,19 +35,19 @@ export abstract class FunctionalGroupRepository {
 }
 
 @Injectable()
-export class PrismaFunctionalGroupRepository implements FunctionalGroupRepository {
+export class PrismaFunctionalGroup_TERepository implements FunctionalGroupRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     ctx: RequestContext
   ): Promise<FunctionalGroup | null> {
-    const where: Prisma.FunctionalGroupWhereUniqueInput = { id }
+    const where: Prisma.FunctionalGroup_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    const prismaGroup = await this.prisma.functionalGroup.findUnique({ where })
+    const prismaGroup = await this.prisma.functionalGroup_TE.findUnique({ where })
     if (!prismaGroup) return null
     if (
       prismaGroup &&
@@ -56,14 +56,14 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     ) {
       return null
     }
-    return PrismaFunctionalGroupMapper.toDomain(prismaGroup)
+    return PrismaFunctionalGroup_TEMapper.toDomain(prismaGroup)
   }
 
   async findAll(
     filter: FunctionalGroupFilter,
     ctx: RequestContext
   ): Promise<FunctionalGroup[]> {
-    const where: Prisma.FunctionalGroupWhereInput = {
+    const where: Prisma.FunctionalGroup_TEWhereInput = {
       ...(filter.name && {
         name: { contains: filter.name, mode: 'insensitive' }
       }),
@@ -80,12 +80,12 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
     if (effectiveTenantId) {
       where.systemState = { not: SystemState.DELETED }
     }
-    const prismaGroups = await this.prisma.functionalGroup.findMany({
+    const prismaGroups = await this.prisma.functionalGroup_TE.findMany({
       where,
       orderBy: { sortOrder: 'asc' }
     })
     return prismaGroups.map((group) =>
-      PrismaFunctionalGroupMapper.toDomain(group)
+      PrismaFunctionalGroup_TEMapper.toDomain(group)
     )
   }
 
@@ -97,8 +97,8 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = group.id.value
-    const prismaGroup = PrismaFunctionalGroupMapper.toPersistence(group)
-    await this.prisma.functionalGroup.upsert({
+    const prismaGroup = PrismaFunctionalGroup_TEMapper.toPersistence(group)
+    await this.prisma.functionalGroup_TE.upsert({
       where: { id },
       update: prismaGroup,
       create: prismaGroup
@@ -107,20 +107,20 @@ export class PrismaFunctionalGroupRepository implements FunctionalGroupRepositor
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const where: Prisma.FunctionalGroupWhereUniqueInput = { id }
+    const where: Prisma.FunctionalGroup_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
       where.tenantId = effectiveTenantId
     }
-    await this.prisma.functionalGroup.update({
+    await this.prisma.functionalGroup_TE.update({
       where,
       data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
 
-class PrismaFunctionalGroupMapper {
-  static toDomain(prismaGroup: PrismaFunctionalGroup): FunctionalGroup {
+class PrismaFunctionalGroup_TEMapper {
+  static toDomain(prismaGroup: PrismaFunctionalGroup_TE): FunctionalGroup {
     const systemState =
       SystemState[prismaGroup.systemState as keyof typeof SystemState]
     if (!systemState) {
@@ -141,7 +141,7 @@ class PrismaFunctionalGroupMapper {
 
   static toPersistence(
     group: FunctionalGroup
-  ): Prisma.FunctionalGroupUncheckedCreateInput {
+  ): Prisma.FunctionalGroup_TEUncheckedCreateInput {
     return {
       id: group.id.value,
       createdAt: group.createdAt,
