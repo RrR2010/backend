@@ -24,7 +24,7 @@ export class IngredientService {
   ) {}
 
   async create(
-    props: CreateIngredient_TEProps,
+    props: Omit<CreateIngredient_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<Ingredient_TE> {
     // TODO: zod validate input
@@ -32,7 +32,7 @@ export class IngredientService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (effectiveTenantId ?? props.tenantId)
+        : effectiveTenantId
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const ingredient = Ingredient_TE.create({ ...props, tenantId })
 

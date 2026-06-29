@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Req, ParseUUIDPipe } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Body, Param, Req, ParseUUIDPipe, Query } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
@@ -23,8 +23,14 @@ export class ProductsController {
 
   @Get()
   @Authorize(Action.Read, Product_TE)
-  async findAll(@Req() request: Request): Promise<Product_TE_ResponseDto[]> {
-    const products = await this.service.findAll({}, request.context)
+  async findAll(
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<Product_TE_ResponseDto[]> {
+    const take = limit ? Math.min(parseInt(limit, 10), 500) : 100
+    const skip = offset ? parseInt(offset, 10) : 0
+    const products = await this.service.findAll({ skip, take }, request.context)
     return products.map(Product_TE_ResponseDto.fromDomain)
   }
 

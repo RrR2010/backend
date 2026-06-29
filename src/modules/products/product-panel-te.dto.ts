@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsNumber, IsEnum, IsObject } from 'class-validator'
 import { ProductPanel_TE } from '@products/product-panel-te.entity'
 import { ProductPanelType } from '@prisma/client'
 import { SystemState } from '@shared/behaviours/lockable'
@@ -6,21 +7,27 @@ import { SystemState } from '@shared/behaviours/lockable'
 // TODO: zod validate dto
 export class CreateProductPanel_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   productId!: string
 
   @ApiProperty({ type: Number })
+  @IsNumber()
   panelNumber!: number
 
   @ApiProperty({ enum: ProductPanelType })
+  @IsEnum(ProductPanelType)
   type!: ProductPanelType
 
   @ApiPropertyOptional({ type: String, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   geometricFormatTypeId?: string | null
 
   @ApiPropertyOptional({ type: Object, nullable: true })
+  @IsObject()
+  @IsOptional()
   geometricFormatValues?: Record<string, unknown> | null
 }
 
@@ -73,14 +80,23 @@ export class ProductPanel_TE_ResponseDto {
 
 export class UpdateProductPanel_TEDto {
   @ApiPropertyOptional({ type: Number })
+  @IsNumber()
+  @IsOptional()
   panelNumber?: number
 
   @ApiPropertyOptional({ enum: ProductPanelType })
+  @IsEnum(ProductPanelType)
+  @IsOptional()
   type?: ProductPanelType
 
   @ApiPropertyOptional({ type: String, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   geometricFormatTypeId?: string | null
 
   @ApiPropertyOptional({ type: Object, nullable: true })
+  @IsObject()
+  @IsOptional()
   geometricFormatValues?: Record<string, unknown> | null
 }

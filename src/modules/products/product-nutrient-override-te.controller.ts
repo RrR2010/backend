@@ -38,7 +38,6 @@ export class ProductNutrientOverride_TEController {
   ): Promise<ProductNutrientOverride_TE_ResponseDto> {
     const entity = await this.service.create(
       {
-        tenantId: dto.tenantId,
         productId: dto.productId,
         nutrientId: dto.nutrientId,
         overriddenValue: dto.overriddenValue,

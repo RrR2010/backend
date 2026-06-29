@@ -1,22 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 import { Company_TE } from '@ingredients/company.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateCompany_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   type!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   contactInfo?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   taxId?: string | null
 }
 
@@ -67,14 +71,22 @@ export class Company_TE_ResponseDto extends CreateCompany_TE_ResponseDto {}
 
 export class UpdateCompany_TEDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   type?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   contactInfo?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   taxId?: string | null
 }

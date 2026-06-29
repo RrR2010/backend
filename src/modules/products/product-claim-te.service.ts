@@ -17,7 +17,7 @@ export class ProductClaim_TEService {
   constructor(private readonly repository: ProductClaim_TE_Repository) {}
 
   async create(
-    props: CreateProductClaim_TEProps,
+    props: Omit<CreateProductClaim_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<ProductClaim_TE> {
     // TODO: zod validate input
@@ -26,7 +26,7 @@ export class ProductClaim_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : props.tenantId || effectiveTenantId
+        : effectiveTenantId
     const entity = ProductClaim_TE.create({ ...props, tenantId })
     return await this.repository.save(entity, ctx)
   }

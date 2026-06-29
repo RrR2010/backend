@@ -17,7 +17,7 @@ export class ProductPanel_TEService {
   constructor(private readonly repository: ProductPanel_TE_Repository) {}
 
   async create(
-    props: CreateProductPanel_TEProps,
+    props: Omit<CreateProductPanel_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<ProductPanel_TE> {
     // TODO: zod validate input
@@ -26,7 +26,7 @@ export class ProductPanel_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : props.tenantId || effectiveTenantId
+        : effectiveTenantId
     const entity = ProductPanel_TE.create({ ...props, tenantId })
     return await this.repository.save(entity, ctx)
   }

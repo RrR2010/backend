@@ -7,6 +7,7 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
+  Query,
   Req
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
@@ -52,8 +53,15 @@ export class Nutrient_PLController {
 
   @Get()
   @Authorize(Action.Manage, Nutrient_PL)
-  async findAll(@Req() request: Request): Promise<Nutrient_PLResponseDto[]> {
-    const nutrients = await this.service.findAll(request.context)
+  async findAll(
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<Nutrient_PLResponseDto[]> {
+    const nutrients = await this.service.findAll(
+      { skip: Number(offset) || 0, take: Number(limit) || 50 },
+      request.context
+    )
     return nutrients.map((n) => Nutrient_PLResponseDto.fromDomain(n))
   }
 

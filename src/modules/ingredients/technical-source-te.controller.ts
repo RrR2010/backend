@@ -7,6 +7,7 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
+  Query,
   Req
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
@@ -37,7 +38,6 @@ export class TechnicalSource_TEController {
   ): Promise<CreateTechnicalSource_TE_ResponseDto> {
     const source = await this.service.create(
       {
-        tenantId: dto.tenantId,
         sourceTypePlId: dto.sourceTypePlId ?? null,
         sourceTypeTeId: dto.sourceTypeTeId ?? null,
         referenceName: dto.referenceName,
@@ -53,9 +53,14 @@ export class TechnicalSource_TEController {
   @Get()
   @Authorize(Action.Read, TechnicalSource_TE)
   async findAll(
-    @Req() request: Request
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
   ): Promise<TechnicalSource_TE_ResponseDto[]> {
-    const sources = await this.service.findAll({}, request.context)
+    const sources = await this.service.findAll(
+      { skip: Number(offset) || 0, take: Number(limit) || 50 },
+      request.context
+    )
     return sources.map(TechnicalSource_TE_ResponseDto.fromDomain)
   }
 

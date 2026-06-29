@@ -7,7 +7,8 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
-  Req
+  Req,
+  Query
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
@@ -37,7 +38,6 @@ export class CompaniesController {
   ): Promise<CreateCompany_TE_ResponseDto> {
     const company = await this.service.create(
       {
-        tenantId: dto.tenantId,
         name: dto.name,
         type: dto.type,
         contactInfo: dto.contactInfo ?? null,
@@ -50,8 +50,14 @@ export class CompaniesController {
 
   @Get()
   @Authorize(Action.Read, Company_TE)
-  async findAll(@Req() request: Request): Promise<Company_TE_ResponseDto[]> {
-    const companies = await this.service.findAll({}, request.context)
+  async findAll(
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<Company_TE_ResponseDto[]> {
+    const take = limit ? Math.min(parseInt(limit, 10), 500) : 100
+    const skip = offset ? parseInt(offset, 10) : 0
+    const companies = await this.service.findAll({ skip, take }, request.context)
     return companies.map(Company_TE_ResponseDto.fromDomain)
   }
 

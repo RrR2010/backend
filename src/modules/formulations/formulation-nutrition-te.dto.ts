@@ -1,24 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsNumber } from 'class-validator'
 import { FormulationNutrition_TE } from './formulation-nutrition-te.entity'
 
 // TODO: zod validate dto
 export class CreateFormulationNutrition_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   formulationRevisionId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   nutrientId!: string
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   declaredValue?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   calculatedValue?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   refValue?: number | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }
 
@@ -75,14 +88,22 @@ export class FormulationNutrition_TE_ResponseDto extends CreateFormulationNutrit
 
 export class UpdateFormulationNutrition_TEDto {
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   declaredValue?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   calculatedValue?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   refValue?: number | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }

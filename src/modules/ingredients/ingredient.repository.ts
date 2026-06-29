@@ -22,6 +22,8 @@ export type IngredientFilter = {
   supplierId?: string
   technicalSourceId?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class IngredientRepository {
@@ -101,6 +103,8 @@ export class PrismaIngredient_TERepository implements IngredientRepository {
     }
     const prismaIngredients = await this.prisma.ingredient_TE.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 100,
       orderBy: { internalName: 'asc' }
     })
     return prismaIngredients.map((ingredient) =>

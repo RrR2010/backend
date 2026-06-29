@@ -1,22 +1,28 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsBoolean, IsNumber } from 'class-validator'
 import { ProductClaim_TE } from '@products/product-claim-te.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateProductClaim_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   productId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   claimId!: string
 
   @ApiPropertyOptional({ type: Boolean, default: true })
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean
 
   @ApiPropertyOptional({ type: Number, default: 0 })
+  @IsNumber()
+  @IsOptional()
   sortOrder?: number
 }
 
@@ -65,8 +71,12 @@ export class ProductClaim_TE_ResponseDto {
 
 export class UpdateProductClaim_TEDto {
   @ApiPropertyOptional({ type: Boolean })
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean
 
   @ApiPropertyOptional({ type: Number })
+  @IsNumber()
+  @IsOptional()
   sortOrder?: number
 }

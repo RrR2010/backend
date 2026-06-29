@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Allergen_PLRepository } from '@ingredients/allergen-pl.repository'
+import { Allergen_PLRepository, Allergen_PLFilter } from '@ingredients/allergen-pl.repository'
 import {
   Allergen_PL,
   CreateAllergenPLProps
@@ -19,8 +19,8 @@ export class Allergen_PLService {
     return this.repository.save(allergen, _ctx)
   }
 
-  async findAll(_ctx: RequestContext): Promise<Allergen_PL[]> {
-    return this.repository.findAll({}, _ctx)
+  async findAll(filter: Allergen_PLFilter, _ctx: RequestContext): Promise<Allergen_PL[]> {
+    return this.repository.findAll(filter, _ctx)
   }
 
   async findById(

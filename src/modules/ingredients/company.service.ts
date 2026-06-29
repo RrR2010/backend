@@ -18,7 +18,7 @@ export class CompanyService {
   constructor(private readonly repository: CompanyRepository) {}
 
   async create(
-    props: CreateCompany_TEProps,
+    props: Omit<CreateCompany_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<Company_TE> {
     // TODO: zod validate input
@@ -26,7 +26,7 @@ export class CompanyService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (effectiveTenantId ?? props.tenantId)
+        : effectiveTenantId
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const company = Company_TE.create({ ...props, tenantId })
     try {

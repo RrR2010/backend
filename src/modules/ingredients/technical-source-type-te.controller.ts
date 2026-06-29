@@ -37,7 +37,6 @@ export class TechnicalSourceType_TEController {
   ): Promise<CreateTechnicalSourceType_TEDtoResponseDto> {
     const source = await this.service.create(
       {
-        tenantId: dto.tenantId,
         name: dto.name,
         description: dto.description ?? null
       },

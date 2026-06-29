@@ -1,50 +1,193 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsOptional, IsUUID, IsNumber, IsEnum } from 'class-validator'
 import { ProductStatus } from '@prisma/client'
 import { Product_TE } from '@products/product.entity'
 
 // TODO: zod validate dto
 export class CreateProduct_TEDto {
-  @ApiProperty({ type: String }) tenantId!: string
-  @ApiProperty() internalName!: string
-  @ApiProperty() code!: string
+  @ApiProperty()
+  @IsString()
+  internalName!: string
+
+  @ApiProperty()
+  @IsString()
+  code!: string
+
   @ApiPropertyOptional({ enum: ProductStatus, default: 'DRAFT' })
+  @IsEnum(ProductStatus)
+  @IsOptional()
   status?: ProductStatus
-  @ApiPropertyOptional() externalCode?: string
-  @ApiPropertyOptional() displayName?: string
-  @ApiPropertyOptional() commercialName?: string
-  @ApiPropertyOptional() saleDenomination?: string
-  @ApiPropertyOptional() productType?: string
-  @ApiPropertyOptional() notes?: string
-  @ApiPropertyOptional() barcodeGtin?: string
-  @ApiPropertyOptional() packagingType?: string
-  @ApiPropertyOptional() batchCode?: string
-  @ApiPropertyOptional() declaredWeight?: number
-  @ApiPropertyOptional() declaredVolume?: number
-  @ApiPropertyOptional() shelfLifeDays?: number
-  @ApiPropertyOptional() storageConditions?: string
-  @ApiPropertyOptional() productFamilyId?: string
-  @ApiPropertyOptional() commercialLineId?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  externalCode?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  displayName?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  commercialName?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  saleDenomination?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  productType?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  barcodeGtin?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  packagingType?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  batchCode?: string
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  declaredWeight?: number
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  declaredVolume?: number
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  shelfLifeDays?: number
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  storageConditions?: string
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsString()
+  @IsOptional()
+  productFamilyId?: string
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsString()
+  @IsOptional()
+  commercialLineId?: string
 }
 
 export class UpdateProduct_TEDto {
-  @ApiPropertyOptional() internalName?: string
-  @ApiPropertyOptional() code?: string
-  @ApiPropertyOptional({ enum: ProductStatus }) status?: ProductStatus
-  @ApiPropertyOptional() externalCode?: string
-  @ApiPropertyOptional() displayName?: string
-  @ApiPropertyOptional() commercialName?: string
-  @ApiPropertyOptional() saleDenomination?: string
-  @ApiPropertyOptional() productType?: string
-  @ApiPropertyOptional() notes?: string
-  @ApiPropertyOptional() barcodeGtin?: string
-  @ApiPropertyOptional() packagingType?: string
-  @ApiPropertyOptional() batchCode?: string
-  @ApiPropertyOptional() declaredWeight?: number
-  @ApiPropertyOptional() declaredVolume?: number
-  @ApiPropertyOptional() shelfLifeDays?: number
-  @ApiPropertyOptional() storageConditions?: string
-  @ApiPropertyOptional() productFamilyId?: string
-  @ApiPropertyOptional() commercialLineId?: string
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  internalName?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  code?: string
+
+  @ApiPropertyOptional({ enum: ProductStatus })
+  @IsEnum(ProductStatus)
+  @IsOptional()
+  status?: ProductStatus
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  externalCode?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  displayName?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  commercialName?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  saleDenomination?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  productType?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  barcodeGtin?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  packagingType?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  batchCode?: string
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  declaredWeight?: number
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  declaredVolume?: number
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  shelfLifeDays?: number
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  storageConditions?: string
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsString()
+  @IsOptional()
+  productFamilyId?: string
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsString()
+  @IsOptional()
+  commercialLineId?: string
 }
 
 export class Product_TE_ResponseDto {

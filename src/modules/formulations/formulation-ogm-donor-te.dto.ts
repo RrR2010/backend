@@ -1,12 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional } from 'class-validator'
 import { FormulationOgmDonor_TE } from './formulation-ogm-donor-te.entity'
 
 // TODO: zod validate dto
 export class CreateFormulationOgmDonor_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   formulationRevisionId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   ogmDonorSpeciesId!: string
 }
 
@@ -47,5 +52,8 @@ export class FormulationOgmDonor_TE_ResponseDto extends CreateFormulationOgmDono
 
 export class UpdateFormulationOgmDonor_TEDto {
   @ApiProperty({ type: String, required: false })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   ogmDonorSpeciesId?: string
 }

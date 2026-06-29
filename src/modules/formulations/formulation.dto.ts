@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsNumber, IsPositive, IsEnum, Min } from 'class-validator'
 import { FormulationVersion_TE } from './formulation-version.entity'
 import { FormulationRevision_TE } from './formulation-revision.entity'
 import { FormulationItem_TE } from './formulation-item.entity'
@@ -6,27 +7,81 @@ import { FormulationRevisionStatus } from '@prisma/client'
 
 // TODO: zod validate dto
 export class CreateFormulationVersion_TEDto {
-  @ApiProperty({ type: String }) tenantId!: string
-  @ApiProperty() productId!: string
-  @ApiProperty() version!: number
-  @ApiPropertyOptional() notes?: string
+  @ApiProperty()
+  @IsUUID()
+  @IsString()
+  productId!: string
+
+  @ApiProperty()
+  @IsNumber()
+  @IsPositive()
+  version!: number
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string
 }
 
+// TODO: zod validate dto
 export class CreateFormulationRevision_TEDto {
-  @ApiProperty() formulationVersionId!: string
-  @ApiProperty() revision!: number
-  @ApiPropertyOptional() notes?: string
+  @ApiProperty()
+  @IsUUID()
+  @IsString()
+  formulationVersionId!: string
+
+  @ApiProperty()
+  @IsNumber()
+  @IsPositive()
+  revision!: number
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string
 }
 
+// TODO: zod validate dto
 export class CreateFormulationItem_TEDto {
-  @ApiProperty() formulationRevisionId!: string
-  @ApiProperty() ingredientId!: string
-  @ApiProperty() quantity!: number
-  @ApiProperty({ type: String }) unitId!: string
-  @ApiPropertyOptional() usageCategory?: string
-  @ApiPropertyOptional() componentGroup?: string
-  @ApiPropertyOptional() sortOrder?: number
-  @ApiPropertyOptional() notes?: string
+  @ApiProperty()
+  @IsUUID()
+  @IsString()
+  formulationRevisionId!: string
+
+  @ApiProperty()
+  @IsUUID()
+  @IsString()
+  ingredientId!: string
+
+  @ApiProperty()
+  @IsNumber()
+  @IsPositive()
+  quantity!: number
+
+  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
+  unitId!: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  usageCategory?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  componentGroup?: string
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  sortOrder?: number
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string
 }
 
 export class FormulationVersion_TE_ResponseDto {
@@ -81,6 +136,18 @@ export class FormulationRevision_TE_ResponseDto {
       updatedAt: revision.updatedAt,
     }
   }
+}
+
+// TODO: zod validate dto
+export class ApproveRevisionDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsString()
+  approverId!: string
+
+  @ApiProperty()
+  @IsString()
+  approvedBy!: string
 }
 
 export class FormulationItem_TE_ResponseDto {

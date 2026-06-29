@@ -7,6 +7,7 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
+  Query,
   Req
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
@@ -49,9 +50,14 @@ export class TechnicalSourceType_PLController {
   @Get()
   @Authorize(Action.Manage, TechnicalSourceType_PL)
   async findAll(
-    @Req() request: Request
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
   ): Promise<TechnicalSourceType_PLResponseDto[]> {
-    const types = await this.service.findAll(request.context)
+    const types = await this.service.findAll(
+      { skip: Number(offset) || 0, take: Number(limit) || 50 },
+      request.context
+    )
     return types.map((t) => TechnicalSourceType_PLResponseDto.fromDomain(t))
   }
 

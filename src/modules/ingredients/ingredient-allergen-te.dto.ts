@@ -1,16 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsEnum } from 'class-validator'
 import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
 import { AllergenRelationType } from '@prisma/client'
 
 // TODO: zod validate dto
 export class CreateIngredientAllergen_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   ingredientId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   allergenId!: string
 
   @ApiProperty({ enum: AllergenRelationType, enumName: 'AllergenRelationType' })
+  @IsEnum(AllergenRelationType)
   relationType!: AllergenRelationType
 }
 

@@ -34,6 +34,14 @@ export class TechnicalSource_TE extends Lockable(
   // --------------- Factory Methods ---------------
 
   static create(props: CreateTechnicalSource_TEProps): TechnicalSource_TE {
+    const hasPlId = !!props.sourceTypePlId
+    const hasTeId = !!props.sourceTypeTeId
+    if (hasPlId === hasTeId) {
+      throw new Error(
+        'TechnicalSource_TE must have exactly one source type: either sourceTypePlId (platform) or sourceTypeTeId (tenant), not both or neither'
+      )
+    }
+
     // TODO: zod validate input
     const now = new Date()
 
@@ -91,6 +99,13 @@ export class TechnicalSource_TE extends Lockable(
     sourceTypeTeId: string | null
   ): void {
     this.ensureActivated('TechnicalSource_TE')
+    const hasPlId = !!sourceTypePlId
+    const hasTeId = !!sourceTypeTeId
+    if (hasPlId === hasTeId) {
+      throw new Error(
+        'TechnicalSource_TE must have exactly one source type: either sourceTypePlId (platform) or sourceTypeTeId (tenant), not both or neither'
+      )
+    }
     this._props.sourceTypePlId = sourceTypePlId
     this._props.sourceTypeTeId = sourceTypeTeId
     this.touch()

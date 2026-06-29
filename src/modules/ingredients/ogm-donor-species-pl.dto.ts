@@ -1,15 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 import { OgmDonorSpecies_PL } from '@ingredients/ogm-donor-species-pl.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
+// TODO: zod validate dto
 export class CreateOgmDonorSpecies_PLDto {
   @ApiProperty({ type: String })
+  @IsString()
   scientificName!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   commonName?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   category?: string | null
 }
 
@@ -62,11 +69,17 @@ export class OgmDonorSpecies_PLResponseDto extends CreateOgmDonorSpecies_PLRespo
 
 export class UpdateOgmDonorSpecies_PLDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   scientificName?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   commonName?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   category?: string | null
 }

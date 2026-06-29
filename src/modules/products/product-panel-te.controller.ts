@@ -36,7 +36,6 @@ export class ProductPanel_TEController {
   ): Promise<ProductPanel_TE_ResponseDto> {
     const entity = await this.service.create(
       {
-        tenantId: dto.tenantId,
         productId: dto.productId,
         panelNumber: dto.panelNumber,
         type: dto.type,

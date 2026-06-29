@@ -1,15 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional } from 'class-validator'
 import { FormulationAllergen_TE } from './formulation-allergen-te.entity'
 
 // TODO: zod validate dto
 export class CreateFormulationAllergen_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   formulationRevisionId!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   allergenDeclaration?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   allergenMayContain?: string | null
 }
 
@@ -54,8 +61,12 @@ export class FormulationAllergen_TE_ResponseDto extends CreateFormulationAllerge
 
 export class UpdateFormulationAllergen_TEDto {
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   allergenDeclaration?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   allergenMayContain?: string | null
 }

@@ -37,7 +37,6 @@ export class ClaimsController {
   ): Promise<CreateClaim_TEDtoResponseDto> {
     const claim = await this.service.create(
       {
-        tenantId: dto.tenantId,
         code: dto.code,
         name: dto.name,
         description: dto.description ?? null

@@ -1,30 +1,45 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsUUID, IsObject } from 'class-validator'
 import { ComplianceRule_PL } from '@ingredients/compliance-rule-pl.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
+// TODO: zod validate dto
 export class CreateComplianceRule_PLDto {
   @ApiProperty({ type: String })
+  @IsString()
   code!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   category!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   ruleType!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   description!: string
 
   @ApiProperty({ type: Object, required: false, nullable: true })
+  @IsObject()
+  @IsOptional()
   condition!: Record<string, unknown> | null
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   severity!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   regulationId!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   nutrientId!: string | null
 }
 
@@ -89,26 +104,44 @@ export class ComplianceRule_PLResponseDto extends CreateComplianceRule_PLRespons
 
 export class UpdateComplianceRule_PLDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   code?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   category?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   ruleType?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   description?: string
 
   @ApiProperty({ type: Object, required: false, nullable: true })
+  @IsObject()
+  @IsOptional()
   condition?: Record<string, unknown> | null
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   severity?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   regulationId?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   nutrientId?: string | null
 }

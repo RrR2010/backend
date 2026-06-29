@@ -1,28 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsEnum, IsNumber, IsUUID } from 'class-validator'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
 import { NutrientUnit, NutrientCategory } from '@prisma/client'
 import { SystemState } from '@shared/behaviours/lockable'
 
+// TODO: zod validate dto
 export class CreateNutrient_PLDto {
   @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ enum: NutrientUnit })
+  @IsEnum(NutrientUnit)
   unit!: NutrientUnit
 
   @ApiProperty({ enum: NutrientCategory })
+  @IsEnum(NutrientCategory)
   category!: NutrientCategory
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   parentId!: string | null
 
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   level?: number
 
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   sortOrder?: number
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   regulatoryRef!: string | null
 }
 
@@ -89,23 +103,38 @@ export class Nutrient_PLResponseDto extends CreateNutrient_PLResponseDto {}
 
 export class UpdateNutrient_PLDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ enum: NutrientUnit, required: false })
+  @IsEnum(NutrientUnit)
+  @IsOptional()
   unit?: NutrientUnit
 
   @ApiProperty({ enum: NutrientCategory, required: false })
+  @IsEnum(NutrientCategory)
+  @IsOptional()
   category?: NutrientCategory
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   parentId!: string | null
 
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   level?: number
 
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   sortOrder?: number
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   regulatoryRef!: string | null
 }

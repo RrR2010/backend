@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { UnitConversion_PLRepository } from '@formulations/unit-conversion-pl.repository'
+import { UnitConversion_PLRepository, UnitConversion_PLFilter } from '@formulations/unit-conversion-pl.repository'
 import {
   UnitConversion_PL,
   CreateUnitConversionPLProps
@@ -21,8 +21,8 @@ export class UnitConversion_PLService {
     return this.repository.save(entity, _ctx)
   }
 
-  async findAll(_ctx: RequestContext): Promise<UnitConversion_PL[]> {
-    return this.repository.findAll({}, _ctx)
+  async findAll(filter: UnitConversion_PLFilter, _ctx: RequestContext): Promise<UnitConversion_PL[]> {
+    return this.repository.findAll(filter, _ctx)
   }
 
   async findById(

@@ -19,7 +19,7 @@ export class ProductNutrientOverride_TEService {
   ) {}
 
   async create(
-    props: CreateProductNutrientOverride_TEProps,
+    props: Omit<CreateProductNutrientOverride_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<ProductNutrientOverride_TE> {
     // TODO: zod validate input
@@ -28,7 +28,7 @@ export class ProductNutrientOverride_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : props.tenantId || effectiveTenantId
+        : effectiveTenantId
     const entity = ProductNutrientOverride_TE.create({ ...props, tenantId })
     return await this.repository.save(entity, ctx)
   }

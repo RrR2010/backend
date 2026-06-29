@@ -14,6 +14,8 @@ import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 export type TechnicalSource_TEFilter = {
   referenceName?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class TechnicalSource_TE_Repository {
@@ -80,6 +82,8 @@ export class PrismaTechnicalSource_TE_Repository
     }
     const prismaSources = await this.prisma.technicalSource_TE.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 50,
       orderBy: { referenceName: 'asc' }
     })
     return prismaSources.map((source) =>

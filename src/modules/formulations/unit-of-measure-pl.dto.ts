@@ -1,19 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsEnum } from 'class-validator'
 import { UnitOfMeasure_PL } from '@formulations/unit-of-measure-pl.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { MeasurementType, MeasurementSystem } from '@prisma/client'
 
+// TODO: zod validate dto
 export class CreateUnitOfMeasure_PLDto {
   @ApiProperty({ type: String })
+  @IsString()
   code!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   symbol!: string | null
 
   @ApiProperty({ enum: MeasurementType })
+  @IsEnum(MeasurementType)
   measurementType!: MeasurementType
 
   @ApiProperty({ enum: MeasurementSystem })
+  @IsEnum(MeasurementSystem)
   measurementSystem!: MeasurementSystem
 }
 
@@ -68,14 +75,22 @@ export class UnitOfMeasure_PLResponseDto extends CreateUnitOfMeasure_PLResponseD
 
 export class UpdateUnitOfMeasure_PLDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   code?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   symbol!: string | null
 
   @ApiProperty({ enum: MeasurementType, required: false })
+  @IsEnum(MeasurementType)
+  @IsOptional()
   measurementType?: MeasurementType
 
   @ApiProperty({ enum: MeasurementSystem, required: false })
+  @IsEnum(MeasurementSystem)
+  @IsOptional()
   measurementSystem?: MeasurementSystem
 }

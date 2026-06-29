@@ -7,7 +7,8 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
-  Req
+  Req,
+  Query
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
@@ -37,7 +38,6 @@ export class IngredientsController {
   ): Promise<CreateIngredientResponseDto> {
     const ingredient = await this.service.create(
       {
-        tenantId: dto.tenantId,
         code: dto.code,
         externalCode: dto.externalCode ?? null,
         internalName: dto.internalName,
@@ -88,8 +88,14 @@ export class IngredientsController {
 
   @Get()
   @Authorize(Action.Read, Ingredient_TE)
-  async findAll(@Req() request: Request): Promise<Ingredient_TE_ResponseDto[]> {
-    const ingredients = await this.service.findAll({}, request.context)
+  async findAll(
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<Ingredient_TE_ResponseDto[]> {
+    const take = limit ? Math.min(parseInt(limit, 10), 500) : 100
+    const skip = offset ? parseInt(offset, 10) : 0
+    const ingredients = await this.service.findAll({ skip, take }, request.context)
     return ingredients.map(Ingredient_TE_ResponseDto.fromDomain)
   }
 

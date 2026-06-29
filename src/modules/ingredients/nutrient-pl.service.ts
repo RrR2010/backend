@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Nutrient_PLRepository } from '@ingredients/nutrient-pl.repository'
+import { Nutrient_PLRepository, Nutrient_PLFilter } from '@ingredients/nutrient-pl.repository'
 import {
   Nutrient_PL,
   CreateNutrientPLProps
@@ -19,8 +19,8 @@ export class Nutrient_PLService {
     return this.repository.save(nutrient, _ctx)
   }
 
-  async findAll(_ctx: RequestContext): Promise<Nutrient_PL[]> {
-    return this.repository.findAll({}, _ctx)
+  async findAll(filter: Nutrient_PLFilter, _ctx: RequestContext): Promise<Nutrient_PL[]> {
+    return this.repository.findAll(filter, _ctx)
   }
 
   async findById(

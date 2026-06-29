@@ -1,18 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsBoolean } from 'class-validator'
 import { FormulationRegulatoryDeclaration_TE } from './formulation-regulatory-declaration-te.entity'
 
 // TODO: zod validate dto
 export class CreateFormulationRegulatoryDeclaration_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   formulationRevisionId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   flagId!: string
 
   @ApiProperty({ type: Boolean })
+  @IsBoolean()
   flagValue!: boolean
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }
 
@@ -61,8 +69,12 @@ export class FormulationRegulatoryDeclaration_TE_ResponseDto extends CreateFormu
 
 export class UpdateFormulationRegulatoryDeclaration_TEDto {
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   flagValue?: boolean
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }

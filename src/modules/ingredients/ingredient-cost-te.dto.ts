@@ -1,28 +1,41 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsNumber, IsDateString } from 'class-validator'
 import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateIngredientCost_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   ingredientId!: string
 
   @ApiProperty({ type: Number })
+  @IsNumber()
   unitPrice!: number
 
   @ApiProperty({ type: String })
+  @IsString()
   currencyCode!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   unitOfMeasureId!: string
 
   @ApiProperty({ type: Date })
+  @IsDateString()
   effectiveDate!: Date
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   supplierId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }
 
@@ -85,20 +98,34 @@ export class IngredientCost_TE_ResponseDto extends CreateIngredientCost_TE_Respo
 
 export class UpdateIngredientCost_TEDto {
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   unitPrice?: number
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   currencyCode?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   unitOfMeasureId?: string
 
   @ApiProperty({ type: Date, required: false })
+  @IsDateString()
+  @IsOptional()
   effectiveDate?: Date
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   supplierId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }

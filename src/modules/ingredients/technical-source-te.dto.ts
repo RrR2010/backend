@@ -1,28 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsUUID } from 'class-validator'
 import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateTechnicalSource_TEDto {
-  @ApiProperty({ type: String })
-  tenantId!: string
-
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   sourceTypePlId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   sourceTypeTeId?: string | null
 
   @ApiProperty({ type: String })
+  @IsString()
   referenceName!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   url?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   documentRef?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }
 
@@ -83,20 +94,34 @@ export class TechnicalSource_TE_ResponseDto extends CreateTechnicalSource_TE_Res
 
 export class UpdateTechnicalSource_TEDto {
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   sourceTypePlId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   sourceTypeTeId?: string | null
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   referenceName?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   url?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   documentRef?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsUUID, IsNumber, IsBoolean, IsEnum } from 'class-validator'
 import { Ingredient_TE } from '@ingredients/ingredient.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import {
@@ -6,67 +7,101 @@ import {
   FlavorOriginType,
   ColorantOriginType
 } from '@prisma/client'
+
 // TODO: zod validate dto
 export class CreateIngredient_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsString()
   code!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   externalCode?: string | null
 
   @ApiProperty({ type: String })
+  @IsString()
   internalName!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   commercialName?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   saleDenomination?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   functionalGroupId?: string | null
 
   @ApiProperty({
     enum: IngredientFunctionType,
     enumName: 'IngredientFunctionType'
   })
+  @IsEnum(IngredientFunctionType)
   ingredientFunction!: IngredientFunctionType
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   manufacturerId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   supplierId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   technicalSourceId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   usageIndication?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   ingredientsListDesc?: string | null
 
-  // === Regulatory Profile ===
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   hasRtiqPiq?: boolean
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   gmoIngredient?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   gmoDonorSpecies?: string | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   gmoPercentage?: number | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   irradiatedIngredient?: string | null
 
   @ApiProperty({
@@ -75,6 +110,8 @@ export class CreateIngredient_TEDto {
     required: false,
     nullable: true
   })
+  @IsEnum(FlavorOriginType)
+  @IsOptional()
   flavorOriginType?: FlavorOriginType | null
 
   @ApiProperty({
@@ -83,44 +120,68 @@ export class CreateIngredient_TEDto {
     required: false,
     nullable: true
   })
+  @IsEnum(ColorantOriginType)
+  @IsOptional()
   colorantOriginType?: ColorantOriginType | null
 
-  // === Labeling Profile ===
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsAddedSugars?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsIngredientWithAddedSugars?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsNaturallyOccurringSugarSubstitutes?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   usesProcessingThatIncreasesSugars?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsAddedFatsOrOils?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsButterOrMargarine?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsDairyCream?: boolean
 
   @ApiProperty({ type: Boolean, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
   containsIngredientsWithFatsOrCream?: boolean
 
-  // === Technical Profile ===
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   pac?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   pod?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   totalSolids?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   ashContent?: number | null
 }
 
@@ -173,7 +234,6 @@ export class CreateIngredientResponseDto {
   @ApiProperty({ required: false, nullable: true })
   ingredientsListDesc!: string | null
 
-  // === Regulatory Profile ===
   @ApiProperty()
   hasRtiqPiq!: boolean
 
@@ -205,7 +265,6 @@ export class CreateIngredientResponseDto {
   })
   colorantOriginType!: ColorantOriginType | null
 
-  // === Labeling Profile ===
   @ApiProperty()
   containsAddedSugars!: boolean
 
@@ -230,7 +289,6 @@ export class CreateIngredientResponseDto {
   @ApiProperty()
   containsIngredientsWithFatsOrCream!: boolean
 
-  // === Technical Profile ===
   @ApiProperty({ required: false, nullable: true })
   pac!: number | null
 
@@ -269,8 +327,6 @@ export class CreateIngredientResponseDto {
       technicalSourceId: ingredient.technicalSourceId,
       usageIndication: ingredient.usageIndication,
       ingredientsListDesc: ingredient.ingredientsListDesc,
-
-      // Regulatory Profile
       hasRtiqPiq: ingredient.hasRtiqPiq,
       gmoIngredient: ingredient.gmoIngredient,
       gmoDonorSpecies: ingredient.gmoDonorSpecies,
@@ -278,8 +334,6 @@ export class CreateIngredientResponseDto {
       irradiatedIngredient: ingredient.irradiatedIngredient,
       flavorOriginType: ingredient.flavorOriginType,
       colorantOriginType: ingredient.colorantOriginType,
-
-      // Labeling Profile
       containsAddedSugars: ingredient.containsAddedSugars,
       containsIngredientWithAddedSugars:
         ingredient.containsIngredientWithAddedSugars,
@@ -292,13 +346,10 @@ export class CreateIngredientResponseDto {
       containsDairyCream: ingredient.containsDairyCream,
       containsIngredientsWithFatsOrCream:
         ingredient.containsIngredientsWithFatsOrCream,
-
-      // Technical Profile
       pac: ingredient.pac,
       pod: ingredient.pod,
       totalSolids: ingredient.totalSolids,
       ashContent: ingredient.ashContent,
-
       systemState: ingredient.systemState,
       createdAt: ingredient.createdAt,
       updatedAt: ingredient.updatedAt
@@ -310,21 +361,34 @@ export class Ingredient_TE_ResponseDto extends CreateIngredientResponseDto {}
 
 export class UpdateIngredient_TEDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   code?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   externalCode?: string | null
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   internalName?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   commercialName?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   saleDenomination?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   functionalGroupId?: string | null
 
   @ApiProperty({
@@ -332,40 +396,66 @@ export class UpdateIngredient_TEDto {
     enumName: 'IngredientFunctionType',
     required: false
   })
+  @IsEnum(IngredientFunctionType)
+  @IsOptional()
   ingredientFunction?: IngredientFunctionType
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   manufacturerId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   supplierId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsUUID()
+  @IsString()
+  @IsOptional()
   technicalSourceId?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   usageIndication?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   ingredientsListDesc?: string | null
 
-  // === Regulatory Profile ===
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   hasRtiqPiq?: boolean
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   gmoIngredient?: string | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   gmoDonorSpecies?: string | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   gmoPercentage?: number | null
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   irradiatedIngredient?: string | null
 
   @ApiProperty({
@@ -374,6 +464,8 @@ export class UpdateIngredient_TEDto {
     required: false,
     nullable: true
   })
+  @IsEnum(FlavorOriginType)
+  @IsOptional()
   flavorOriginType?: FlavorOriginType | null
 
   @ApiProperty({
@@ -382,43 +474,67 @@ export class UpdateIngredient_TEDto {
     required: false,
     nullable: true
   })
+  @IsEnum(ColorantOriginType)
+  @IsOptional()
   colorantOriginType?: ColorantOriginType | null
 
-  // === Labeling Profile ===
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsAddedSugars?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsIngredientWithAddedSugars?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsNaturallyOccurringSugarSubstitutes?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   usesProcessingThatIncreasesSugars?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsAddedFatsOrOils?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsButterOrMargarine?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsDairyCream?: boolean
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   containsIngredientsWithFatsOrCream?: boolean
 
-  // === Technical Profile ===
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   pac?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   pod?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   totalSolids?: number | null
 
   @ApiProperty({ type: Number, required: false, nullable: true })
+  @IsNumber()
+  @IsOptional()
   ashContent?: number | null
 }

@@ -1,22 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsNumber, IsBoolean } from 'class-validator'
 import { FunctionalGroup_TE } from '@ingredients/functional-group.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateFunctionalGroup_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   code?: string | null
 
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   sortOrder?: number
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean
 }
 
@@ -67,14 +72,22 @@ export class FunctionalGroup_TE_ResponseDto extends CreateFunctionalGroup_TE_Res
 
 export class UpdateFunctionalGroup_TEDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   code?: string | null
 
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   sortOrder?: number
 
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean
 }

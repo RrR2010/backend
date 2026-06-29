@@ -21,7 +21,7 @@ export abstract class FormulationVersion_TE_Repository {
     id: string,
     ctx: RequestContext
   ): Promise<FormulationVersion_TE | null>
-  abstract findAll(ctx: RequestContext): Promise<FormulationVersion_TE[]>
+  abstract findAll(ctx: RequestContext, skip?: number, take?: number): Promise<FormulationVersion_TE[]>
   abstract findByProductId(
     productId: string,
     ctx: RequestContext
@@ -79,17 +79,19 @@ export class PrismaFormulationVersion_TE_Repository implements FormulationVersio
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) where.tenantId = effectiveTenantId
     const data = await this.prisma.formulationVersion_TE.findUnique({ where })
-    if (!data || data.systemState === 'DELETED') return null
+    if (!data || data.systemState === SystemState.DELETED) return null
     return PrismaFormulationVersion_TE_Mapper.toDomain(data)
   }
 
-  async findAll(ctx: RequestContext): Promise<FormulationVersion_TE[]> {
+  async findAll(ctx: RequestContext, skip = 0, take = 100): Promise<FormulationVersion_TE[]> {
     const where: Prisma.FormulationVersion_TEWhereInput = {}
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) where.tenantId = effectiveTenantId
-    where.systemState = 'ACTIVE'
+    where.systemState = SystemState.ACTIVE
     const data = await this.prisma.formulationVersion_TE.findMany({
       where,
+      skip,
+      take,
       orderBy: { version: 'desc' }
     })
     return data.map(PrismaFormulationVersion_TE_Mapper.toDomain)
@@ -102,7 +104,7 @@ export class PrismaFormulationVersion_TE_Repository implements FormulationVersio
     const where: Prisma.FormulationVersion_TEWhereInput = { productId }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) where.tenantId = effectiveTenantId
-    where.systemState = 'ACTIVE'
+    where.systemState = SystemState.ACTIVE
     const data = await this.prisma.formulationVersion_TE.findMany({
       where,
       orderBy: { version: 'desc' }
@@ -133,7 +135,7 @@ export class PrismaFormulationVersion_TE_Repository implements FormulationVersio
     if (effectiveTenantId) where.tenantId = effectiveTenantId
     await this.prisma.formulationVersion_TE.update({
       where,
-      data: { systemState: 'DELETED', updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }
@@ -147,10 +149,10 @@ export class PrismaFormulationRevision_TE_Repository implements FormulationRevis
     ctx: RequestContext
   ): Promise<FormulationRevision_TE | null> {
     const effectiveTenantId = getEffectiveTenantId(ctx)
-    const where: Prisma.FormulationRevision_TEWhereUniqueInput = { id }
+    const where: Prisma.FormulationRevision_TEWhereInput = { id }
     if (effectiveTenantId) where.formulationVersion_TE = { tenantId: effectiveTenantId }
-    const data = await this.prisma.formulationRevision_TE.findUnique({ where })
-    if (!data || data.systemState === 'DELETED') return null
+    const data = await this.prisma.formulationRevision_TE.findFirst({ where })
+    if (!data || data.systemState === SystemState.DELETED) return null
     return PrismaFormulationRevision_TE_Mapper.toDomain(data)
   }
 
@@ -161,7 +163,7 @@ export class PrismaFormulationRevision_TE_Repository implements FormulationRevis
     const effectiveTenantId = getEffectiveTenantId(ctx)
     const where: Prisma.FormulationRevision_TEWhereInput = {
       formulationVersionId: versionId,
-      systemState: 'ACTIVE'
+      systemState: SystemState.ACTIVE
     }
     if (effectiveTenantId) where.formulationVersion_TE = { tenantId: effectiveTenantId }
     const data = await this.prisma.formulationRevision_TE.findMany({
@@ -206,7 +208,7 @@ export class PrismaFormulationRevision_TE_Repository implements FormulationRevis
     }
     await this.prisma.formulationRevision_TE.update({
       where: { id },
-      data: { systemState: 'DELETED', updatedAt: new Date() }
+      data: { systemState: SystemState.DELETED, updatedAt: new Date() }
     })
   }
 }

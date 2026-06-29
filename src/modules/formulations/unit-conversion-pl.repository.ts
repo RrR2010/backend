@@ -16,6 +16,8 @@ export type UnitConversion_PLFilter = {
   fromUnitId?: string
   toUnitId?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class UnitConversion_PLRepository {
@@ -81,6 +83,8 @@ export class PrismaUnitConversion_PLRepository implements UnitConversion_PLRepos
     }
     const prismaEntities = await this.prisma.unitConversion_PL.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 50,
       orderBy: { createdAt: 'asc' }
     })
     return prismaEntities.map((entity) =>

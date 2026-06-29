@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { UnitOfMeasure_PLRepository } from '@formulations/unit-of-measure-pl.repository'
+import { UnitOfMeasure_PLRepository, UnitOfMeasure_PLFilter } from '@formulations/unit-of-measure-pl.repository'
 import {
   UnitOfMeasure_PL,
   CreateUnitOfMeasurePLProps
@@ -21,8 +21,8 @@ export class UnitOfMeasure_PLService {
     return this.repository.save(entity, _ctx)
   }
 
-  async findAll(_ctx: RequestContext): Promise<UnitOfMeasure_PL[]> {
-    return this.repository.findAll({}, _ctx)
+  async findAll(filter: UnitOfMeasure_PLFilter, _ctx: RequestContext): Promise<UnitOfMeasure_PL[]> {
+    return this.repository.findAll(filter, _ctx)
   }
 
   async findById(

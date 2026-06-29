@@ -21,7 +21,7 @@ export class FunctionalGroupService {
   constructor(private readonly repository: FunctionalGroupRepository) {}
 
   async create(
-    props: CreateFunctionalGroup_TEProps,
+    props: Omit<CreateFunctionalGroup_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<FunctionalGroup_TE> {
     // TODO: zod validate input
@@ -29,7 +29,7 @@ export class FunctionalGroupService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (effectiveTenantId ?? props.tenantId)
+        : effectiveTenantId
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const group = FunctionalGroup_TE.create({ ...props, tenantId })
     try {

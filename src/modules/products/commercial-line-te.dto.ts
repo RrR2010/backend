@@ -1,16 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateCommercialLine_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description?: string | null
 }
 
@@ -53,8 +54,12 @@ export class CommercialLine_TEDtoResponseDto extends CreateCommercialLine_TEDtoR
 
 export class UpdateCommercialLine_TEDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description?: string | null
 }

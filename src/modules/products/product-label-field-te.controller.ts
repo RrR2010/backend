@@ -36,7 +36,6 @@ export class ProductLabelField_TEController {
   ): Promise<ProductLabelField_TE_ResponseDto> {
     const entity = await this.service.create(
       {
-        tenantId: dto.tenantId,
         productId: dto.productId,
         labelFieldId: dto.labelFieldId,
         designerValue: dto.designerValue ?? null,

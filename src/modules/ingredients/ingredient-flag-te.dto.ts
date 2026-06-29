@@ -1,19 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsBoolean } from 'class-validator'
 import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateIngredientFlag_TEDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   ingredientId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   flagId!: string
 
   @ApiProperty({ type: Boolean })
+  @IsBoolean()
   flagValue!: boolean
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }
 
@@ -66,8 +74,12 @@ export class IngredientFlag_TE_ResponseDto extends CreateIngredientFlag_TE_Respo
 
 export class UpdateIngredientFlag_TEDto {
   @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
   flagValue?: boolean
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }

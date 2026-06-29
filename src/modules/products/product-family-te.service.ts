@@ -21,7 +21,7 @@ export class ProductFamily_TEService {
   constructor(private readonly repository: ProductFamily_TE_Repository) {}
 
   async create(
-    props: CreateProductFamily_TEProps,
+    props: Omit<CreateProductFamily_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<ProductFamily_TE> {
     // TODO: zod validate input
@@ -29,7 +29,7 @@ export class ProductFamily_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (effectiveTenantId ?? props.tenantId)
+        : effectiveTenantId
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const family = ProductFamily_TE.create({ ...props, tenantId })
     try {

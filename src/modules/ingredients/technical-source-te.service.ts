@@ -19,7 +19,7 @@ export class TechnicalSource_TEService {
   ) {}
 
   async create(
-    props: CreateTechnicalSource_TEProps,
+    props: Omit<CreateTechnicalSource_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<TechnicalSource_TE> {
     // TODO: zod validate input
@@ -27,7 +27,7 @@ export class TechnicalSource_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (effectiveTenantId ?? props.tenantId)
+        : effectiveTenantId
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const source = TechnicalSource_TE.create({ ...props, tenantId })
     return this.repository.save(source, ctx)

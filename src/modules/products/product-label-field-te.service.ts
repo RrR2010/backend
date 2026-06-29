@@ -19,7 +19,7 @@ export class ProductLabelField_TEService {
   ) {}
 
   async create(
-    props: CreateProductLabelField_TEProps,
+    props: Omit<CreateProductLabelField_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<ProductLabelField_TE> {
     // TODO: zod validate input
@@ -28,7 +28,7 @@ export class ProductLabelField_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : props.tenantId || effectiveTenantId
+        : effectiveTenantId
     const entity = ProductLabelField_TE.create({ ...props, tenantId })
     return await this.repository.save(entity, ctx)
   }

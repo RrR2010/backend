@@ -16,6 +16,8 @@ export type FunctionalGroupFilter = {
   code?: string
   isActive?: boolean
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class FunctionalGroupRepository {
@@ -82,6 +84,8 @@ export class PrismaFunctionalGroup_TERepository implements FunctionalGroupReposi
     }
     const prismaGroups = await this.prisma.functionalGroup_TE.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 50,
       orderBy: { sortOrder: 'asc' }
     })
     return prismaGroups.map((group) =>

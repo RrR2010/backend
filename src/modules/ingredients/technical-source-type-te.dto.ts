@@ -1,16 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateTechnicalSourceType_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description?: string | null
 }
 
@@ -53,8 +54,12 @@ export class TechnicalSourceType_TEDtoResponseDto extends CreateTechnicalSourceT
 
 export class UpdateTechnicalSourceType_TEDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description?: string | null
 }

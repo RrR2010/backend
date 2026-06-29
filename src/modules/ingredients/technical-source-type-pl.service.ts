@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { TechnicalSourceType_PLRepository } from '@ingredients/technical-source-type-pl.repository'
+import { TechnicalSourceType_PLRepository, TechnicalSourceType_PLFilter } from '@ingredients/technical-source-type-pl.repository'
 import {
   TechnicalSourceType_PL,
   CreateTechnicalSourceTypePLProps
@@ -21,8 +21,8 @@ export class TechnicalSourceType_PLService {
     return this.repository.save(type, _ctx)
   }
 
-  async findAll(_ctx: RequestContext): Promise<TechnicalSourceType_PL[]> {
-    return this.repository.findAll({}, _ctx)
+  async findAll(filter: TechnicalSourceType_PLFilter, _ctx: RequestContext): Promise<TechnicalSourceType_PL[]> {
+    return this.repository.findAll(filter, _ctx)
   }
 
   async findById(

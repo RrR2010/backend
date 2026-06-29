@@ -7,6 +7,7 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
+  Query,
   Req
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
@@ -49,8 +50,15 @@ export class UnitOfMeasure_PLController {
 
   @Get()
   @Authorize(Action.Manage, UnitOfMeasure_PL)
-  async findAll(@Req() request: Request): Promise<UnitOfMeasure_PLResponseDto[]> {
-    const entities = await this.service.findAll(request.context)
+  async findAll(
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<UnitOfMeasure_PLResponseDto[]> {
+    const entities = await this.service.findAll(
+      { skip: Number(offset) || 0, take: Number(limit) || 50 },
+      request.context
+    )
     return entities.map((e) => UnitOfMeasure_PLResponseDto.fromDomain(e))
   }
 

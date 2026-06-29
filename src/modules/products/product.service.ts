@@ -11,10 +11,10 @@ import { ProductNotFoundError, ProductAlreadyExistsError } from './product.error
 export class ProductService {
   constructor(private readonly repository: ProductRepository) {}
 
-  async create(props: CreateProduct_TEProps, ctx: RequestContext): Promise<Product_TE> {
+  async create(props: Omit<CreateProduct_TEProps, 'tenantId'>, ctx: RequestContext): Promise<Product_TE> {
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (!effectiveTenantId) throw new InternalServerErrorException('tenantId is required')
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : (props.tenantId || effectiveTenantId)
+    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : effectiveTenantId
     const product = Product_TE.create({ ...props, tenantId })
     try {
       return await this.repository.save(product, ctx)

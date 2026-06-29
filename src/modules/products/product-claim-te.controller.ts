@@ -36,7 +36,6 @@ export class ProductClaim_TEController {
   ): Promise<ProductClaim_TE_ResponseDto> {
     const entity = await this.service.create(
       {
-        tenantId: dto.tenantId,
         productId: dto.productId,
         claimId: dto.claimId,
         isActive: dto.isActive ?? true,

@@ -18,6 +18,8 @@ export type UnitOfMeasure_PLFilter = {
   measurementType?: string
   measurementSystem?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class UnitOfMeasure_PLRepository {
@@ -75,6 +77,8 @@ export class PrismaUnitOfMeasure_PLRepository implements UnitOfMeasure_PLReposit
     }
     const prismaEntities = await this.prisma.unitOfMeasure_PL.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 50,
       orderBy: { code: 'asc' }
     })
     return prismaEntities.map((entity) =>

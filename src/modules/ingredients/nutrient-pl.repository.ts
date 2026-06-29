@@ -19,6 +19,8 @@ export type Nutrient_PLFilter = {
   unit?: string
   category?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class Nutrient_PLRepository {
@@ -76,6 +78,8 @@ export class PrismaNutrient_PLRepository implements Nutrient_PLRepository {
     }
     const prismaNutrientsPL = await this.prisma.nutrient_PL.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 50,
       orderBy: { sortOrder: 'asc' }
     })
     return prismaNutrientsPL.map((nutrient) =>

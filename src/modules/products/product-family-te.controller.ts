@@ -37,7 +37,6 @@ export class ProductFamiliesController {
   ): Promise<CreateProductFamily_TEDtoResponseDto> {
     const family = await this.service.create(
       {
-        tenantId: dto.tenantId,
         name: dto.name,
         description: dto.description ?? null
       },

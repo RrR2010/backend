@@ -905,6 +905,7 @@ model FormulationNutrition_TE {
 
   @@unique([formulationRevisionId, nutrientId])
   @@index([tenantId])
+  @@index([formulationRevisionId])
 }
 
 model FormulationOgmDonor_TE {

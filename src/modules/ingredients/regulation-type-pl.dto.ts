@@ -1,18 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 import { RegulationType_PL } from '@ingredients/regulation-type-pl.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
+// TODO: zod validate dto
 export class CreateRegulationType_PLDto {
   @ApiProperty({ type: String })
+  @IsString()
   abbreviation!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   code!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description!: string | null
 }
 
@@ -61,14 +68,22 @@ export class RegulationType_PLResponseDto extends CreateRegulationType_PLRespons
 
 export class UpdateRegulationType_PLDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   abbreviation?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   code?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description?: string | null
 }

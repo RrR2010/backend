@@ -14,6 +14,8 @@ import { RequestContext } from '@authorization/authorization.types'
 
 export type TechnicalSourceType_PLFilter = {
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class TechnicalSourceType_PLRepository {
@@ -71,6 +73,8 @@ export class PrismaTechnicalSourceType_PLRepository
     const prismaTypesPL =
       await this.prisma.technicalSourceType_PL.findMany({
         where,
+        skip: filter.skip ?? 0,
+        take: filter.take ?? 50,
         orderBy: { code: 'asc' }
       })
     return prismaTypesPL.map((type) =>

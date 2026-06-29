@@ -20,6 +20,8 @@ export abstract class ProductRepository {
 export type ProductFilter = {
   tenantId?: string
   status?: string
+  skip?: number
+  take?: number
 }
 
 @Injectable()
@@ -42,7 +44,12 @@ export class PrismaProductRepository implements ProductRepository {
     if (effectiveTenantId) where.tenantId = effectiveTenantId
     if (filter.status) where.status = filter.status as ProductStatus
     where.systemState = 'ACTIVE'
-    const data = await this.prisma.product_TE.findMany({ where, orderBy: { internalName: 'asc' } })
+    const data = await this.prisma.product_TE.findMany({
+      where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 100,
+      orderBy: { internalName: 'asc' }
+    })
     return data.map(PrismaProduct_TEMapper.toDomain)
   }
 

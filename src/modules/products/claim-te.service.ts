@@ -18,7 +18,7 @@ export class Claim_TEService {
   constructor(private readonly repository: Claim_TE_Repository) {}
 
   async create(
-    props: CreateClaim_TEProps,
+    props: Omit<CreateClaim_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<Claim_TE> {
     // TODO: zod validate input
@@ -27,7 +27,7 @@ export class Claim_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : props.tenantId || effectiveTenantId
+        : effectiveTenantId
     const claim = Claim_TE.create({ ...props, tenantId })
     try {
       return await this.repository.save(claim, ctx)

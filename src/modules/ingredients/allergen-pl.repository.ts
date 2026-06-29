@@ -16,6 +16,8 @@ import { RequestContext } from '@authorization/authorization.types'
 export type Allergen_PLFilter = {
   category?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class Allergen_PLRepository {
@@ -70,6 +72,8 @@ export class PrismaAllergen_PLRepository implements Allergen_PLRepository {
     }
     const prismaAllergensPL = await this.prisma.allergen_PL.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 50,
       orderBy: { sortOrder: 'asc' }
     })
     return prismaAllergensPL.map((allergen) =>

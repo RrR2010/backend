@@ -1,19 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsOptional, IsEnum } from 'class-validator'
 import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
 import { DeclarationFlagScope } from '@prisma/client'
 import { SystemState } from '@shared/behaviours/lockable'
 
+// TODO: zod validate dto
 export class CreateDeclarationFlag_PLDto {
   @ApiProperty({ type: String })
+  @IsString()
   code!: string
 
   @ApiProperty({ type: String })
+  @IsString()
   name!: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description!: string | null
 
   @ApiProperty({ enum: DeclarationFlagScope, required: false })
+  @IsEnum(DeclarationFlagScope)
+  @IsOptional()
   appliesTo?: DeclarationFlagScope
 }
 
@@ -70,14 +78,22 @@ export class DeclarationFlag_PLResponseDto extends CreateDeclarationFlag_PLRespo
 
 export class UpdateDeclarationFlag_PLDto {
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   code?: string
 
   @ApiProperty({ type: String, required: false })
+  @IsString()
+  @IsOptional()
   name?: string
 
   @ApiProperty({ type: String, required: false, nullable: true })
+  @IsString()
+  @IsOptional()
   description!: string | null
 
   @ApiProperty({ enum: DeclarationFlagScope, required: false })
+  @IsEnum(DeclarationFlagScope)
+  @IsOptional()
   appliesTo?: DeclarationFlagScope
 }

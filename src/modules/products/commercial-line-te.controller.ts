@@ -37,7 +37,6 @@ export class CommercialLinesController {
   ): Promise<CreateCommercialLine_TEDtoResponseDto> {
     const line = await this.service.create(
       {
-        tenantId: dto.tenantId,
         name: dto.name,
         description: dto.description ?? null
       },

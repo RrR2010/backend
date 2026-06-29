@@ -1,21 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsUUID, IsOptional, IsNumber } from 'class-validator'
 import { ProductNutrientOverride_TE } from '@products/product-nutrient-override-te.entity'
 
 // TODO: zod validate dto
 export class CreateProductNutrientOverride_TEDto {
   @ApiProperty({ type: String })
-  tenantId!: string
-
-  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   productId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   nutrientId!: string
 
   @ApiProperty({ type: Number })
+  @IsNumber()
   overriddenValue!: number
 
   @ApiPropertyOptional({ type: String, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }
 
@@ -62,8 +67,11 @@ export class ProductNutrientOverride_TE_ResponseDto {
 
 export class UpdateProductNutrientOverride_TEDto {
   @ApiProperty({ type: Number })
+  @IsNumber()
   overriddenValue!: number
 
   @ApiPropertyOptional({ type: String, nullable: true })
+  @IsString()
+  @IsOptional()
   notes?: string | null
 }

@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import * as cookieParser from 'cookie-parser'
+import * as bodyParser from 'body-parser'
+import { PrismaExceptionFilter } from '@shared/filters/prisma-exception.filter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -33,6 +35,10 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, documentFactory)
 
   app.use(cookieParser.default())
+  app.use(bodyParser.json({ limit: '5mb' }))
+  app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }))
+
+  app.useGlobalFilters(new PrismaExceptionFilter())
 
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS

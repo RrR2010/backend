@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import type { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
@@ -20,15 +20,16 @@ export class FormulationService {
 
   // --- Versions ---
 
-  async createVersion(props: CreateFormulationVersion_TEProps, ctx: RequestContext): Promise<FormulationVersion_TE> {
-    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
-    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : (props.tenantId || effectiveTenantId)
+  async createVersion(props: Omit<CreateFormulationVersion_TEProps, 'tenantId'>, ctx: RequestContext): Promise<FormulationVersion_TE> {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (!effectiveTenantId) throw new InternalServerErrorException('tenantId is required')
+    const tenantId = ctx.scope === UserScope.TENANT ? ctx.tenantId : effectiveTenantId
     const version = FormulationVersion_TE.create({ ...props, tenantId })
     return this.versionRepo.save(version, ctx)
   }
 
-  async findAllVersions(ctx: RequestContext): Promise<FormulationVersion_TE[]> {
-    return this.versionRepo.findAll(ctx)
+  async findAllVersions(ctx: RequestContext, skip = 0, take = 100): Promise<FormulationVersion_TE[]> {
+    return this.versionRepo.findAll(ctx, skip, take)
   }
 
   async findVersionsByProduct(productId: string, ctx: RequestContext): Promise<FormulationVersion_TE[]> {
@@ -85,5 +86,31 @@ export class FormulationService {
   async deleteItem(id: string, ctx: RequestContext): Promise<void> {
     await this.findItemById(id, ctx)
     await this.itemRepo.delete(id, ctx)
+  }
+
+  // --- Revision Lifecycle ---
+
+  async submitRevision(id: string, ctx: RequestContext): Promise<FormulationRevision_TE> {
+    const revision = await this.findRevisionById(id, ctx)
+    revision.submitForApproval()
+    return this.revisionRepo.save(revision, ctx)
+  }
+
+  async approveRevision(id: string, approverId: string, approvedBy: string, ctx: RequestContext): Promise<FormulationRevision_TE> {
+    const revision = await this.findRevisionById(id, ctx)
+    revision.approve(approverId, approvedBy)
+    return this.revisionRepo.save(revision, ctx)
+  }
+
+  async rejectRevision(id: string, ctx: RequestContext): Promise<FormulationRevision_TE> {
+    const revision = await this.findRevisionById(id, ctx)
+    revision.rejectToDraft()
+    return this.revisionRepo.save(revision, ctx)
+  }
+
+  async archiveRevision(id: string, ctx: RequestContext): Promise<FormulationRevision_TE> {
+    const revision = await this.findRevisionById(id, ctx)
+    revision.archive()
+    return this.revisionRepo.save(revision, ctx)
   }
 }

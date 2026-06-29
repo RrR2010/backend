@@ -1,15 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { IsString, IsUUID, IsNumber, IsOptional, IsPositive } from 'class-validator'
 import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
+// TODO: zod validate dto
 export class CreateUnitConversion_PLDto {
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   fromUnitId!: string
 
   @ApiProperty({ type: String })
+  @IsUUID()
+  @IsString()
   toUnitId!: string
 
   @ApiProperty({ type: Number })
+  @IsNumber()
+  @IsPositive()
   factor!: number
 }
 
@@ -60,5 +68,7 @@ export class UnitConversion_PLResponseDto extends CreateUnitConversion_PLRespons
 
 export class UpdateUnitConversion_PLDto {
   @ApiProperty({ type: Number, required: false })
+  @IsNumber()
+  @IsOptional()
   factor?: number
 }

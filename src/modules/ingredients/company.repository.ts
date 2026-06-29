@@ -13,6 +13,8 @@ export type CompanyFilter = {
   type?: string
   taxId?: string
   systemState?: SystemState
+  skip?: number
+  take?: number
 }
 
 export abstract class CompanyRepository {
@@ -70,6 +72,8 @@ export class PrismaCompany_TERepository implements CompanyRepository {
     }
     const prismaCompanies = await this.prisma.company_TE.findMany({
       where,
+      skip: filter.skip ?? 0,
+      take: filter.take ?? 100,
       orderBy: { name: 'asc' }
     })
     return prismaCompanies.map((company) =>

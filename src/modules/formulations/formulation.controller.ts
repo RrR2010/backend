@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, Req, ParseUUIDPipe } from '@nestjs/common'
+import { Controller, Get, Post, Delete, Body, Param, Req, ParseUUIDPipe, Query } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
@@ -9,6 +9,7 @@ import { FormulationService } from '@formulations/formulation.service'
 import {
   CreateFormulationVersion_TEDto, CreateFormulationRevision_TEDto, CreateFormulationItem_TEDto,
   FormulationVersion_TE_ResponseDto, FormulationRevision_TE_ResponseDto, FormulationItem_TE_ResponseDto,
+  ApproveRevisionDto,
 } from '@formulations/formulation.dto'
 import type { Request } from 'express'
 
@@ -30,8 +31,14 @@ export class FormulationsController {
 
   @Get('versions')
   @Authorize(Action.Read, FormulationVersion_TE)
-  async findAllVersions(@Req() request: Request): Promise<FormulationVersion_TE_ResponseDto[]> {
-    const versions = await this.service.findAllVersions(request.context)
+  async findAllVersions(
+    @Req() request: Request,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<FormulationVersion_TE_ResponseDto[]> {
+    const take = limit ? Math.min(parseInt(limit, 10), 500) : 100
+    const skip = offset ? parseInt(offset, 10) : 0
+    const versions = await this.service.findAllVersions(request.context, skip, take)
     return versions.map(FormulationVersion_TE_ResponseDto.fromDomain)
   }
 
@@ -76,6 +83,34 @@ export class FormulationsController {
   @Authorize(Action.Read, FormulationRevision_TE)
   async findRevisionById(@Param('id', ParseUUIDPipe) id: string, @Req() request: Request): Promise<FormulationRevision_TE_ResponseDto> {
     const revision = await this.service.findRevisionById(id, request.context)
+    return FormulationRevision_TE_ResponseDto.fromDomain(revision)
+  }
+
+  @Post('revisions/:id/submit')
+  @Authorize(Action.Update, FormulationRevision_TE)
+  async submitRevision(@Param('id', ParseUUIDPipe) id: string, @Req() request: Request): Promise<FormulationRevision_TE_ResponseDto> {
+    const revision = await this.service.submitRevision(id, request.context)
+    return FormulationRevision_TE_ResponseDto.fromDomain(revision)
+  }
+
+  @Post('revisions/:id/approve')
+  @Authorize(Action.Approve, FormulationRevision_TE)
+  async approveRevision(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ApproveRevisionDto, @Req() request: Request): Promise<FormulationRevision_TE_ResponseDto> {
+    const revision = await this.service.approveRevision(id, dto.approverId, dto.approvedBy, request.context)
+    return FormulationRevision_TE_ResponseDto.fromDomain(revision)
+  }
+
+  @Post('revisions/:id/reject')
+  @Authorize(Action.Update, FormulationRevision_TE)
+  async rejectRevision(@Param('id', ParseUUIDPipe) id: string, @Req() request: Request): Promise<FormulationRevision_TE_ResponseDto> {
+    const revision = await this.service.rejectRevision(id, request.context)
+    return FormulationRevision_TE_ResponseDto.fromDomain(revision)
+  }
+
+  @Post('revisions/:id/archive')
+  @Authorize(Action.Update, FormulationRevision_TE)
+  async archiveRevision(@Param('id', ParseUUIDPipe) id: string, @Req() request: Request): Promise<FormulationRevision_TE_ResponseDto> {
+    const revision = await this.service.archiveRevision(id, request.context)
     return FormulationRevision_TE_ResponseDto.fromDomain(revision)
   }
 

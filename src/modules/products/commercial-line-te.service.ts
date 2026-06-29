@@ -21,7 +21,7 @@ export class CommercialLine_TEService {
   constructor(private readonly repository: CommercialLine_TE_Repository) {}
 
   async create(
-    props: CreateCommercialLine_TEProps,
+    props: Omit<CreateCommercialLine_TEProps, 'tenantId'>,
     ctx: RequestContext
   ): Promise<CommercialLine_TE> {
     // TODO: zod validate input
@@ -29,7 +29,7 @@ export class CommercialLine_TEService {
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (effectiveTenantId ?? props.tenantId)
+        : effectiveTenantId
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const line = CommercialLine_TE.create({ ...props, tenantId })
     try {
