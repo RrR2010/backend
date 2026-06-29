@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
-import { Ingredient } from '@ingredients/ingredient.entity'
+import { Ingredient_TE } from '@ingredients/ingredient.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import {
@@ -25,15 +25,15 @@ export type IngredientFilter = {
 }
 
 export abstract class IngredientRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<Ingredient | null>
+  abstract findById(id: string, ctx: RequestContext): Promise<Ingredient_TE | null>
   abstract findAll(
     filter: IngredientFilter,
     ctx: RequestContext
-  ): Promise<Ingredient[]>
+  ): Promise<Ingredient_TE[]>
   abstract save(
-    ingredient: Ingredient,
+    ingredient: Ingredient_TE,
     ctx: RequestContext
-  ): Promise<Ingredient>
+  ): Promise<Ingredient_TE>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
@@ -41,7 +41,7 @@ export abstract class IngredientRepository {
 export class PrismaIngredient_TERepository implements IngredientRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<Ingredient | null> {
+  async findById(id: string, ctx: RequestContext): Promise<Ingredient_TE | null> {
     const where: Prisma.Ingredient_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
@@ -62,7 +62,7 @@ export class PrismaIngredient_TERepository implements IngredientRepository {
   async findAll(
     filter: IngredientFilter,
     ctx: RequestContext
-  ): Promise<Ingredient[]> {
+  ): Promise<Ingredient_TE[]> {
     const where: Prisma.Ingredient_TEWhereInput = {
       ...(filter.code && {
         code: { contains: filter.code, mode: 'insensitive' }
@@ -108,7 +108,7 @@ export class PrismaIngredient_TERepository implements IngredientRepository {
     )
   }
 
-  async save(ingredient: Ingredient, ctx: RequestContext): Promise<Ingredient> {
+  async save(ingredient: Ingredient_TE, ctx: RequestContext): Promise<Ingredient_TE> {
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId && ingredient.tenantId !== effectiveTenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
@@ -137,7 +137,7 @@ export class PrismaIngredient_TERepository implements IngredientRepository {
 }
 
 class PrismaIngredient_TEMapper {
-  static toDomain(prismaIngredient: PrismaIngredient_TE): Ingredient {
+  static toDomain(prismaIngredient: PrismaIngredient_TE): Ingredient_TE {
     const systemState =
       SystemState[prismaIngredient.systemState as keyof typeof SystemState]
     if (!systemState) {
@@ -146,13 +146,14 @@ class PrismaIngredient_TEMapper {
       )
     }
     const ingredientFunction = prismaIngredient.ingredientFunction
-    return Ingredient.rehydrate({
+    return Ingredient_TE.rehydrate({
       id: Id.from(prismaIngredient.id),
       createdAt: prismaIngredient.createdAt,
       updatedAt: prismaIngredient.updatedAt,
       systemState,
       tenantId: prismaIngredient.tenantId,
       code: prismaIngredient.code,
+      externalCode: prismaIngredient.externalCode,
       internalName: prismaIngredient.internalName,
       commercialName: prismaIngredient.commercialName,
       saleDenomination: prismaIngredient.saleDenomination,
@@ -163,12 +164,41 @@ class PrismaIngredient_TEMapper {
       supplierId: prismaIngredient.supplierId,
       technicalSourceId: prismaIngredient.technicalSourceId,
       usageIndication: prismaIngredient.usageIndication,
-      ingredientsListDesc: prismaIngredient.ingredientsListDesc
+      ingredientsListDesc: prismaIngredient.ingredientsListDesc,
+
+      // Regulatory Profile
+      hasRtiqPiq: prismaIngredient.hasRtiqPiq,
+      gmoIngredient: prismaIngredient.gmoIngredient,
+      gmoDonorSpecies: prismaIngredient.gmoDonorSpecies,
+      gmoPercentage: prismaIngredient.gmoPercentage?.toNumber() ?? null,
+      irradiatedIngredient: prismaIngredient.irradiatedIngredient,
+      flavorOriginType: prismaIngredient.flavorOriginType,
+      colorantOriginType: prismaIngredient.colorantOriginType,
+
+      // Labeling Profile
+      containsAddedSugars: prismaIngredient.containsAddedSugars,
+      containsIngredientWithAddedSugars:
+        prismaIngredient.containsIngredientWithAddedSugars,
+      containsNaturallyOccurringSugarSubstitutes:
+        prismaIngredient.containsNaturallyOccurringSugarSubstitutes,
+      usesProcessingThatIncreasesSugars:
+        prismaIngredient.usesProcessingThatIncreasesSugars,
+      containsAddedFatsOrOils: prismaIngredient.containsAddedFatsOrOils,
+      containsButterOrMargarine: prismaIngredient.containsButterOrMargarine,
+      containsDairyCream: prismaIngredient.containsDairyCream,
+      containsIngredientsWithFatsOrCream:
+        prismaIngredient.containsIngredientsWithFatsOrCream,
+
+      // Technical Profile
+      pac: prismaIngredient.pac?.toNumber() ?? null,
+      pod: prismaIngredient.pod?.toNumber() ?? null,
+      totalSolids: prismaIngredient.totalSolids?.toNumber() ?? null,
+      ashContent: prismaIngredient.ashContent?.toNumber() ?? null
     })
   }
 
   static toPersistence(
-    ingredient: Ingredient
+    ingredient: Ingredient_TE
   ): Prisma.Ingredient_TEUncheckedCreateInput {
     return {
       id: ingredient.id.value,
@@ -177,6 +207,7 @@ class PrismaIngredient_TEMapper {
       systemState: ingredient.systemState,
       tenantId: ingredient.tenantId,
       code: ingredient.code,
+      externalCode: ingredient.externalCode,
       internalName: ingredient.internalName,
       commercialName: ingredient.commercialName,
       saleDenomination: ingredient.saleDenomination,
@@ -187,7 +218,36 @@ class PrismaIngredient_TEMapper {
       supplierId: ingredient.supplierId,
       technicalSourceId: ingredient.technicalSourceId,
       usageIndication: ingredient.usageIndication,
-      ingredientsListDesc: ingredient.ingredientsListDesc
+      ingredientsListDesc: ingredient.ingredientsListDesc,
+
+      // Regulatory Profile
+      hasRtiqPiq: ingredient.hasRtiqPiq,
+      gmoIngredient: ingredient.gmoIngredient,
+      gmoDonorSpecies: ingredient.gmoDonorSpecies,
+      gmoPercentage: ingredient.gmoPercentage,
+      irradiatedIngredient: ingredient.irradiatedIngredient,
+      flavorOriginType: ingredient.flavorOriginType,
+      colorantOriginType: ingredient.colorantOriginType,
+
+      // Labeling Profile
+      containsAddedSugars: ingredient.containsAddedSugars,
+      containsIngredientWithAddedSugars:
+        ingredient.containsIngredientWithAddedSugars,
+      containsNaturallyOccurringSugarSubstitutes:
+        ingredient.containsNaturallyOccurringSugarSubstitutes,
+      usesProcessingThatIncreasesSugars:
+        ingredient.usesProcessingThatIncreasesSugars,
+      containsAddedFatsOrOils: ingredient.containsAddedFatsOrOils,
+      containsButterOrMargarine: ingredient.containsButterOrMargarine,
+      containsDairyCream: ingredient.containsDairyCream,
+      containsIngredientsWithFatsOrCream:
+        ingredient.containsIngredientsWithFatsOrCream,
+
+      // Technical Profile
+      pac: ingredient.pac,
+      pod: ingredient.pod,
+      totalSolids: ingredient.totalSolids,
+      ashContent: ingredient.ashContent
     }
   }
 }

@@ -8,12 +8,11 @@ import {
 } from '@authorization/authorization.types'
 import { User } from '@users/user.entity'
 import { Tenant } from '@tenants/tenant.entity'
-import { Ingredient } from '@ingredients/ingredient.entity'
-import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
-import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
+import { Ingredient_TE } from '@ingredients/ingredient.entity'
 import { Company } from '@ingredients/company.entity'
 import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
+import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
 import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
@@ -30,15 +29,15 @@ import { Claim_TE } from '@products/claim-te.entity'
 import { ProductFamily_TE } from '@products/product-family-te.entity'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
+import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
+import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
+import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
+import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
 import { UnitOfMeasure_PL } from '@formulations/unit-of-measure-pl.entity'
 import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
 import { ProductCategory_PL } from '@products/product-category-pl.entity'
 import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
 import { PanelGeometricFormatType_PL } from '@products/panel-geometric-format-type-pl.entity'
-import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
-import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
-import { IngredientTenantAllergen } from '@ingredients/ingredient-tenant-allergen.entity'
-import { IngredientTenantNutrient } from '@ingredients/ingredient-tenant-nutrient.entity'
 import { Identity } from '@identities/identity.entity'
 import { Address } from '@addresses/address.entity'
 import { Phone } from '@phones/phone.entity'
@@ -76,17 +75,25 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     cannot(Action.Delete, User)
 
     // Can manage ingredients within their tenant
-    can(Action.Manage, Ingredient, {
+    can(Action.Manage, Ingredient_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage ingredient junctions within their tenant
+    can(Action.Manage, IngredientAllergen_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, IngredientNutrient_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, IngredientFlag_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, IngredientCost_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 
     // Can read catalog entities within their tenant
-    can(Action.Read, TenantAllergen, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
-    can(Action.Read, TenantNutrient, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
     can(Action.Read, Company, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
@@ -96,14 +103,11 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Read, TechnicalInfoSource, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
+    can(Action.Read, TechnicalSource_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can manage catalog entities (for create/update/lock/unlock/delete operations)
-    can(Action.Manage, TenantAllergen, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
-    can(Action.Manage, TenantNutrient, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
     can(Action.Manage, Company, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
@@ -111,6 +115,9 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Manage, TechnicalInfoSource, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, TechnicalSource_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Manage, Claim_TE, {
@@ -144,26 +151,6 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Read, PanelGeometricFormatType_PL)
     can(Action.Read, UnitOfMeasure_PL)
     can(Action.Read, UnitConversion_PL)
-
-    // Can manage ingredient-base-allergen junctions within their tenant
-    can(Action.Manage, IngredientBaseAllergen, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
-
-    // Can manage ingredient-base-nutrient junctions within their tenant
-    can(Action.Manage, IngredientBaseNutrient, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
-
-    // Can manage ingredient-tenant-allergen junctions within their tenant
-    can(Action.Manage, IngredientTenantAllergen, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
-
-    // Can manage ingredient-tenant-nutrient junctions within their tenant
-    can(Action.Manage, IngredientTenantNutrient, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
 
     // Can read identities within their tenant
     can(Action.Read, Identity, {

@@ -1,14 +1,10 @@
 import { MongoQuery, MongoAbility, InferSubjects } from '@casl/ability'
 import { Identity } from '@identities/identity.entity'
-import { Ingredient } from '@ingredients/ingredient.entity'
-import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
-import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
+import { Ingredient_TE } from '@ingredients/ingredient.entity'
 import { FunctionalGroup } from '@ingredients/functional-group.entity'
 import { Company } from '@ingredients/company.entity'
 import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
-import { IngredientRegulatoryProfile } from '@ingredients/ingredient-regulatory-profile.entity'
-import { IngredientLabelingProfile } from '@ingredients/ingredient-labeling-profile.entity'
-import { IngredientTechnicalProfile } from '@ingredients/ingredient-technical-profile.entity'
+import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
 import { BaseAllergen } from '@ingredients/base-allergen.entity'
 import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
@@ -20,8 +16,6 @@ import { RegulatoryBody_PL } from '@ingredients/regulatory-body-pl.entity'
 import { RegulationType_PL } from '@ingredients/regulation-type-pl.entity'
 import { Regulation_PL } from '@ingredients/regulation-pl.entity'
 import { ComplianceRule_PL } from '@ingredients/compliance-rule-pl.entity'
-import { IngredientBaseAllergen } from '@ingredients/ingredient-base-allergen.entity'
-import { IngredientBaseNutrient } from '@ingredients/ingredient-base-nutrient.entity'
 import { LabelField_PL } from '@products/label-field-pl.entity'
 import { ProductCategory_PL } from '@products/product-category-pl.entity'
 import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
@@ -42,6 +36,10 @@ import { Claim_TE } from '@products/claim-te.entity'
 import { ProductFamily_TE } from '@products/product-family-te.entity'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
+import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
+import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
+import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
+import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
 import { FormulationVersion } from '@formulations/formulation-version.entity'
 import { FormulationRevision } from '@formulations/formulation-revision.entity'
 import { FormulationItem } from '@formulations/formulation-item.entity'
@@ -67,15 +65,11 @@ export type Subjects =
   | InferSubjects<
       | typeof User
       | typeof Tenant
-      | typeof Ingredient
-      | typeof TenantAllergen
-      | typeof TenantNutrient
+      | typeof Ingredient_TE
       | typeof FunctionalGroup
       | typeof Company
       | typeof TechnicalInfoSource
-      | typeof IngredientRegulatoryProfile
-      | typeof IngredientLabelingProfile
-      | typeof IngredientTechnicalProfile
+      | typeof TechnicalSource_TE
       | typeof BaseAllergen
       | typeof BaseNutrient
       | typeof Allergen_PL
@@ -87,8 +81,6 @@ export type Subjects =
       | typeof RegulationType_PL
       | typeof Regulation_PL
       | typeof ComplianceRule_PL
-      | typeof IngredientBaseAllergen
-      | typeof IngredientBaseNutrient
       | typeof Identity
       | typeof TenantMembership
       | typeof PlatformMembership
@@ -116,6 +108,11 @@ export type Subjects =
       | typeof CommercialLine_TE
       // Tenant-scoped ingredient catalogs
       | typeof TechnicalSourceType_TE
+      // Tenant-scoped ingredient junctions
+      | typeof IngredientAllergen_TE
+      | typeof IngredientNutrient_TE
+      | typeof IngredientFlag_TE
+      | typeof IngredientCost_TE
       | AnyClass
     >
   | 'all'

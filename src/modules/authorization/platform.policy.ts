@@ -7,8 +7,6 @@ import {
   RequestContext
 } from '@authorization/authorization.types'
 import { User } from '@users/user.entity'
-import { TenantNutrient } from '@ingredients/tenant-nutrient.entity'
-import { TenantAllergen } from '@ingredients/tenant-allergen.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
 import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
@@ -28,6 +26,11 @@ import { Claim_TE } from '@products/claim-te.entity'
 import { ProductFamily_TE } from '@products/product-family-te.entity'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
+import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
+import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
+import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
+import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
+import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
 
 type PlatformContext = Extract<RequestContext, { scope: UserScope.PLATFORM }>
 
@@ -72,12 +75,15 @@ export function definePlatformAbility(ctx: PlatformContext): AppAbility {
 
     if (ctx.impersonatedTenantId) {
       // Allow reading tenant-scoped entities when impersonating
-      can(Action.Read, TenantNutrient)
-      can(Action.Read, TenantAllergen)
       can(Action.Read, Claim_TE)
       can(Action.Read, ProductFamily_TE)
       can(Action.Read, CommercialLine_TE)
       can(Action.Read, TechnicalSourceType_TE)
+      can(Action.Read, TechnicalSource_TE)
+      can(Action.Read, IngredientAllergen_TE)
+      can(Action.Read, IngredientNutrient_TE)
+      can(Action.Read, IngredientFlag_TE)
+      can(Action.Read, IngredientCost_TE)
       // Additional tenant-scoped permissions can be added here
       // as needed for the PLATFORM USER role
     }
