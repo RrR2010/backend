@@ -11,10 +11,7 @@ import { Tenant } from '@tenants/tenant.entity'
 import { Ingredient_TE } from '@ingredients/ingredient.entity'
 import { Company } from '@ingredients/company.entity'
 import { FunctionalGroup } from '@ingredients/functional-group.entity'
-import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
 import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
-import { BaseAllergen } from '@ingredients/base-allergen.entity'
-import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
 import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
@@ -25,9 +22,14 @@ import { RegulationType_PL } from '@ingredients/regulation-type-pl.entity'
 import { Regulation_PL } from '@ingredients/regulation-pl.entity'
 import { ComplianceRule_PL } from '@ingredients/compliance-rule-pl.entity'
 import { LabelField_PL } from '@products/label-field-pl.entity'
+import { Product_TE } from '@products/product.entity'
 import { Claim_TE } from '@products/claim-te.entity'
 import { ProductFamily_TE } from '@products/product-family-te.entity'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
+import { ProductLabelField_TE } from '@products/product-label-field-te.entity'
+import { ProductPanel_TE } from '@products/product-panel-te.entity'
+import { ProductNutrientOverride_TE } from '@products/product-nutrient-override-te.entity'
+import { ProductClaim_TE } from '@products/product-claim-te.entity'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
 import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
 import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
@@ -78,6 +80,9 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Manage, Ingredient_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
+    can(Action.Manage, Product_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can manage ingredient junctions within their tenant
     can(Action.Manage, IngredientAllergen_TE, {
@@ -100,9 +105,6 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Read, FunctionalGroup, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
-    can(Action.Read, TechnicalInfoSource, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
     can(Action.Read, TechnicalSource_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
@@ -112,9 +114,6 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Manage, FunctionalGroup, {
-      tenantId: { $eq: ctx.tenantId }
-    } as AppConditions)
-    can(Action.Manage, TechnicalInfoSource, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Manage, TechnicalSource_TE, {
@@ -132,10 +131,20 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     can(Action.Manage, TechnicalSourceType_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
+    can(Action.Manage, ProductLabelField_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, ProductPanel_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, ProductNutrientOverride_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, ProductClaim_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
 
     // Can read global base catalogs (no tenantId — shared reference data)
-    can(Action.Read, BaseAllergen)
-    can(Action.Read, BaseNutrient)
     can(Action.Read, Allergen_PL)
     can(Action.Read, Nutrient_PL)
     can(Action.Read, DeclarationFlag_PL)

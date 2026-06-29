@@ -29,12 +29,14 @@ import { Phone } from '@phones/phone.entity'
 import { TenantSite } from '@tenant-sites/tenant-site.entity'
 import { MemberProfile } from '@member-profiles/member-profile.entity'
 import { MemberProfileDocument } from '@member-profile-documents/member-profile-document.entity'
-import { Product } from '@products/product.entity'
-import { ProductNutritionalInfo } from '@products/product-nutritional-info.entity'
-import { LabelProfile } from '@products/label-profile.entity'
+import { Product_TE } from '@products/product.entity'
 import { Claim_TE } from '@products/claim-te.entity'
 import { ProductFamily_TE } from '@products/product-family-te.entity'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
+import { ProductLabelField_TE } from '@products/product-label-field-te.entity'
+import { ProductPanel_TE } from '@products/product-panel-te.entity'
+import { ProductNutrientOverride_TE } from '@products/product-nutrient-override-te.entity'
+import { ProductClaim_TE } from '@products/product-claim-te.entity'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
 import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
 import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
@@ -90,9 +92,7 @@ export type Subjects =
       | typeof MemberProfile
       | typeof MemberProfileDocument
       | typeof AuditLog
-      | typeof Product
-      | typeof ProductNutritionalInfo
-      | typeof LabelProfile
+      | typeof Product_TE
       | typeof LabelField_PL
       | typeof ProductCategory_PL
       | typeof ProductSubcategory_PL
@@ -106,6 +106,11 @@ export type Subjects =
       | typeof Claim_TE
       | typeof ProductFamily_TE
       | typeof CommercialLine_TE
+      // Tenant-scoped product sub-entities (Wave 5)
+      | typeof ProductLabelField_TE
+      | typeof ProductPanel_TE
+      | typeof ProductNutrientOverride_TE
+      | typeof ProductClaim_TE
       // Tenant-scoped ingredient catalogs
       | typeof TechnicalSourceType_TE
       // Tenant-scoped ingredient junctions

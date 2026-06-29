@@ -25,6 +25,10 @@ import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
 import { Claim_TE } from '@products/claim-te.entity'
 import { ProductFamily_TE } from '@products/product-family-te.entity'
 import { CommercialLine_TE } from '@products/commercial-line-te.entity'
+import { ProductLabelField_TE } from '@products/product-label-field-te.entity'
+import { ProductPanel_TE } from '@products/product-panel-te.entity'
+import { ProductNutrientOverride_TE } from '@products/product-nutrient-override-te.entity'
+import { ProductClaim_TE } from '@products/product-claim-te.entity'
 import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.entity'
 import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
 import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entity'
@@ -84,6 +88,10 @@ export function definePlatformAbility(ctx: PlatformContext): AppAbility {
       can(Action.Read, IngredientNutrient_TE)
       can(Action.Read, IngredientFlag_TE)
       can(Action.Read, IngredientCost_TE)
+      can(Action.Read, ProductLabelField_TE)
+      can(Action.Read, ProductPanel_TE)
+      can(Action.Read, ProductNutrientOverride_TE)
+      can(Action.Read, ProductClaim_TE)
       // Additional tenant-scoped permissions can be added here
       // as needed for the PLATFORM USER role
     }

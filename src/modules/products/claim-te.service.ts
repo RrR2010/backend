@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import {
   Claim_TE_Repository,
   Claim_TEFilter
@@ -22,7 +22,8 @@ export class Claim_TEService {
     ctx: RequestContext
   ): Promise<Claim_TE> {
     // TODO: zod validate input
-    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (!effectiveTenantId) throw new InternalServerErrorException('tenantId is required')
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId

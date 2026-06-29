@@ -52,6 +52,32 @@ import {
 } from './commercial-line-te.repository'
 import { CommercialLinesController } from './commercial-line-te.controller'
 
+// Wave 5 — Product sub-entities
+import { ProductLabelField_TEController } from './product-label-field-te.controller'
+import { ProductLabelField_TEService } from './product-label-field-te.service'
+import {
+  ProductLabelField_TE_Repository,
+  PrismaProductLabelField_TE_Repository
+} from './product-label-field-te.repository'
+import { ProductPanel_TEController } from './product-panel-te.controller'
+import { ProductPanel_TEService } from './product-panel-te.service'
+import {
+  ProductPanel_TE_Repository,
+  PrismaProductPanel_TE_Repository
+} from './product-panel-te.repository'
+import { ProductNutrientOverride_TEController } from './product-nutrient-override-te.controller'
+import { ProductNutrientOverride_TEService } from './product-nutrient-override-te.service'
+import {
+  ProductNutrientOverride_TE_Repository,
+  PrismaProductNutrientOverride_TE_Repository
+} from './product-nutrient-override-te.repository'
+import { ProductClaim_TEController } from './product-claim-te.controller'
+import { ProductClaim_TEService } from './product-claim-te.service'
+import {
+  ProductClaim_TE_Repository,
+  PrismaProductClaim_TE_Repository
+} from './product-claim-te.repository'
+
 @Module({
   imports: [PrismaModule, AuditLogModule],
   controllers: [
@@ -62,7 +88,12 @@ import { CommercialLinesController } from './commercial-line-te.controller'
     PanelGeometricFormatType_PLController,
     ClaimsController,
     ProductFamiliesController,
-    CommercialLinesController
+    CommercialLinesController,
+    // Wave 5 — Product sub-entities
+    ProductLabelField_TEController,
+    ProductPanel_TEController,
+    ProductNutrientOverride_TEController,
+    ProductClaim_TEController
   ],
   providers: [
     ProductService,
@@ -107,6 +138,31 @@ import { CommercialLinesController } from './commercial-line-te.controller'
     {
       provide: CommercialLine_TE_Repository,
       useExisting: PrismaCommercialLine_TE_Repository
+    },
+    // Wave 5 — Product sub-entities
+    ProductLabelField_TEService,
+    PrismaProductLabelField_TE_Repository,
+    {
+      provide: ProductLabelField_TE_Repository,
+      useExisting: PrismaProductLabelField_TE_Repository
+    },
+    ProductPanel_TEService,
+    PrismaProductPanel_TE_Repository,
+    {
+      provide: ProductPanel_TE_Repository,
+      useExisting: PrismaProductPanel_TE_Repository
+    },
+    ProductNutrientOverride_TEService,
+    PrismaProductNutrientOverride_TE_Repository,
+    {
+      provide: ProductNutrientOverride_TE_Repository,
+      useExisting: PrismaProductNutrientOverride_TE_Repository
+    },
+    ProductClaim_TEService,
+    PrismaProductClaim_TE_Repository,
+    {
+      provide: ProductClaim_TE_Repository,
+      useExisting: PrismaProductClaim_TE_Repository
     }
   ],
   exports: [
@@ -126,7 +182,16 @@ import { CommercialLinesController } from './commercial-line-te.controller'
     ProductFamily_TE_Repository,
     ProductFamily_TEService,
     CommercialLine_TE_Repository,
-    CommercialLine_TEService
+    CommercialLine_TEService,
+    // Wave 5 — Product sub-entities
+    ProductLabelField_TE_Repository,
+    ProductLabelField_TEService,
+    ProductPanel_TE_Repository,
+    ProductPanel_TEService,
+    ProductNutrientOverride_TE_Repository,
+    ProductNutrientOverride_TEService,
+    ProductClaim_TE_Repository,
+    ProductClaim_TEService
   ]
 })
 export class ProductsModule {}
