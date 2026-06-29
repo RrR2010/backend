@@ -12,11 +12,10 @@ import {
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
 import {
-  CreateIngredientDto,
+  CreateIngredient_TEDto,
   CreateIngredientResponseDto,
-  IngredientResponseDto,
-  UpdateIngredientDto,
-  SaveAllIngredientDto
+  Ingredient_TE_ResponseDto,
+  UpdateIngredient_TEDto
 } from '@ingredients/ingredient.dto'
 import { IngredientService } from '@ingredients/ingredient.service'
 import { Authorize } from '@authorization/authorization.decorators'
@@ -33,7 +32,7 @@ export class IngredientsController {
   @Authorize(Action.Create, Ingredient_TE)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateIngredientDto,
+    @Body() dto: CreateIngredient_TEDto,
     @Req() request: Request
   ): Promise<CreateIngredientResponseDto> {
     const ingredient = await this.service.create(
@@ -89,9 +88,9 @@ export class IngredientsController {
 
   @Get()
   @Authorize(Action.Read, Ingredient_TE)
-  async findAll(@Req() request: Request): Promise<IngredientResponseDto[]> {
+  async findAll(@Req() request: Request): Promise<Ingredient_TE_ResponseDto[]> {
     const ingredients = await this.service.findAll({}, request.context)
-    return ingredients.map(IngredientResponseDto.fromDomain)
+    return ingredients.map(Ingredient_TE_ResponseDto.fromDomain)
   }
 
   @Get(':id')
@@ -99,9 +98,9 @@ export class IngredientsController {
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<IngredientResponseDto> {
+  ): Promise<Ingredient_TE_ResponseDto> {
     const ingredient = await this.service.findById(id, request.context)
-    return IngredientResponseDto.fromDomain(ingredient)
+    return Ingredient_TE_ResponseDto.fromDomain(ingredient)
   }
 
   @Patch(':id')
@@ -109,9 +108,9 @@ export class IngredientsController {
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateIngredientDto,
+    @Body() dto: UpdateIngredient_TEDto,
     @Req() request: Request
-  ): Promise<IngredientResponseDto> {
+  ): Promise<Ingredient_TE_ResponseDto> {
     const ingredient = await this.service.findById(id, request.context)
 
     if (dto.code !== undefined) ingredient.changeCode(dto.code)
@@ -189,7 +188,7 @@ export class IngredientsController {
       ingredient.changeAshContent(dto.ashContent)
 
     const saved = await this.service.save(ingredient, request.context)
-    return IngredientResponseDto.fromDomain(saved)
+    return Ingredient_TE_ResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
@@ -206,9 +205,9 @@ export class IngredientsController {
   async activate(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<IngredientResponseDto> {
+  ): Promise<Ingredient_TE_ResponseDto> {
     const ingredient = await this.service.activate(id, request.context)
-    return IngredientResponseDto.fromDomain(ingredient)
+    return Ingredient_TE_ResponseDto.fromDomain(ingredient)
   }
 
   @Post(':id/lock')
@@ -216,9 +215,9 @@ export class IngredientsController {
   async lock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<IngredientResponseDto> {
+  ): Promise<Ingredient_TE_ResponseDto> {
     const ingredient = await this.service.lock(id, request.context)
-    return IngredientResponseDto.fromDomain(ingredient)
+    return Ingredient_TE_ResponseDto.fromDomain(ingredient)
   }
 
   @Post(':id/unlock')
@@ -226,20 +225,9 @@ export class IngredientsController {
   async unlock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<IngredientResponseDto> {
+  ): Promise<Ingredient_TE_ResponseDto> {
     const ingredient = await this.service.unlock(id, request.context)
-    return IngredientResponseDto.fromDomain(ingredient)
+    return Ingredient_TE_ResponseDto.fromDomain(ingredient)
   }
 
-  @Post(':id/save')
-  @Authorize(Action.Update, Ingredient_TE)
-  @ApiConsumes('application/json')
-  async saveAll(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: SaveAllIngredientDto,
-    @Req() request: Request
-  ): Promise<IngredientResponseDto> {
-    const ingredient = await this.service.saveAll(id, dto, request.context)
-    return IngredientResponseDto.fromDomain(ingredient)
-  }
 }

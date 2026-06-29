@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
-import { Company } from '@ingredients/company.entity'
+import { Company_TE } from '@ingredients/company.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import { Company_TE as PrismaCompany_TE, Prisma } from '@prisma/client'
@@ -16,12 +16,12 @@ export type CompanyFilter = {
 }
 
 export abstract class CompanyRepository {
-  abstract findById(id: string, ctx: RequestContext): Promise<Company | null>
+  abstract findById(id: string, ctx: RequestContext): Promise<Company_TE | null>
   abstract findAll(
     filter: CompanyFilter,
     ctx: RequestContext
-  ): Promise<Company[]>
-  abstract save(company: Company, ctx: RequestContext): Promise<Company>
+  ): Promise<Company_TE[]>
+  abstract save(company: Company_TE, ctx: RequestContext): Promise<Company_TE>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
@@ -29,7 +29,7 @@ export abstract class CompanyRepository {
 export class PrismaCompany_TERepository implements CompanyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string, ctx: RequestContext): Promise<Company | null> {
+  async findById(id: string, ctx: RequestContext): Promise<Company_TE | null> {
     const where: Prisma.Company_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
@@ -50,7 +50,7 @@ export class PrismaCompany_TERepository implements CompanyRepository {
   async findAll(
     filter: CompanyFilter,
     ctx: RequestContext
-  ): Promise<Company[]> {
+  ): Promise<Company_TE[]> {
     const where: Prisma.Company_TEWhereInput = {
       ...(filter.name && {
         name: { contains: filter.name, mode: 'insensitive' }
@@ -77,7 +77,7 @@ export class PrismaCompany_TERepository implements CompanyRepository {
     )
   }
 
-  async save(company: Company, ctx: RequestContext): Promise<Company> {
+  async save(company: Company_TE, ctx: RequestContext): Promise<Company_TE> {
     if (ctx.scope === UserScope.TENANT && company.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
@@ -105,13 +105,13 @@ export class PrismaCompany_TERepository implements CompanyRepository {
 }
 
 class PrismaCompany_TEMapper {
-  static toDomain(prismaCompany: PrismaCompany_TE): Company {
+  static toDomain(prismaCompany: PrismaCompany_TE): Company_TE {
     const systemState =
       SystemState[prismaCompany.systemState as keyof typeof SystemState]
     if (!systemState) {
       throw new Error(`Invalid systemState value: ${prismaCompany.systemState}`)
     }
-    return Company.rehydrate({
+    return Company_TE.rehydrate({
       id: Id.from(prismaCompany.id),
       createdAt: prismaCompany.createdAt,
       updatedAt: prismaCompany.updatedAt,
@@ -124,7 +124,7 @@ class PrismaCompany_TEMapper {
     })
   }
 
-  static toPersistence(company: Company): Prisma.Company_TEUncheckedCreateInput {
+  static toPersistence(company: Company_TE): Prisma.Company_TEUncheckedCreateInput {
     return {
       id: company.id.value,
       createdAt: company.createdAt,

@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { FunctionalGroup } from '@ingredients/functional-group.entity'
+import { FunctionalGroup_TE } from '@ingredients/functional-group.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
-export class CreateFunctionalGroupDto {
+export class CreateFunctionalGroup_TEDto {
   @ApiProperty({ type: String })
   tenantId!: string
 
@@ -20,7 +20,7 @@ export class CreateFunctionalGroupDto {
   isActive?: boolean
 }
 
-export class CreateFunctionalGroupResponseDto {
+export class CreateFunctionalGroup_TE_ResponseDto {
   @ApiProperty()
   id!: string
 
@@ -48,7 +48,7 @@ export class CreateFunctionalGroupResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(group: FunctionalGroup): CreateFunctionalGroupResponseDto {
+  static fromDomain(group: FunctionalGroup_TE): CreateFunctionalGroup_TE_ResponseDto {
     return {
       id: group.id.value,
       tenantId: group.tenantId,
@@ -63,9 +63,9 @@ export class CreateFunctionalGroupResponseDto {
   }
 }
 
-export class FunctionalGroupResponseDto extends CreateFunctionalGroupResponseDto {}
+export class FunctionalGroup_TE_ResponseDto extends CreateFunctionalGroup_TE_ResponseDto {}
 
-export class UpdateFunctionalGroupDto {
+export class UpdateFunctionalGroup_TEDto {
   @ApiProperty({ type: String, required: false })
   name?: string
 

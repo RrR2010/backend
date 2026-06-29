@@ -1016,7 +1016,7 @@ model UnitConversion_PL {
   fromUnit    UnitOfMeasure_PL @relation("UnitConversionFromUnit", fields: [fromUnitId], references: [id])
   toUnitId    String
   toUnit      UnitOfMeasure_PL @relation("UnitConversionToUnit", fields: [toUnitId], references: [id])
-  factor      Decimal     @db.Decimal(12,6)
+  factor      Decimal     @db.Decimal(13,6)
 
   @@unique([fromUnitId, toUnitId])
 }

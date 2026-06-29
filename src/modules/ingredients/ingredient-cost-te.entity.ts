@@ -22,8 +22,8 @@ export type IngredientCost_TEProps = AuditableProps &
 
 export type CreateIngredientCost_TEProps = Omit<
   IngredientCost_TEProps,
-  keyof AuditableProps | keyof LockableProps | 'id'
->
+  keyof AuditableProps | keyof LockableProps | 'id' | 'tenantId'
+> & { tenantId?: string }
 
 export class IngredientCost_TE extends Lockable(
   Auditable(Base<IngredientCost_TEProps>)
@@ -43,7 +43,8 @@ export class IngredientCost_TE extends Lockable(
       id: Id.generate(),
       createdAt: now,
       updatedAt: now,
-      systemState: SystemState.ACTIVE
+      systemState: SystemState.ACTIVE,
+      tenantId: props.tenantId!
     })
   }
 

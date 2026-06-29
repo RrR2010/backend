@@ -9,8 +9,8 @@ import {
 import { User } from '@users/user.entity'
 import { Tenant } from '@tenants/tenant.entity'
 import { Ingredient_TE } from '@ingredients/ingredient.entity'
-import { Company } from '@ingredients/company.entity'
-import { FunctionalGroup } from '@ingredients/functional-group.entity'
+import { Company_TE } from '@ingredients/company.entity'
+import { FunctionalGroup_TE } from '@ingredients/functional-group.entity'
 import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
@@ -37,6 +37,13 @@ import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
 import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
 import { UnitOfMeasure_PL } from '@formulations/unit-of-measure-pl.entity'
 import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
+import { FormulationVersion_TE } from '@formulations/formulation-version.entity'
+import { FormulationRevision_TE } from '@formulations/formulation-revision.entity'
+import { FormulationItem_TE } from '@formulations/formulation-item.entity'
+import { FormulationRegulatoryDeclaration_TE } from '@formulations/formulation-regulatory-declaration-te.entity'
+import { FormulationAllergen_TE } from '@formulations/formulation-allergen-te.entity'
+import { FormulationNutrition_TE } from '@formulations/formulation-nutrition-te.entity'
+import { FormulationOgmDonor_TE } from '@formulations/formulation-ogm-donor-te.entity'
 import { ProductCategory_PL } from '@products/product-category-pl.entity'
 import { ProductSubcategory_PL } from '@products/product-subcategory-pl.entity'
 import { PanelGeometricFormatType_PL } from '@products/panel-geometric-format-type-pl.entity'
@@ -99,10 +106,10 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     } as AppConditions)
 
     // Can read catalog entities within their tenant
-    can(Action.Read, Company, {
+    can(Action.Read, Company_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
-    can(Action.Read, FunctionalGroup, {
+    can(Action.Read, FunctionalGroup_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Read, TechnicalSource_TE, {
@@ -110,10 +117,10 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
     } as AppConditions)
 
     // Can manage catalog entities (for create/update/lock/unlock/delete operations)
-    can(Action.Manage, Company, {
+    can(Action.Manage, Company_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
-    can(Action.Manage, FunctionalGroup, {
+    can(Action.Manage, FunctionalGroup_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Manage, TechnicalSource_TE, {
@@ -141,6 +148,29 @@ export function defineTenantAbility(ctx: TenantContext): AppAbility {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
     can(Action.Manage, ProductClaim_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, FormulationRegulatoryDeclaration_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, FormulationAllergen_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, FormulationNutrition_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, FormulationOgmDonor_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+
+    // Can manage formulation versions, revisions, and items within their tenant
+    can(Action.Manage, FormulationVersion_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, FormulationRevision_TE, {
+      tenantId: { $eq: ctx.tenantId }
+    } as AppConditions)
+    can(Action.Manage, FormulationItem_TE, {
       tenantId: { $eq: ctx.tenantId }
     } as AppConditions)
 

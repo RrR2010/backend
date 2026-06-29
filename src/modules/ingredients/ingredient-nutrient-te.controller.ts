@@ -36,17 +36,10 @@ export class IngredientNutrient_TEController {
   ): Promise<IngredientNutrient_TE_ResponseDto> {
     const entry = await this.service.create(
       {
-        tenantId: dto.tenantId ?? '',
         ingredientId: dto.ingredientId,
         nutrientId: dto.nutrientId,
-        value:
-          dto.value !== null && dto.value !== undefined
-            ? dto.value
-            : null,
-        sourceId:
-          dto.sourceId !== null && dto.sourceId !== undefined
-            ? dto.sourceId
-            : null
+        value: dto.value ?? null,
+        sourceId: dto.sourceId ?? null
       },
       request.context
     )

@@ -1,12 +1,9 @@
 import { MongoQuery, MongoAbility, InferSubjects } from '@casl/ability'
 import { Identity } from '@identities/identity.entity'
 import { Ingredient_TE } from '@ingredients/ingredient.entity'
-import { FunctionalGroup } from '@ingredients/functional-group.entity'
-import { Company } from '@ingredients/company.entity'
-import { TechnicalInfoSource } from '@ingredients/technical-info-source.entity'
+import { FunctionalGroup_TE } from '@ingredients/functional-group.entity'
+import { Company_TE } from '@ingredients/company.entity'
 import { TechnicalSource_TE } from '@ingredients/technical-source-te.entity'
-import { BaseAllergen } from '@ingredients/base-allergen.entity'
-import { BaseNutrient } from '@ingredients/base-nutrient.entity'
 import { Allergen_PL } from '@ingredients/allergen-pl.entity'
 import { Nutrient_PL } from '@ingredients/nutrient-pl.entity'
 import { DeclarationFlag_PL } from '@ingredients/declaration-flag-pl.entity'
@@ -42,9 +39,13 @@ import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entit
 import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
 import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
 import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
-import { FormulationVersion } from '@formulations/formulation-version.entity'
-import { FormulationRevision } from '@formulations/formulation-revision.entity'
-import { FormulationItem } from '@formulations/formulation-item.entity'
+import { FormulationVersion_TE } from '@formulations/formulation-version.entity'
+import { FormulationRevision_TE } from '@formulations/formulation-revision.entity'
+import { FormulationItem_TE } from '@formulations/formulation-item.entity'
+import { FormulationRegulatoryDeclaration_TE } from '@formulations/formulation-regulatory-declaration-te.entity'
+import { FormulationAllergen_TE } from '@formulations/formulation-allergen-te.entity'
+import { FormulationNutrition_TE } from '@formulations/formulation-nutrition-te.entity'
+import { FormulationOgmDonor_TE } from '@formulations/formulation-ogm-donor-te.entity'
 import { AuditLog } from '@audit-logs/audit-log.entity'
 import { UnitOfMeasure_PL } from '@formulations/unit-of-measure-pl.entity'
 import { UnitConversion_PL } from '@formulations/unit-conversion-pl.entity'
@@ -68,12 +69,9 @@ export type Subjects =
       | typeof User
       | typeof Tenant
       | typeof Ingredient_TE
-      | typeof FunctionalGroup
-      | typeof Company
-      | typeof TechnicalInfoSource
+      | typeof FunctionalGroup_TE
+      | typeof Company_TE
       | typeof TechnicalSource_TE
-      | typeof BaseAllergen
-      | typeof BaseNutrient
       | typeof Allergen_PL
       | typeof Nutrient_PL
       | typeof DeclarationFlag_PL
@@ -97,9 +95,9 @@ export type Subjects =
       | typeof ProductCategory_PL
       | typeof ProductSubcategory_PL
       | typeof PanelGeometricFormatType_PL
-      | typeof FormulationVersion
-      | typeof FormulationRevision
-      | typeof FormulationItem
+      | typeof FormulationVersion_TE
+      | typeof FormulationRevision_TE
+      | typeof FormulationItem_TE
       | typeof UnitOfMeasure_PL
       | typeof UnitConversion_PL
       // Tenant-scoped product catalogs
@@ -118,6 +116,11 @@ export type Subjects =
       | typeof IngredientNutrient_TE
       | typeof IngredientFlag_TE
       | typeof IngredientCost_TE
+      // Formulation sub-entities (Wave 6)
+      | typeof FormulationRegulatoryDeclaration_TE
+      | typeof FormulationAllergen_TE
+      | typeof FormulationNutrition_TE
+      | typeof FormulationOgmDonor_TE
       | AnyClass
     >
   | 'all'

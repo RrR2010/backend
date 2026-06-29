@@ -4,9 +4,6 @@ import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
 export class CreateIngredientCost_TEDto {
-  @ApiProperty({ type: String, required: false })
-  tenantId?: string
-
   @ApiProperty({ type: String })
   ingredientId!: string
 

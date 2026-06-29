@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import {
   TechnicalInfoSourceRepository,
   TechnicalInfoSourceFilter
@@ -21,11 +21,12 @@ export class TechnicalInfoSourceService {
     ctx: RequestContext
   ): Promise<TechnicalInfoSource> {
     // TODO: zod validate input
-    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId || effectiveTenantId)
+        : (effectiveTenantId ?? props.tenantId)
+    if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const source = TechnicalInfoSource.create({ ...props, tenantId })
     return this.repository.save(source, ctx)
   }

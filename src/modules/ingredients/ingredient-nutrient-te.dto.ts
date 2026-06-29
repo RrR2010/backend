@@ -3,9 +3,6 @@ import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entit
 
 // TODO: zod validate dto
 export class CreateIngredientNutrient_TEDto {
-  @ApiProperty({ type: String, required: false })
-  tenantId?: string
-
   @ApiProperty({ type: String })
   ingredientId!: string
 

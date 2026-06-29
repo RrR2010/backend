@@ -12,15 +12,15 @@ import {
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
 import {
-  CreateCompanyDto,
-  CreateCompanyResponseDto,
-  CompanyResponseDto,
-  UpdateCompanyDto
+  CreateCompany_TEDto,
+  CreateCompany_TE_ResponseDto,
+  Company_TE_ResponseDto,
+  UpdateCompany_TEDto
 } from '@ingredients/company.dto'
 import { CompanyService } from '@ingredients/company.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import { Company } from '@ingredients/company.entity'
+import { Company_TE } from '@ingredients/company.entity'
 
 @ApiTags('Companies')
 @ApiBearerAuth('accessToken')
@@ -29,12 +29,12 @@ export class CompaniesController {
   constructor(private readonly service: CompanyService) {}
 
   @Post()
-  @Authorize(Action.Create, Company)
+  @Authorize(Action.Create, Company_TE)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateCompanyDto,
+    @Body() dto: CreateCompany_TEDto,
     @Req() request: Request
-  ): Promise<CreateCompanyResponseDto> {
+  ): Promise<CreateCompany_TE_ResponseDto> {
     const company = await this.service.create(
       {
         tenantId: dto.tenantId,
@@ -45,34 +45,34 @@ export class CompaniesController {
       },
       request.context
     )
-    return CreateCompanyResponseDto.fromDomain(company)
+    return CreateCompany_TE_ResponseDto.fromDomain(company)
   }
 
   @Get()
-  @Authorize(Action.Read, Company)
-  async findAll(@Req() request: Request): Promise<CompanyResponseDto[]> {
+  @Authorize(Action.Read, Company_TE)
+  async findAll(@Req() request: Request): Promise<Company_TE_ResponseDto[]> {
     const companies = await this.service.findAll({}, request.context)
-    return companies.map(CompanyResponseDto.fromDomain)
+    return companies.map(Company_TE_ResponseDto.fromDomain)
   }
 
   @Get(':id')
-  @Authorize(Action.Read, Company)
+  @Authorize(Action.Read, Company_TE)
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<CompanyResponseDto> {
+  ): Promise<Company_TE_ResponseDto> {
     const company = await this.service.findById(id, request.context)
-    return CompanyResponseDto.fromDomain(company)
+    return Company_TE_ResponseDto.fromDomain(company)
   }
 
   @Patch(':id')
-  @Authorize(Action.Update, Company)
+  @Authorize(Action.Update, Company_TE)
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateCompanyDto,
+    @Body() dto: UpdateCompany_TEDto,
     @Req() request: Request
-  ): Promise<CompanyResponseDto> {
+  ): Promise<Company_TE_ResponseDto> {
     const company = await this.service.findById(id, request.context)
 
     if (dto.name) company.changeName(dto.name)
@@ -82,11 +82,11 @@ export class CompaniesController {
     if (dto.taxId !== undefined) company.changeTaxId(dto.taxId)
 
     const saved = await this.service.save(company, request.context)
-    return CompanyResponseDto.fromDomain(saved)
+    return Company_TE_ResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, Company)
+  @Authorize(Action.Delete, Company_TE)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
@@ -95,32 +95,32 @@ export class CompaniesController {
   }
 
   @Post(':id/activate')
-  @Authorize(Action.Update, Company)
+  @Authorize(Action.Update, Company_TE)
   async activate(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<CompanyResponseDto> {
+  ): Promise<Company_TE_ResponseDto> {
     const company = await this.service.activate(id, request.context)
-    return CompanyResponseDto.fromDomain(company)
+    return Company_TE_ResponseDto.fromDomain(company)
   }
 
   @Post(':id/lock')
-  @Authorize(Action.Update, Company)
+  @Authorize(Action.Update, Company_TE)
   async lock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<CompanyResponseDto> {
+  ): Promise<Company_TE_ResponseDto> {
     const company = await this.service.lock(id, request.context)
-    return CompanyResponseDto.fromDomain(company)
+    return Company_TE_ResponseDto.fromDomain(company)
   }
 
   @Post(':id/unlock')
-  @Authorize(Action.Unlock, Company)
+  @Authorize(Action.Unlock, Company_TE)
   async unlock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<CompanyResponseDto> {
+  ): Promise<Company_TE_ResponseDto> {
     const company = await this.service.unlock(id, request.context)
-    return CompanyResponseDto.fromDomain(company)
+    return Company_TE_ResponseDto.fromDomain(company)
   }
 }

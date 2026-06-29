@@ -19,8 +19,8 @@ export type IngredientFlag_TEProps = AuditableProps &
 
 export type CreateIngredientFlag_TEProps = Omit<
   IngredientFlag_TEProps,
-  keyof AuditableProps | keyof LockableProps | 'id'
->
+  keyof AuditableProps | keyof LockableProps | 'id' | 'tenantId'
+> & { tenantId?: string }
 
 export class IngredientFlag_TE extends Lockable(
   Auditable(Base<IngredientFlag_TEProps>)
@@ -40,7 +40,8 @@ export class IngredientFlag_TE extends Lockable(
       id: Id.generate(),
       createdAt: now,
       updatedAt: now,
-      systemState: SystemState.ACTIVE
+      systemState: SystemState.ACTIVE,
+      tenantId: props.tenantId!
     })
   }
 

@@ -2,9 +2,9 @@ import { Injectable, InternalServerErrorException, ForbiddenException } from '@n
 import {
   FormulationRevisionStatus,
   Prisma,
-  FormulationVersion_TE,
-  FormulationRevision_TE,
-  FormulationItem_TE
+  FormulationVersion_TE as PrismaFormulationVersion_TE,
+  FormulationRevision_TE as PrismaFormulationRevision_TE,
+  FormulationItem_TE as PrismaFormulationItem_TE
 } from '@prisma/client'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import type { RequestContext } from '@authorization/authorization.types'
@@ -12,113 +12,113 @@ import { UserScope } from '@users/user.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/behaviours/lockable'
-import { FormulationVersion } from './formulation-version.entity'
-import { FormulationRevision } from './formulation-revision.entity'
-import { FormulationItem } from './formulation-item.entity'
+import { FormulationVersion_TE } from './formulation-version.entity'
+import { FormulationRevision_TE } from './formulation-revision.entity'
+import { FormulationItem_TE } from './formulation-item.entity'
 
-export abstract class FormulationVersionRepository {
+export abstract class FormulationVersion_TE_Repository {
   abstract findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FormulationVersion | null>
-  abstract findAll(ctx: RequestContext): Promise<FormulationVersion[]>
+  ): Promise<FormulationVersion_TE | null>
+  abstract findAll(ctx: RequestContext): Promise<FormulationVersion_TE[]>
   abstract findByProductId(
     productId: string,
     ctx: RequestContext
-  ): Promise<FormulationVersion[]>
+  ): Promise<FormulationVersion_TE[]>
   abstract save(
-    version: FormulationVersion,
+    version: FormulationVersion_TE,
     ctx: RequestContext
-  ): Promise<FormulationVersion>
+  ): Promise<FormulationVersion_TE>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
-export abstract class FormulationRevisionRepository {
+export abstract class FormulationRevision_TE_Repository {
   abstract findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FormulationRevision | null>
+  ): Promise<FormulationRevision_TE | null>
   abstract findByVersionId(
     versionId: string,
     ctx: RequestContext
-  ): Promise<FormulationRevision[]>
+  ): Promise<FormulationRevision_TE[]>
   abstract save(
-    revision: FormulationRevision,
+    revision: FormulationRevision_TE,
     ctx: RequestContext
-  ): Promise<FormulationRevision>
+  ): Promise<FormulationRevision_TE>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
-export abstract class FormulationItemRepository {
+export abstract class FormulationItem_TE_Repository {
   abstract findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FormulationItem | null>
+  ): Promise<FormulationItem_TE | null>
   abstract findByRevisionId(
     revisionId: string,
     ctx: RequestContext
-  ): Promise<FormulationItem[]>
+  ): Promise<FormulationItem_TE[]>
   abstract save(
-    item: FormulationItem,
+    item: FormulationItem_TE,
     ctx: RequestContext
-  ): Promise<FormulationItem>
+  ): Promise<FormulationItem_TE>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
 // PRISMA IMPLEMENTATIONS
 
 @Injectable()
-export class PrismaFormulationVersionRepository implements FormulationVersionRepository {
+export class PrismaFormulationVersion_TE_Repository implements FormulationVersion_TE_Repository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FormulationVersion | null> {
+  ): Promise<FormulationVersion_TE | null> {
     const where: Prisma.FormulationVersion_TEWhereUniqueInput = { id }
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) where.tenantId = tid
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) where.tenantId = effectiveTenantId
     const data = await this.prisma.formulationVersion_TE.findUnique({ where })
     if (!data || data.systemState === 'DELETED') return null
-    return PrismaFormulationVersionMapper.toDomain(data)
+    return PrismaFormulationVersion_TE_Mapper.toDomain(data)
   }
 
-  async findAll(ctx: RequestContext): Promise<FormulationVersion[]> {
+  async findAll(ctx: RequestContext): Promise<FormulationVersion_TE[]> {
     const where: Prisma.FormulationVersion_TEWhereInput = {}
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) where.tenantId = tid
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) where.tenantId = effectiveTenantId
     where.systemState = 'ACTIVE'
     const data = await this.prisma.formulationVersion_TE.findMany({
       where,
       orderBy: { version: 'desc' }
     })
-    return data.map(PrismaFormulationVersionMapper.toDomain)
+    return data.map(PrismaFormulationVersion_TE_Mapper.toDomain)
   }
 
   async findByProductId(
     productId: string,
     ctx: RequestContext
-  ): Promise<FormulationVersion[]> {
+  ): Promise<FormulationVersion_TE[]> {
     const where: Prisma.FormulationVersion_TEWhereInput = { productId }
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) where.tenantId = tid
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) where.tenantId = effectiveTenantId
     where.systemState = 'ACTIVE'
     const data = await this.prisma.formulationVersion_TE.findMany({
       where,
       orderBy: { version: 'desc' }
     })
-    return data.map(PrismaFormulationVersionMapper.toDomain)
+    return data.map(PrismaFormulationVersion_TE_Mapper.toDomain)
   }
 
   async save(
-    version: FormulationVersion,
+    version: FormulationVersion_TE,
     ctx: RequestContext
-  ): Promise<FormulationVersion> {
+  ): Promise<FormulationVersion_TE> {
     if (ctx.scope === UserScope.TENANT && version.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
     const id = version.id.value
-    const data = PrismaFormulationVersionMapper.toPersistence(version)
+    const data = PrismaFormulationVersion_TE_Mapper.toPersistence(version)
     await this.prisma.formulationVersion_TE.upsert({
       where: { id },
       update: data,
@@ -129,8 +129,8 @@ export class PrismaFormulationVersionRepository implements FormulationVersionRep
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
     const where: Prisma.FormulationVersion_TEWhereUniqueInput = { id }
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) where.tenantId = tid
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) where.tenantId = effectiveTenantId
     await this.prisma.formulationVersion_TE.update({
       where,
       data: { systemState: 'DELETED', updatedAt: new Date() }
@@ -139,42 +139,42 @@ export class PrismaFormulationVersionRepository implements FormulationVersionRep
 }
 
 @Injectable()
-export class PrismaFormulationRevisionRepository implements FormulationRevisionRepository {
+export class PrismaFormulationRevision_TE_Repository implements FormulationRevision_TE_Repository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FormulationRevision | null> {
-    const tid = getEffectiveTenantId(ctx)
+  ): Promise<FormulationRevision_TE | null> {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const where: Prisma.FormulationRevision_TEWhereUniqueInput = { id }
-    if (tid) where.formulationVersion_TE = { tenantId: tid }
+    if (effectiveTenantId) where.formulationVersion_TE = { tenantId: effectiveTenantId }
     const data = await this.prisma.formulationRevision_TE.findUnique({ where })
     if (!data || data.systemState === 'DELETED') return null
-    return PrismaFormulationRevisionMapper.toDomain(data)
+    return PrismaFormulationRevision_TE_Mapper.toDomain(data)
   }
 
   async findByVersionId(
     versionId: string,
     ctx: RequestContext
-  ): Promise<FormulationRevision[]> {
-    const tid = getEffectiveTenantId(ctx)
+  ): Promise<FormulationRevision_TE[]> {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const where: Prisma.FormulationRevision_TEWhereInput = {
       formulationVersionId: versionId,
       systemState: 'ACTIVE'
     }
-    if (tid) where.formulationVersion_TE = { tenantId: tid }
+    if (effectiveTenantId) where.formulationVersion_TE = { tenantId: effectiveTenantId }
     const data = await this.prisma.formulationRevision_TE.findMany({
       where,
       orderBy: { revision: 'desc' }
     })
-    return data.map(PrismaFormulationRevisionMapper.toDomain)
+    return data.map(PrismaFormulationRevision_TE_Mapper.toDomain)
   }
 
   async save(
-    revision: FormulationRevision,
+    revision: FormulationRevision_TE,
     ctx: RequestContext
-  ): Promise<FormulationRevision> {
+  ): Promise<FormulationRevision_TE> {
     const tenantId = getEffectiveTenantId(ctx)
     if (tenantId) {
       const version = await this.prisma.formulationVersion_TE.findUnique({
@@ -185,10 +185,7 @@ export class PrismaFormulationRevisionRepository implements FormulationRevisionR
     }
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const id = revision.id.value
-    const data = PrismaFormulationRevisionMapper.toPersistence(
-      revision,
-      tenantId
-    )
+    const data = PrismaFormulationRevision_TE_Mapper.toPersistence(revision)
     await this.prisma.formulationRevision_TE.upsert({
       where: { id },
       update: data,
@@ -198,13 +195,13 @@ export class PrismaFormulationRevisionRepository implements FormulationRevisionR
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
       const revision = await this.prisma.formulationRevision_TE.findUnique({
         where: { id },
         select: { formulationVersion_TE: { select: { tenantId: true } } }
       })
-      if (!revision || revision.formulationVersion_TE.tenantId !== tid)
+      if (!revision || revision.formulationVersion_TE.tenantId !== effectiveTenantId)
         throw new ForbiddenException()
     }
     await this.prisma.formulationRevision_TE.update({
@@ -215,47 +212,47 @@ export class PrismaFormulationRevisionRepository implements FormulationRevisionR
 }
 
 @Injectable()
-export class PrismaFormulationItemRepository implements FormulationItemRepository {
+export class PrismaFormulationItem_TE_Repository implements FormulationItem_TE_Repository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FormulationItem | null> {
-    const tid = getEffectiveTenantId(ctx)
+  ): Promise<FormulationItem_TE | null> {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const where: Prisma.FormulationItem_TEWhereUniqueInput = { id }
-    if (tid)
+    if (effectiveTenantId)
       where.formulationRevision_TE = {
-        formulationVersion_TE: { tenantId: tid }
+        formulationVersion_TE: { tenantId: effectiveTenantId }
       }
     const data = await this.prisma.formulationItem_TE.findUnique({ where })
     if (!data) return null
-    return PrismaFormulationItemMapper.toDomain(data)
+    return PrismaFormulationItem_TE_Mapper.toDomain(data)
   }
 
   async findByRevisionId(
     revisionId: string,
     ctx: RequestContext
-  ): Promise<FormulationItem[]> {
-    const tid = getEffectiveTenantId(ctx)
+  ): Promise<FormulationItem_TE[]> {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const where: Prisma.FormulationItem_TEWhereInput = {
       formulationRevisionId: revisionId
     }
-    if (tid)
+    if (effectiveTenantId)
       where.formulationRevision_TE = {
-        formulationVersion_TE: { tenantId: tid }
+        formulationVersion_TE: { tenantId: effectiveTenantId }
       }
     const data = await this.prisma.formulationItem_TE.findMany({
       where,
       orderBy: { createdAt: 'asc' }
     })
-    return data.map(PrismaFormulationItemMapper.toDomain)
+    return data.map(PrismaFormulationItem_TE_Mapper.toDomain)
   }
 
   async save(
-    item: FormulationItem,
+    item: FormulationItem_TE,
     ctx: RequestContext
-  ): Promise<FormulationItem> {
+  ): Promise<FormulationItem_TE> {
     const tenantId = getEffectiveTenantId(ctx)
     if (tenantId) {
       const revision = await this.prisma.formulationRevision_TE.findUnique({
@@ -267,7 +264,7 @@ export class PrismaFormulationItemRepository implements FormulationItemRepositor
     }
     if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const id = item.id.value
-    const data = PrismaFormulationItemMapper.toPersistence(item, tenantId)
+    const data = PrismaFormulationItem_TE_Mapper.toPersistence(item)
     await this.prisma.formulationItem_TE.upsert({
       where: { id },
       update: data,
@@ -277,8 +274,8 @@ export class PrismaFormulationItemRepository implements FormulationItemRepositor
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) {
+    const effectiveTenantId = getEffectiveTenantId(ctx)
+    if (effectiveTenantId) {
       const item = await this.prisma.formulationItem_TE.findUnique({
         where: { id },
         select: {
@@ -289,7 +286,7 @@ export class PrismaFormulationItemRepository implements FormulationItemRepositor
       })
       if (
         !item ||
-        item.formulationRevision_TE.formulationVersion_TE.tenantId !== tid
+        item.formulationRevision_TE.formulationVersion_TE.tenantId !== effectiveTenantId
       )
         throw new ForbiddenException()
     }
@@ -299,9 +296,9 @@ export class PrismaFormulationItemRepository implements FormulationItemRepositor
 
 // MAPPERS
 
-class PrismaFormulationVersionMapper {
-  static toDomain(data: FormulationVersion_TE): FormulationVersion {
-    return FormulationVersion.rehydrate({
+class PrismaFormulationVersion_TE_Mapper {
+  static toDomain(data: PrismaFormulationVersion_TE): FormulationVersion_TE {
+    return FormulationVersion_TE.rehydrate({
       id: Id.from(data.id),
       tenantId: data.tenantId,
       productId: data.productId,
@@ -313,7 +310,7 @@ class PrismaFormulationVersionMapper {
     })
   }
   static toPersistence(
-    version: FormulationVersion
+    version: FormulationVersion_TE
   ): Prisma.FormulationVersion_TEUncheckedCreateInput {
     return {
       id: version.id.value,
@@ -328,32 +325,38 @@ class PrismaFormulationVersionMapper {
   }
 }
 
-class PrismaFormulationRevisionMapper {
-  static toDomain(data: FormulationRevision_TE): FormulationRevision {
-    return FormulationRevision.rehydrate({
+class PrismaFormulationRevision_TE_Mapper {
+  static toDomain(data: PrismaFormulationRevision_TE): FormulationRevision_TE {
+    return FormulationRevision_TE.rehydrate({
       id: Id.from(data.id),
       formulationVersionId: data.formulationVersionId,
       revision: data.revision,
       notes: data.notes,
-      nutritionalSummary: null,
-      complianceSummary: null,
+      status: FormulationRevisionStatus[data.status],
+      tenantId: data.tenantId,
+      approverId: data.approverId,
+      approvedBy: data.approvedBy,
+      approvedAt: data.approvedAt,
+      drift: data.drift,
       systemState: SystemState[data.systemState],
       createdAt: data.createdAt,
       updatedAt: data.updatedAt
     })
   }
   static toPersistence(
-    revision: FormulationRevision,
-    tenantId: string
+    revision: FormulationRevision_TE
   ): Prisma.FormulationRevision_TEUncheckedCreateInput {
     return {
       id: revision.id.value,
       formulationVersionId: revision.formulationVersionId,
       revision: revision.revision,
       notes: revision.notes,
-      status: FormulationRevisionStatus.DRAFT,
-      drift: false,
-      tenantId,
+      status: revision.status,
+      drift: revision.drift,
+      tenantId: revision.tenantId,
+      approverId: revision.approverId,
+      approvedBy: revision.approvedBy,
+      approvedAt: revision.approvedAt,
       systemState: revision.systemState,
       createdAt: revision.createdAt,
       updatedAt: revision.updatedAt
@@ -361,30 +364,37 @@ class PrismaFormulationRevisionMapper {
   }
 }
 
-class PrismaFormulationItemMapper {
-  static toDomain(data: FormulationItem_TE): FormulationItem {
-    return FormulationItem.rehydrate({
+class PrismaFormulationItem_TE_Mapper {
+  static toDomain(data: PrismaFormulationItem_TE): FormulationItem_TE {
+    return FormulationItem_TE.rehydrate({
       id: Id.from(data.id),
       formulationRevisionId: data.formulationRevisionId,
       ingredientId: data.ingredientId,
       quantity: Number(data.quantity),
-      unit: data.unitId,
+      unitId: data.unitId,
+      tenantId: data.tenantId,
+      usageCategory: data.usageCategory,
+      componentGroup: data.componentGroup,
+      sortOrder: data.sortOrder,
+      notes: data.notes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt
     })
   }
   static toPersistence(
-    item: FormulationItem,
-    tenantId: string
+    item: FormulationItem_TE
   ): Prisma.FormulationItem_TEUncheckedCreateInput {
     return {
       id: item.id.value,
       formulationRevisionId: item.formulationRevisionId,
       ingredientId: item.ingredientId,
       quantity: item.quantity,
-      unitId: item.unit,
-      tenantId,
-      sortOrder: 0,
+      unitId: item.unitId,
+      tenantId: item.tenantId,
+      usageCategory: item.usageCategory,
+      componentGroup: item.componentGroup,
+      sortOrder: item.sortOrder,
+      notes: item.notes,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt
     }

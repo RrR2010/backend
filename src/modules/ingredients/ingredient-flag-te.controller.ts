@@ -37,7 +37,6 @@ export class IngredientFlag_TEController {
   ): Promise<CreateIngredientFlag_TE_ResponseDto> {
     const entry = await this.service.create(
       {
-        tenantId: dto.tenantId ?? '',
         ingredientId: dto.ingredientId,
         flagId: dto.flagId,
         flagValue: dto.flagValue,

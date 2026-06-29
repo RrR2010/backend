@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '@shared/prisma/prisma.service'
-import { FunctionalGroup } from '@ingredients/functional-group.entity'
+import { FunctionalGroup_TE } from '@ingredients/functional-group.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 import { Id } from '@shared/value-objects'
 import {
@@ -22,15 +22,15 @@ export abstract class FunctionalGroupRepository {
   abstract findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FunctionalGroup | null>
+  ): Promise<FunctionalGroup_TE | null>
   abstract findAll(
     filter: FunctionalGroupFilter,
     ctx: RequestContext
-  ): Promise<FunctionalGroup[]>
+  ): Promise<FunctionalGroup_TE[]>
   abstract save(
-    group: FunctionalGroup,
+    group: FunctionalGroup_TE,
     ctx: RequestContext
-  ): Promise<FunctionalGroup>
+  ): Promise<FunctionalGroup_TE>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
 }
 
@@ -41,7 +41,7 @@ export class PrismaFunctionalGroup_TERepository implements FunctionalGroupReposi
   async findById(
     id: string,
     ctx: RequestContext
-  ): Promise<FunctionalGroup | null> {
+  ): Promise<FunctionalGroup_TE | null> {
     const where: Prisma.FunctionalGroup_TEWhereUniqueInput = { id }
     const effectiveTenantId = getEffectiveTenantId(ctx)
     if (effectiveTenantId) {
@@ -62,7 +62,7 @@ export class PrismaFunctionalGroup_TERepository implements FunctionalGroupReposi
   async findAll(
     filter: FunctionalGroupFilter,
     ctx: RequestContext
-  ): Promise<FunctionalGroup[]> {
+  ): Promise<FunctionalGroup_TE[]> {
     const where: Prisma.FunctionalGroup_TEWhereInput = {
       ...(filter.name && {
         name: { contains: filter.name, mode: 'insensitive' }
@@ -90,9 +90,9 @@ export class PrismaFunctionalGroup_TERepository implements FunctionalGroupReposi
   }
 
   async save(
-    group: FunctionalGroup,
+    group: FunctionalGroup_TE,
     ctx: RequestContext
-  ): Promise<FunctionalGroup> {
+  ): Promise<FunctionalGroup_TE> {
     if (ctx.scope === UserScope.TENANT && group.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
@@ -120,13 +120,13 @@ export class PrismaFunctionalGroup_TERepository implements FunctionalGroupReposi
 }
 
 class PrismaFunctionalGroup_TEMapper {
-  static toDomain(prismaGroup: PrismaFunctionalGroup_TE): FunctionalGroup {
+  static toDomain(prismaGroup: PrismaFunctionalGroup_TE): FunctionalGroup_TE {
     const systemState =
       SystemState[prismaGroup.systemState as keyof typeof SystemState]
     if (!systemState) {
       throw new Error(`Invalid systemState value: ${prismaGroup.systemState}`)
     }
-    return FunctionalGroup.rehydrate({
+    return FunctionalGroup_TE.rehydrate({
       id: Id.from(prismaGroup.id),
       createdAt: prismaGroup.createdAt,
       updatedAt: prismaGroup.updatedAt,
@@ -140,7 +140,7 @@ class PrismaFunctionalGroup_TEMapper {
   }
 
   static toPersistence(
-    group: FunctionalGroup
+    group: FunctionalGroup_TE
   ): Prisma.FunctionalGroup_TEUncheckedCreateInput {
     return {
       id: group.id.value,

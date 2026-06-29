@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import {
   CommercialLine_TE_Repository,
   CommercialLine_TEFilter
@@ -25,11 +25,12 @@ export class CommercialLine_TEService {
     ctx: RequestContext
   ): Promise<CommercialLine_TE> {
     // TODO: zod validate input
-    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : props.tenantId || effectiveTenantId
+        : (effectiveTenantId ?? props.tenantId)
+    if (!tenantId) throw new InternalServerErrorException('tenantId is required')
     const line = CommercialLine_TE.create({ ...props, tenantId })
     try {
       return await this.repository.save(line, ctx)

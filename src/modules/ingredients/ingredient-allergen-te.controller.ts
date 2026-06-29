@@ -36,7 +36,6 @@ export class IngredientAllergen_TEController {
   ): Promise<IngredientAllergen_TE_ResponseDto> {
     const entry = await this.service.create(
       {
-        tenantId: dto.tenantId ?? '',
         ingredientId: dto.ingredientId,
         allergenId: dto.allergenId,
         relationType: dto.relationType

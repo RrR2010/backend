@@ -7,7 +7,7 @@ import {
   type LockableProps
 } from '@shared/behaviours/lockable'
 
-export type CompanyProps = AuditableProps &
+export type Company_TEProps = AuditableProps &
   LockableProps & {
     id: Id
     tenantId: string
@@ -17,23 +17,23 @@ export type CompanyProps = AuditableProps &
     taxId: string | null
   }
 
-export type CreateCompanyProps = Omit<
-  CompanyProps,
+export type CreateCompany_TEProps = Omit<
+  Company_TEProps,
   keyof AuditableProps | keyof LockableProps | 'id'
 >
 
-export class Company extends Lockable(Auditable(Base<CompanyProps>)) {
-  protected constructor(props: CompanyProps) {
+export class Company_TE extends Lockable(Auditable(Base<Company_TEProps>)) {
+  protected constructor(props: Company_TEProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateCompanyProps): Company {
+  static create(props: CreateCompany_TEProps): Company_TE {
     // TODO: zod validate input
     const now = new Date()
 
-    return new Company({
+    return new Company_TE({
       ...props,
       id: Id.generate(),
       createdAt: now,
@@ -42,8 +42,8 @@ export class Company extends Lockable(Auditable(Base<CompanyProps>)) {
     })
   }
 
-  static rehydrate(props: CompanyProps): Company {
-    return new Company(props)
+  static rehydrate(props: Company_TEProps): Company_TE {
+    return new Company_TE(props)
   }
 
   // --------------- Getters ---------------
@@ -75,32 +75,32 @@ export class Company extends Lockable(Auditable(Base<CompanyProps>)) {
   // --------------- Behaviors ---------------
 
   changeName(name: string): void {
-    this.ensureActivated('Company')
+    this.ensureActivated('Company_TE')
     this._props.name = name
     this.touch()
   }
 
   changeType(type: string): void {
-    this.ensureActivated('Company')
+    this.ensureActivated('Company_TE')
     this._props.type = type
     this.touch()
   }
 
   changeContactInfo(contactInfo: string | null): void {
-    this.ensureActivated('Company')
+    this.ensureActivated('Company_TE')
     this._props.contactInfo = contactInfo
     this.touch()
   }
 
   changeTaxId(taxId: string | null): void {
-    this.ensureActivated('Company')
+    this.ensureActivated('Company_TE')
     this._props.taxId = taxId
     this.touch()
   }
 
   // Locked entities cannot be reactivated — requires unlock first
   activate(): void {
-    this.ensureActivated('Company')
+    this.ensureActivated('Company_TE')
     super.activate()
   }
 

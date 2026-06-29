@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { Company } from '@ingredients/company.entity'
+import { Company_TE } from '@ingredients/company.entity'
 import { SystemState } from '@shared/behaviours/lockable'
 
 // TODO: zod validate dto
-export class CreateCompanyDto {
+export class CreateCompany_TEDto {
   @ApiProperty({ type: String })
   tenantId!: string
 
@@ -20,7 +20,7 @@ export class CreateCompanyDto {
   taxId?: string | null
 }
 
-export class CreateCompanyResponseDto {
+export class CreateCompany_TE_ResponseDto {
   @ApiProperty()
   id!: string
 
@@ -48,7 +48,7 @@ export class CreateCompanyResponseDto {
   @ApiProperty()
   updatedAt!: Date
 
-  static fromDomain(company: Company): CreateCompanyResponseDto {
+  static fromDomain(company: Company_TE): CreateCompany_TE_ResponseDto {
     return {
       id: company.id.value,
       tenantId: company.tenantId,
@@ -63,9 +63,9 @@ export class CreateCompanyResponseDto {
   }
 }
 
-export class CompanyResponseDto extends CreateCompanyResponseDto {}
+export class Company_TE_ResponseDto extends CreateCompany_TE_ResponseDto {}
 
-export class UpdateCompanyDto {
+export class UpdateCompany_TEDto {
   @ApiProperty({ type: String, required: false })
   name?: string
 

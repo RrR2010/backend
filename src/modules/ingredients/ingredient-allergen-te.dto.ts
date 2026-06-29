@@ -4,9 +4,6 @@ import { AllergenRelationType } from '@prisma/client'
 
 // TODO: zod validate dto
 export class CreateIngredientAllergen_TEDto {
-  @ApiProperty({ type: String, required: false })
-  tenantId?: string
-
   @ApiProperty({ type: String })
   ingredientId!: string
 

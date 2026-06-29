@@ -4,7 +4,7 @@ import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
 import { Product_TE } from '@products/product.entity'
 import { ProductService } from '@products/product.service'
-import { CreateProductDto, UpdateProductDto, ProductResponseDto } from '@products/product.dto'
+import { CreateProduct_TEDto, UpdateProduct_TEDto, Product_TE_ResponseDto } from '@products/product.dto'
 import type { Request } from 'express'
 
 @ApiTags('Products')
@@ -16,30 +16,30 @@ export class ProductsController {
   @Post()
   @Authorize(Action.Create, Product_TE)
   @ApiConsumes('application/json')
-  async create(@Body() dto: CreateProductDto, @Req() request: Request): Promise<ProductResponseDto> {
+  async create(@Body() dto: CreateProduct_TEDto, @Req() request: Request): Promise<Product_TE_ResponseDto> {
     const product = await this.service.create(dto, request.context)
-    return ProductResponseDto.fromDomain(product)
+    return Product_TE_ResponseDto.fromDomain(product)
   }
 
   @Get()
   @Authorize(Action.Read, Product_TE)
-  async findAll(@Req() request: Request): Promise<ProductResponseDto[]> {
+  async findAll(@Req() request: Request): Promise<Product_TE_ResponseDto[]> {
     const products = await this.service.findAll({}, request.context)
-    return products.map(ProductResponseDto.fromDomain)
+    return products.map(Product_TE_ResponseDto.fromDomain)
   }
 
   @Get(':id')
   @Authorize(Action.Read, Product_TE)
-  async findById(@Param('id', ParseUUIDPipe) id: string, @Req() request: Request): Promise<ProductResponseDto> {
+  async findById(@Param('id', ParseUUIDPipe) id: string, @Req() request: Request): Promise<Product_TE_ResponseDto> {
     const product = await this.service.findById(id, request.context)
-    return ProductResponseDto.fromDomain(product)
+    return Product_TE_ResponseDto.fromDomain(product)
   }
 
   @Patch(':id')
   @Authorize(Action.Update, Product_TE)
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateProductDto, @Req() request: Request): Promise<ProductResponseDto> {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateProduct_TEDto, @Req() request: Request): Promise<Product_TE_ResponseDto> {
     const product = await this.service.update(id, dto, request.context)
-    return ProductResponseDto.fromDomain(product)
+    return Product_TE_ResponseDto.fromDomain(product)
   }
 
   @Delete(':id')

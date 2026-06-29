@@ -13,8 +13,8 @@ export type IngredientAllergen_TEProps = AuditableProps & {
 
 export type CreateIngredientAllergen_TEProps = Omit<
   IngredientAllergen_TEProps,
-  keyof AuditableProps | 'id'
->
+  keyof AuditableProps | 'id' | 'tenantId'
+> & { tenantId?: string }
 
 export class IngredientAllergen_TE extends Auditable(
   Base<IngredientAllergen_TEProps>
@@ -31,7 +31,8 @@ export class IngredientAllergen_TE extends Auditable(
       ...props,
       id: Id.generate(),
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      tenantId: props.tenantId!
     })
   }
 

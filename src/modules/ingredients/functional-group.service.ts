@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import {
   FunctionalGroupRepository,
   FunctionalGroupFilter
 } from '@ingredients/functional-group.repository'
 import {
-  FunctionalGroup,
-  CreateFunctionalGroupProps
+  FunctionalGroup_TE,
+  CreateFunctionalGroup_TEProps
 } from '@ingredients/functional-group.entity'
 import {
   FunctionalGroupNotFoundError,
@@ -21,16 +21,17 @@ export class FunctionalGroupService {
   constructor(private readonly repository: FunctionalGroupRepository) {}
 
   async create(
-    props: CreateFunctionalGroupProps,
+    props: CreateFunctionalGroup_TEProps,
     ctx: RequestContext
-  ): Promise<FunctionalGroup> {
+  ): Promise<FunctionalGroup_TE> {
     // TODO: zod validate input
-    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId || effectiveTenantId)
-    const group = FunctionalGroup.create({ ...props, tenantId })
+        : (effectiveTenantId ?? props.tenantId)
+    if (!tenantId) throw new InternalServerErrorException('tenantId is required')
+    const group = FunctionalGroup_TE.create({ ...props, tenantId })
     try {
       return await this.repository.save(group, ctx)
     } catch (error: unknown) {
@@ -47,11 +48,11 @@ export class FunctionalGroupService {
   async findAll(
     filter: FunctionalGroupFilter,
     ctx: RequestContext
-  ): Promise<FunctionalGroup[]> {
+  ): Promise<FunctionalGroup_TE[]> {
     return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, ctx: RequestContext): Promise<FunctionalGroup> {
+  async findById(id: string, ctx: RequestContext): Promise<FunctionalGroup_TE> {
     const group = await this.repository.findById(id, ctx)
     if (!group) {
       throw new FunctionalGroupNotFoundError(id)
@@ -60,9 +61,9 @@ export class FunctionalGroupService {
   }
 
   async save(
-    group: FunctionalGroup,
+    group: FunctionalGroup_TE,
     ctx: RequestContext
-  ): Promise<FunctionalGroup> {
+  ): Promise<FunctionalGroup_TE> {
     return this.repository.save(group, ctx)
   }
 
@@ -72,19 +73,19 @@ export class FunctionalGroupService {
     await this.repository.save(group, ctx)
   }
 
-  async activate(id: string, ctx: RequestContext): Promise<FunctionalGroup> {
+  async activate(id: string, ctx: RequestContext): Promise<FunctionalGroup_TE> {
     const group = await this.findById(id, ctx)
     group.activate()
     return this.repository.save(group, ctx)
   }
 
-  async lock(id: string, ctx: RequestContext): Promise<FunctionalGroup> {
+  async lock(id: string, ctx: RequestContext): Promise<FunctionalGroup_TE> {
     const group = await this.findById(id, ctx)
     group.lock()
     return this.repository.save(group, ctx)
   }
 
-  async unlock(id: string, ctx: RequestContext): Promise<FunctionalGroup> {
+  async unlock(id: string, ctx: RequestContext): Promise<FunctionalGroup_TE> {
     const group = await this.findById(id, ctx)
     group.unlock()
     return this.repository.save(group, ctx)

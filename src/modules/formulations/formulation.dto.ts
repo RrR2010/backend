@@ -1,30 +1,35 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { FormulationVersion } from './formulation-version.entity'
-import { FormulationRevision } from './formulation-revision.entity'
-import { FormulationItem } from './formulation-item.entity'
+import { FormulationVersion_TE } from './formulation-version.entity'
+import { FormulationRevision_TE } from './formulation-revision.entity'
+import { FormulationItem_TE } from './formulation-item.entity'
+import { FormulationRevisionStatus } from '@prisma/client'
 
 // TODO: zod validate dto
-export class CreateFormulationVersionDto {
+export class CreateFormulationVersion_TEDto {
   @ApiProperty({ type: String }) tenantId!: string
   @ApiProperty() productId!: string
   @ApiProperty() version!: number
   @ApiPropertyOptional() notes?: string
 }
 
-export class CreateFormulationRevisionDto {
+export class CreateFormulationRevision_TEDto {
   @ApiProperty() formulationVersionId!: string
   @ApiProperty() revision!: number
   @ApiPropertyOptional() notes?: string
 }
 
-export class CreateFormulationItemDto {
+export class CreateFormulationItem_TEDto {
   @ApiProperty() formulationRevisionId!: string
   @ApiProperty() ingredientId!: string
   @ApiProperty() quantity!: number
-  @ApiPropertyOptional({ default: 'g' }) unit?: string
+  @ApiProperty({ type: String }) unitId!: string
+  @ApiPropertyOptional() usageCategory?: string
+  @ApiPropertyOptional() componentGroup?: string
+  @ApiPropertyOptional() sortOrder?: number
+  @ApiPropertyOptional() notes?: string
 }
 
-export class FormulationVersionResponseDto {
+export class FormulationVersion_TE_ResponseDto {
   @ApiProperty() id!: string
   @ApiProperty() tenantId!: string
   @ApiProperty() productId!: string
@@ -33,57 +38,79 @@ export class FormulationVersionResponseDto {
   @ApiProperty() createdAt!: Date
   @ApiProperty() updatedAt!: Date
 
-  static fromDomain(v: FormulationVersion): FormulationVersionResponseDto {
+  static fromDomain(version: FormulationVersion_TE): FormulationVersion_TE_ResponseDto {
     return {
-      id: v.id.value,
-      tenantId: v.tenantId,
-      productId: v.productId,
-      version: v.version,
-      notes: v.notes,
-      createdAt: v.createdAt,
-      updatedAt: v.updatedAt,
+      id: version.id.value,
+      tenantId: version.tenantId,
+      productId: version.productId,
+      version: version.version,
+      notes: version.notes,
+      createdAt: version.createdAt,
+      updatedAt: version.updatedAt,
     }
   }
 }
 
-export class FormulationRevisionResponseDto {
+export class FormulationRevision_TE_ResponseDto {
   @ApiProperty() id!: string
   @ApiProperty() formulationVersionId!: string
   @ApiProperty() revision!: number
   @ApiProperty({ nullable: true }) notes!: string | null
+  @ApiProperty() status!: FormulationRevisionStatus
+  @ApiProperty() tenantId!: string
+  @ApiProperty({ nullable: true }) approverId!: string | null
+  @ApiProperty({ nullable: true }) approvedBy!: string | null
+  @ApiProperty({ nullable: true }) approvedAt!: Date | null
+  @ApiProperty() drift!: boolean
   @ApiProperty() createdAt!: Date
   @ApiProperty() updatedAt!: Date
 
-  static fromDomain(r: FormulationRevision): FormulationRevisionResponseDto {
+  static fromDomain(revision: FormulationRevision_TE): FormulationRevision_TE_ResponseDto {
     return {
-      id: r.id.value,
-      formulationVersionId: r.formulationVersionId,
-      revision: r.revision,
-      notes: r.notes,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
+      id: revision.id.value,
+      formulationVersionId: revision.formulationVersionId,
+      revision: revision.revision,
+      notes: revision.notes,
+      status: revision.status,
+      tenantId: revision.tenantId,
+      approverId: revision.approverId,
+      approvedBy: revision.approvedBy,
+      approvedAt: revision.approvedAt,
+      drift: revision.drift,
+      createdAt: revision.createdAt,
+      updatedAt: revision.updatedAt,
     }
   }
 }
 
-export class FormulationItemResponseDto {
+export class FormulationItem_TE_ResponseDto {
   @ApiProperty() id!: string
   @ApiProperty() formulationRevisionId!: string
   @ApiProperty() ingredientId!: string
   @ApiProperty() quantity!: number
-  @ApiProperty() unit!: string
+  @ApiProperty() unitId!: string
+  @ApiProperty() tenantId!: string
+  @ApiProperty({ nullable: true }) usageCategory!: string | null
+  @ApiProperty({ nullable: true }) componentGroup!: string | null
+  @ApiProperty() sortOrder!: number
+  @ApiProperty({ nullable: true }) notes!: string | null
   @ApiProperty() createdAt!: Date
   @ApiProperty() updatedAt!: Date
 
-  static fromDomain(i: FormulationItem): FormulationItemResponseDto {
+  static fromDomain(item: FormulationItem_TE): FormulationItem_TE_ResponseDto {
     return {
-      id: i.id.value,
-      formulationRevisionId: i.formulationRevisionId,
-      ingredientId: i.ingredientId,
-      quantity: i.quantity,
-      unit: i.unit,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt,
+      id: item.id.value,
+      formulationRevisionId: item.formulationRevisionId,
+      ingredientId: item.ingredientId,
+      quantity: item.quantity,
+      unitId: item.unitId,
+      tenantId: item.tenantId,
+      usageCategory: item.usageCategory,
+      componentGroup: item.componentGroup,
+      sortOrder: item.sortOrder,
+      notes: item.notes,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
     }
   }
 }

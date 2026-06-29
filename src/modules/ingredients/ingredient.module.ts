@@ -2,21 +2,6 @@ import { Module } from '@nestjs/common'
 import { PrismaModule } from '@shared/prisma/prisma.module'
 import { AuditLogModule } from '@audit-logs/audit-log.module'
 
-// Base catalogs
-import {
-  BaseAllergenRepository,
-  PrismaAllergen_PLRepository as PrismaBaseAllergenRepository
-} from '@ingredients/base-allergen.repository'
-import { BaseAllergenService } from '@ingredients/base-allergen.service'
-import { BaseAllergenController } from '@ingredients/base-allergen.controller'
-
-import {
-  BaseNutrientRepository,
-  PrismaNutrient_PLRepository as PrismaBaseNutrientRepository
-} from '@ingredients/base-nutrient.repository'
-import { BaseNutrientService } from '@ingredients/base-nutrient.service'
-import { BaseNutrientController } from '@ingredients/base-nutrient.controller'
-
 // Platform-scoped catalogs (PL)
 import {
   Allergen_PLRepository,
@@ -104,13 +89,6 @@ import { CompanyService } from '@ingredients/company.service'
 import { CompaniesController } from '@ingredients/company.controller'
 
 import {
-  TechnicalInfoSourceRepository,
-  PrismaTechnicalSource_TERepository
-} from '@ingredients/technical-info-source.repository'
-import { TechnicalInfoSourceService } from '@ingredients/technical-info-source.service'
-import { TechnicalInfoSourcesController } from '@ingredients/technical-info-source.controller'
-
-import {
   TechnicalSource_TE_Repository,
   PrismaTechnicalSource_TE_Repository
 } from '@ingredients/technical-source-te.repository'
@@ -157,11 +135,8 @@ import { IngredientCost_TEController } from '@ingredients/ingredient-cost-te.con
 @Module({
   imports: [PrismaModule, AuditLogModule],
   controllers: [
-    BaseAllergenController,
-    BaseNutrientController,
     FunctionalGroupsController,
     CompaniesController,
-    TechnicalInfoSourcesController,
     TechnicalSource_TEController,
     TechnicalSourceType_TEController,
     IngredientsController,
@@ -181,19 +156,6 @@ import { IngredientCost_TEController } from '@ingredients/ingredient-cost-te.con
     ComplianceRule_PLController
   ],
   providers: [
-    // Base catalogs
-    BaseAllergenService,
-    PrismaBaseAllergenRepository,
-    {
-      provide: BaseAllergenRepository,
-      useExisting: PrismaBaseAllergenRepository
-    },
-    BaseNutrientService,
-    PrismaBaseNutrientRepository,
-    {
-      provide: BaseNutrientRepository,
-      useExisting: PrismaBaseNutrientRepository
-    },
     // Additional tenant-scoped catalogs
     FunctionalGroupService,
     PrismaFunctionalGroup_TERepository,
@@ -210,12 +172,6 @@ import { IngredientCost_TEController } from '@ingredients/ingredient-cost-te.con
     CompanyService,
     PrismaCompany_TERepository,
     { provide: CompanyRepository, useExisting: PrismaCompany_TERepository },
-    TechnicalInfoSourceService,
-    PrismaTechnicalSource_TERepository,
-    {
-      provide: TechnicalInfoSourceRepository,
-      useExisting: PrismaTechnicalSource_TERepository
-    },
     TechnicalSource_TEService,
     PrismaTechnicalSource_TE_Repository,
     {
@@ -310,18 +266,12 @@ import { IngredientCost_TEController } from '@ingredients/ingredient-cost-te.con
     }
   ],
   exports: [
-    BaseAllergenRepository,
-    BaseAllergenService,
-    BaseNutrientRepository,
-    BaseNutrientService,
     FunctionalGroupRepository,
     FunctionalGroupService,
     TechnicalSourceType_TE_Repository,
     TechnicalSourceType_TEService,
     CompanyRepository,
     CompanyService,
-    TechnicalInfoSourceRepository,
-    TechnicalInfoSourceService,
     TechnicalSource_TE_Repository,
     TechnicalSource_TEService,
     IngredientRepository,

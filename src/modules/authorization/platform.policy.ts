@@ -35,6 +35,13 @@ import { IngredientAllergen_TE } from '@ingredients/ingredient-allergen-te.entit
 import { IngredientNutrient_TE } from '@ingredients/ingredient-nutrient-te.entity'
 import { IngredientFlag_TE } from '@ingredients/ingredient-flag-te.entity'
 import { IngredientCost_TE } from '@ingredients/ingredient-cost-te.entity'
+import { FormulationVersion_TE } from '@formulations/formulation-version.entity'
+import { FormulationRevision_TE } from '@formulations/formulation-revision.entity'
+import { FormulationItem_TE } from '@formulations/formulation-item.entity'
+import { FormulationRegulatoryDeclaration_TE } from '@formulations/formulation-regulatory-declaration-te.entity'
+import { FormulationAllergen_TE } from '@formulations/formulation-allergen-te.entity'
+import { FormulationNutrition_TE } from '@formulations/formulation-nutrition-te.entity'
+import { FormulationOgmDonor_TE } from '@formulations/formulation-ogm-donor-te.entity'
 
 type PlatformContext = Extract<RequestContext, { scope: UserScope.PLATFORM }>
 
@@ -92,6 +99,13 @@ export function definePlatformAbility(ctx: PlatformContext): AppAbility {
       can(Action.Read, ProductPanel_TE)
       can(Action.Read, ProductNutrientOverride_TE)
       can(Action.Read, ProductClaim_TE)
+      can(Action.Read, FormulationRegulatoryDeclaration_TE)
+      can(Action.Read, FormulationAllergen_TE)
+      can(Action.Read, FormulationNutrition_TE)
+      can(Action.Read, FormulationOgmDonor_TE)
+      can(Action.Read, FormulationVersion_TE)
+      can(Action.Read, FormulationRevision_TE)
+      can(Action.Read, FormulationItem_TE)
       // Additional tenant-scoped permissions can be added here
       // as needed for the PLATFORM USER role
     }

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import {
   CompanyRepository,
   CompanyFilter
 } from '@ingredients/company.repository'
-import { Company, CreateCompanyProps } from '@ingredients/company.entity'
+import { Company_TE, CreateCompany_TEProps } from '@ingredients/company.entity'
 import {
   CompanyNotFoundError,
   CompanyAlreadyExistsError
@@ -18,16 +18,17 @@ export class CompanyService {
   constructor(private readonly repository: CompanyRepository) {}
 
   async create(
-    props: CreateCompanyProps,
+    props: CreateCompany_TEProps,
     ctx: RequestContext
-  ): Promise<Company> {
+  ): Promise<Company_TE> {
     // TODO: zod validate input
-    const effectiveTenantId = getEffectiveTenantId(ctx) ?? ''
+    const effectiveTenantId = getEffectiveTenantId(ctx)
     const tenantId =
       ctx.scope === UserScope.TENANT
         ? ctx.tenantId
-        : (props.tenantId || effectiveTenantId)
-    const company = Company.create({ ...props, tenantId })
+        : (effectiveTenantId ?? props.tenantId)
+    if (!tenantId) throw new InternalServerErrorException('tenantId is required')
+    const company = Company_TE.create({ ...props, tenantId })
     try {
       return await this.repository.save(company, ctx)
     } catch (error: unknown) {
@@ -47,11 +48,11 @@ export class CompanyService {
   async findAll(
     filter: CompanyFilter,
     ctx: RequestContext
-  ): Promise<Company[]> {
+  ): Promise<Company_TE[]> {
     return this.repository.findAll(filter, ctx)
   }
 
-  async findById(id: string, ctx: RequestContext): Promise<Company> {
+  async findById(id: string, ctx: RequestContext): Promise<Company_TE> {
     const company = await this.repository.findById(id, ctx)
     if (!company) {
       throw new CompanyNotFoundError(id)
@@ -59,7 +60,7 @@ export class CompanyService {
     return company
   }
 
-  async save(company: Company, ctx: RequestContext): Promise<Company> {
+  async save(company: Company_TE, ctx: RequestContext): Promise<Company_TE> {
     try {
       return await this.repository.save(company, ctx)
     } catch (error: unknown) {
@@ -82,19 +83,19 @@ export class CompanyService {
     await this.repository.save(company, ctx)
   }
 
-  async activate(id: string, ctx: RequestContext): Promise<Company> {
+  async activate(id: string, ctx: RequestContext): Promise<Company_TE> {
     const company = await this.findById(id, ctx)
     company.activate()
     return this.repository.save(company, ctx)
   }
 
-  async lock(id: string, ctx: RequestContext): Promise<Company> {
+  async lock(id: string, ctx: RequestContext): Promise<Company_TE> {
     const company = await this.findById(id, ctx)
     company.lock()
     return this.repository.save(company, ctx)
   }
 
-  async unlock(id: string, ctx: RequestContext): Promise<Company> {
+  async unlock(id: string, ctx: RequestContext): Promise<Company_TE> {
     const company = await this.findById(id, ctx)
     company.unlock()
     return this.repository.save(company, ctx)

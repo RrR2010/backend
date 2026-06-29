@@ -37,7 +37,6 @@ export class IngredientCost_TEController {
   ): Promise<CreateIngredientCost_TE_ResponseDto> {
     const entity = await this.service.create(
       {
-        tenantId: dto.tenantId ?? '',
         ingredientId: dto.ingredientId,
         unitPrice: dto.unitPrice,
         currencyCode: dto.currencyCode,

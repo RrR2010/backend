@@ -3,7 +3,7 @@ import { Base } from '@shared/base-entity'
 import { Auditable, type AuditableProps } from '@shared/behaviours/auditable'
 import { SystemState, Lockable, type LockableProps } from '@shared/behaviours/lockable'
 
-export type FormulationVersionProps = AuditableProps & LockableProps & {
+export type FormulationVersion_TEProps = AuditableProps & LockableProps & {
   id: Id
   tenantId: string
   productId: string
@@ -11,17 +11,17 @@ export type FormulationVersionProps = AuditableProps & LockableProps & {
   notes: string | null
 }
 
-export type CreateFormulationVersionProps = Omit<FormulationVersionProps, keyof AuditableProps | keyof LockableProps | 'id' | 'notes'> & { notes?: string | null }
+export type CreateFormulationVersion_TEProps = Omit<FormulationVersion_TEProps, keyof AuditableProps | keyof LockableProps | 'id' | 'notes'> & { notes?: string | null }
 
-export class FormulationVersion extends Lockable(Auditable(Base<FormulationVersionProps>)) {
-  protected constructor(props: FormulationVersionProps) {
+export class FormulationVersion_TE extends Lockable(Auditable(Base<FormulationVersion_TEProps>)) {
+  protected constructor(props: FormulationVersion_TEProps) {
     super(props)
   }
 
-  static create(props: CreateFormulationVersionProps): FormulationVersion {
+  static create(props: CreateFormulationVersion_TEProps): FormulationVersion_TE {
     // TODO: zod validate input
     const now = new Date()
-    return new FormulationVersion({
+    return new FormulationVersion_TE({
       ...props,
       id: Id.generate(),
       notes: props.notes ?? null,
@@ -31,8 +31,8 @@ export class FormulationVersion extends Lockable(Auditable(Base<FormulationVersi
     })
   }
 
-  static rehydrate(props: FormulationVersionProps): FormulationVersion {
-    return new FormulationVersion(props)
+  static rehydrate(props: FormulationVersion_TEProps): FormulationVersion_TE {
+    return new FormulationVersion_TE(props)
   }
 
   get id(): Id { return this._props.id }
@@ -42,13 +42,13 @@ export class FormulationVersion extends Lockable(Auditable(Base<FormulationVersi
   get notes(): string | null { return this._props.notes }
 
   changeNotes(notes: string | null): void {
-    this.ensureActivated('FormulationVersion')
+    this.ensureActivated('FormulationVersion_TE')
     this._props.notes = notes
     this.touch()
   }
 
   activate(): void {
-    this.ensureActivated('FormulationVersion')
+    this.ensureActivated('FormulationVersion_TE')
     super.activate()
   }
 

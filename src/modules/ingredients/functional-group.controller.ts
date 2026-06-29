@@ -12,15 +12,15 @@ import {
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import type { Request } from 'express'
 import {
-  CreateFunctionalGroupDto,
-  CreateFunctionalGroupResponseDto,
-  FunctionalGroupResponseDto,
-  UpdateFunctionalGroupDto
+  CreateFunctionalGroup_TEDto,
+  CreateFunctionalGroup_TE_ResponseDto,
+  FunctionalGroup_TE_ResponseDto,
+  UpdateFunctionalGroup_TEDto
 } from '@ingredients/functional-group.dto'
 import { FunctionalGroupService } from '@ingredients/functional-group.service'
 import { Authorize } from '@authorization/authorization.decorators'
 import { Action } from '@authorization/authorization.types'
-import { FunctionalGroup } from '@ingredients/functional-group.entity'
+import { FunctionalGroup_TE } from '@ingredients/functional-group.entity'
 
 @ApiTags('FunctionalGroups')
 @ApiBearerAuth('accessToken')
@@ -29,12 +29,12 @@ export class FunctionalGroupsController {
   constructor(private readonly service: FunctionalGroupService) {}
 
   @Post()
-  @Authorize(Action.Create, FunctionalGroup)
+  @Authorize(Action.Create, FunctionalGroup_TE)
   @ApiConsumes('application/json')
   async create(
-    @Body() dto: CreateFunctionalGroupDto,
+    @Body() dto: CreateFunctionalGroup_TEDto,
     @Req() request: Request
-  ): Promise<CreateFunctionalGroupResponseDto> {
+  ): Promise<CreateFunctionalGroup_TE_ResponseDto> {
     const group = await this.service.create(
       {
         tenantId: dto.tenantId,
@@ -45,36 +45,36 @@ export class FunctionalGroupsController {
       },
       request.context
     )
-    return CreateFunctionalGroupResponseDto.fromDomain(group)
+    return CreateFunctionalGroup_TE_ResponseDto.fromDomain(group)
   }
 
   @Get()
-  @Authorize(Action.Read, FunctionalGroup)
+  @Authorize(Action.Read, FunctionalGroup_TE)
   async findAll(
     @Req() request: Request
-  ): Promise<FunctionalGroupResponseDto[]> {
+  ): Promise<FunctionalGroup_TE_ResponseDto[]> {
     const groups = await this.service.findAll({}, request.context)
-    return groups.map(FunctionalGroupResponseDto.fromDomain)
+    return groups.map(FunctionalGroup_TE_ResponseDto.fromDomain)
   }
 
   @Get(':id')
-  @Authorize(Action.Read, FunctionalGroup)
+  @Authorize(Action.Read, FunctionalGroup_TE)
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<FunctionalGroupResponseDto> {
+  ): Promise<FunctionalGroup_TE_ResponseDto> {
     const group = await this.service.findById(id, request.context)
-    return FunctionalGroupResponseDto.fromDomain(group)
+    return FunctionalGroup_TE_ResponseDto.fromDomain(group)
   }
 
   @Patch(':id')
-  @Authorize(Action.Update, FunctionalGroup)
+  @Authorize(Action.Update, FunctionalGroup_TE)
   @ApiConsumes('application/json')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateFunctionalGroupDto,
+    @Body() dto: UpdateFunctionalGroup_TEDto,
     @Req() request: Request
-  ): Promise<FunctionalGroupResponseDto> {
+  ): Promise<FunctionalGroup_TE_ResponseDto> {
     const group = await this.service.findById(id, request.context)
 
     if (dto.name) group.changeName(dto.name)
@@ -85,11 +85,11 @@ export class FunctionalGroupsController {
     }
 
     const saved = await this.service.save(group, request.context)
-    return FunctionalGroupResponseDto.fromDomain(saved)
+    return FunctionalGroup_TE_ResponseDto.fromDomain(saved)
   }
 
   @Delete(':id')
-  @Authorize(Action.Delete, FunctionalGroup)
+  @Authorize(Action.Delete, FunctionalGroup_TE)
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
@@ -98,32 +98,32 @@ export class FunctionalGroupsController {
   }
 
   @Post(':id/activate')
-  @Authorize(Action.Update, FunctionalGroup)
+  @Authorize(Action.Update, FunctionalGroup_TE)
   async activate(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<FunctionalGroupResponseDto> {
+  ): Promise<FunctionalGroup_TE_ResponseDto> {
     const group = await this.service.activate(id, request.context)
-    return FunctionalGroupResponseDto.fromDomain(group)
+    return FunctionalGroup_TE_ResponseDto.fromDomain(group)
   }
 
   @Post(':id/lock')
-  @Authorize(Action.Update, FunctionalGroup)
+  @Authorize(Action.Update, FunctionalGroup_TE)
   async lock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<FunctionalGroupResponseDto> {
+  ): Promise<FunctionalGroup_TE_ResponseDto> {
     const group = await this.service.lock(id, request.context)
-    return FunctionalGroupResponseDto.fromDomain(group)
+    return FunctionalGroup_TE_ResponseDto.fromDomain(group)
   }
 
   @Post(':id/unlock')
-  @Authorize(Action.Unlock, FunctionalGroup)
+  @Authorize(Action.Unlock, FunctionalGroup_TE)
   async unlock(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() request: Request
-  ): Promise<FunctionalGroupResponseDto> {
+  ): Promise<FunctionalGroup_TE_ResponseDto> {
     const group = await this.service.unlock(id, request.context)
-    return FunctionalGroupResponseDto.fromDomain(group)
+    return FunctionalGroup_TE_ResponseDto.fromDomain(group)
   }
 }

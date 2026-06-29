@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { ProductStatus } from '@prisma/client'
-import { Product_TE } from './product.entity'
+import { Product_TE } from '@products/product.entity'
 
 // TODO: zod validate dto
-export class CreateProductDto {
+export class CreateProduct_TEDto {
   @ApiProperty({ type: String }) tenantId!: string
   @ApiProperty() internalName!: string
   @ApiProperty() code!: string
@@ -26,7 +26,7 @@ export class CreateProductDto {
   @ApiPropertyOptional() commercialLineId?: string
 }
 
-export class UpdateProductDto {
+export class UpdateProduct_TEDto {
   @ApiPropertyOptional() internalName?: string
   @ApiPropertyOptional() code?: string
   @ApiPropertyOptional({ enum: ProductStatus }) status?: ProductStatus
@@ -47,7 +47,7 @@ export class UpdateProductDto {
   @ApiPropertyOptional() commercialLineId?: string
 }
 
-export class ProductResponseDto {
+export class Product_TE_ResponseDto {
   @ApiProperty() id!: string
   @ApiProperty() tenantId!: string
   @ApiProperty() internalName!: string
@@ -71,7 +71,7 @@ export class ProductResponseDto {
   @ApiProperty() createdAt!: Date
   @ApiProperty() updatedAt!: Date
 
-  static fromDomain(product: Product_TE): ProductResponseDto {
+  static fromDomain(product: Product_TE): Product_TE_ResponseDto {
     return {
       id: product.id.value,
       tenantId: product.tenantId,

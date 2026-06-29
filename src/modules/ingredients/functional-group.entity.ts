@@ -7,7 +7,7 @@ import {
   type LockableProps
 } from '@shared/behaviours/lockable'
 
-export type FunctionalGroupProps = AuditableProps &
+export type FunctionalGroup_TEProps = AuditableProps &
   LockableProps & {
     id: Id
     tenantId: string
@@ -17,25 +17,25 @@ export type FunctionalGroupProps = AuditableProps &
     isActive: boolean
   }
 
-export type CreateFunctionalGroupProps = Omit<
-  FunctionalGroupProps,
+export type CreateFunctionalGroup_TEProps = Omit<
+  FunctionalGroup_TEProps,
   keyof AuditableProps | keyof LockableProps | 'id'
 >
 
-export class FunctionalGroup extends Lockable(
-  Auditable(Base<FunctionalGroupProps>)
+export class FunctionalGroup_TE extends Lockable(
+  Auditable(Base<FunctionalGroup_TEProps>)
 ) {
-  protected constructor(props: FunctionalGroupProps) {
+  protected constructor(props: FunctionalGroup_TEProps) {
     super(props)
   }
 
   // --------------- Factory Methods ---------------
 
-  static create(props: CreateFunctionalGroupProps): FunctionalGroup {
+  static create(props: CreateFunctionalGroup_TEProps): FunctionalGroup_TE {
     // TODO: zod validate input
     const now = new Date()
 
-    return new FunctionalGroup({
+    return new FunctionalGroup_TE({
       ...props,
       id: Id.generate(),
       createdAt: now,
@@ -44,8 +44,8 @@ export class FunctionalGroup extends Lockable(
     })
   }
 
-  static rehydrate(props: FunctionalGroupProps): FunctionalGroup {
-    return new FunctionalGroup(props)
+  static rehydrate(props: FunctionalGroup_TEProps): FunctionalGroup_TE {
+    return new FunctionalGroup_TE(props)
   }
 
   // --------------- Getters ---------------
@@ -77,38 +77,38 @@ export class FunctionalGroup extends Lockable(
   // --------------- Behaviors ---------------
 
   changeName(name: string): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     this._props.name = name
     this.touch()
   }
 
   changeCode(code: string | null): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     this._props.code = code
     this.touch()
   }
 
   changeSortOrder(sortOrder: number): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     this._props.sortOrder = sortOrder
     this.touch()
   }
 
   toggleActive(): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     this._props.isActive = !this._props.isActive
     this.touch()
   }
 
   setActive(): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     if (this._props.isActive) return
     this._props.isActive = true
     this.touch()
   }
 
   setInactive(): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     if (!this._props.isActive) return
     this._props.isActive = false
     this.touch()
@@ -119,7 +119,7 @@ export class FunctionalGroup extends Lockable(
   // Both are kept in sync: activate/lock/delete update both fields.
   // Locked entities cannot be reactivated — requires unlock first.
   activate(): void {
-    this.ensureActivated('FunctionalGroup')
+    this.ensureActivated('FunctionalGroup_TE')
     this._props.isActive = true
     super.activate()
   }
