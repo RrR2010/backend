@@ -65,4 +65,22 @@ export class Claim_TEService {
     claim.delete()
     await this.repository.save(claim, ctx)
   }
+
+  async activate(id: string, ctx: RequestContext): Promise<Claim_TE> {
+    const claim = await this.findById(id, ctx)
+    claim.activate()
+    return this.repository.save(claim, ctx)
+  }
+
+  async lock(id: string, ctx: RequestContext): Promise<Claim_TE> {
+    const claim = await this.findById(id, ctx)
+    claim.lock()
+    return this.repository.save(claim, ctx)
+  }
+
+  async unlock(id: string, ctx: RequestContext): Promise<Claim_TE> {
+    const claim = await this.findById(id, ctx)
+    claim.unlock()
+    return this.repository.save(claim, ctx)
+  }
 }

@@ -90,4 +90,34 @@ export class ProductFamiliesController {
   ): Promise<void> {
     await this.service.delete(id, request.context)
   }
+
+  @Post(':id/activate')
+  @Authorize(Action.Update, ProductFamily_TE)
+  async activate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<ProductFamily_TEDtoResponseDto> {
+    const entity = await this.service.activate(id, request.context)
+    return ProductFamily_TEDtoResponseDto.fromDomain(entity)
+  }
+
+  @Post(':id/lock')
+  @Authorize(Action.Update, ProductFamily_TE)
+  async lock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<ProductFamily_TEDtoResponseDto> {
+    const entity = await this.service.lock(id, request.context)
+    return ProductFamily_TEDtoResponseDto.fromDomain(entity)
+  }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, ProductFamily_TE)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<ProductFamily_TEDtoResponseDto> {
+    const entity = await this.service.unlock(id, request.context)
+    return ProductFamily_TEDtoResponseDto.fromDomain(entity)
+  }
 }

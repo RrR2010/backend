@@ -25,7 +25,7 @@ import { TechnicalSourceType_TE } from '@ingredients/technical-source-type-te.en
 @ApiTags('TechnicalSourceTypes')
 @ApiBearerAuth('accessToken')
 @Controller('technical-source-types')
-export class TechnicalSourceTypesController {
+export class TechnicalSourceType_TEController {
   constructor(private readonly service: TechnicalSourceType_TEService) {}
 
   @Post()
@@ -89,5 +89,35 @@ export class TechnicalSourceTypesController {
     @Req() request: Request
   ): Promise<void> {
     await this.service.delete(id, request.context)
+  }
+
+  @Post(':id/activate')
+  @Authorize(Action.Update, TechnicalSourceType_TE)
+  async activate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<TechnicalSourceType_TEDtoResponseDto> {
+    const entity = await this.service.activate(id, request.context)
+    return TechnicalSourceType_TEDtoResponseDto.fromDomain(entity)
+  }
+
+  @Post(':id/lock')
+  @Authorize(Action.Update, TechnicalSourceType_TE)
+  async lock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<TechnicalSourceType_TEDtoResponseDto> {
+    const entity = await this.service.lock(id, request.context)
+    return TechnicalSourceType_TEDtoResponseDto.fromDomain(entity)
+  }
+
+  @Post(':id/unlock')
+  @Authorize(Action.Unlock, TechnicalSourceType_TE)
+  async unlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request
+  ): Promise<TechnicalSourceType_TEDtoResponseDto> {
+    const entity = await this.service.unlock(id, request.context)
+    return TechnicalSourceType_TEDtoResponseDto.fromDomain(entity)
   }
 }

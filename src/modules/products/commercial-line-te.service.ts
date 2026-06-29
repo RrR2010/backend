@@ -71,4 +71,22 @@ export class CommercialLine_TEService {
     line.delete()
     await this.repository.save(line, ctx)
   }
+
+  async activate(id: string, ctx: RequestContext): Promise<CommercialLine_TE> {
+    const line = await this.findById(id, ctx)
+    line.activate()
+    return this.repository.save(line, ctx)
+  }
+
+  async lock(id: string, ctx: RequestContext): Promise<CommercialLine_TE> {
+    const line = await this.findById(id, ctx)
+    line.lock()
+    return this.repository.save(line, ctx)
+  }
+
+  async unlock(id: string, ctx: RequestContext): Promise<CommercialLine_TE> {
+    const line = await this.findById(id, ctx)
+    line.unlock()
+    return this.repository.save(line, ctx)
+  }
 }

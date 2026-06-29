@@ -1,11 +1,17 @@
-import { Injectable } from '@nestjs/common'
-import { FormulationRevisionStatus, Prisma } from '@prisma/client'
+import { Injectable, InternalServerErrorException, ForbiddenException } from '@nestjs/common'
+import {
+  FormulationRevisionStatus,
+  Prisma,
+  FormulationVersion_TE,
+  FormulationRevision_TE,
+  FormulationItem_TE
+} from '@prisma/client'
 import { PrismaService } from '@shared/prisma/prisma.service'
 import type { RequestContext } from '@authorization/authorization.types'
 import { UserScope } from '@users/user.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
-import { ForbiddenException } from '@nestjs/common'
 import { Id } from '@shared/value-objects'
+import { SystemState } from '@shared/behaviours/lockable'
 import { FormulationVersion } from './formulation-version.entity'
 import { FormulationRevision } from './formulation-revision.entity'
 import { FormulationItem } from './formulation-item.entity'
@@ -21,7 +27,7 @@ export abstract class FormulationVersionRepository {
     ctx: RequestContext
   ): Promise<FormulationVersion[]>
   abstract save(
-    v: FormulationVersion,
+    version: FormulationVersion,
     ctx: RequestContext
   ): Promise<FormulationVersion>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
@@ -37,7 +43,7 @@ export abstract class FormulationRevisionRepository {
     ctx: RequestContext
   ): Promise<FormulationRevision[]>
   abstract save(
-    r: FormulationRevision,
+    revision: FormulationRevision,
     ctx: RequestContext
   ): Promise<FormulationRevision>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
@@ -53,7 +59,7 @@ export abstract class FormulationItemRepository {
     ctx: RequestContext
   ): Promise<FormulationItem[]>
   abstract save(
-    i: FormulationItem,
+    item: FormulationItem,
     ctx: RequestContext
   ): Promise<FormulationItem>
   abstract delete(id: string, ctx: RequestContext): Promise<void>
@@ -105,20 +111,20 @@ export class PrismaFormulationVersionRepository implements FormulationVersionRep
   }
 
   async save(
-    v: FormulationVersion,
+    version: FormulationVersion,
     ctx: RequestContext
   ): Promise<FormulationVersion> {
-    if (ctx.scope === UserScope.TENANT && v.tenantId !== ctx.tenantId) {
+    if (ctx.scope === UserScope.TENANT && version.tenantId !== ctx.tenantId) {
       throw new ForbiddenException('Cannot modify resource outside your tenant')
     }
-    const id = v.id.value
-    const data = PrismaFormulationVersionMapper.toPersistence(v)
+    const id = version.id.value
+    const data = PrismaFormulationVersionMapper.toPersistence(version)
     await this.prisma.formulationVersion_TE.upsert({
       where: { id },
       update: data,
       create: data
     })
-    return v
+    return version
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
@@ -166,28 +172,29 @@ export class PrismaFormulationRevisionRepository implements FormulationRevisionR
   }
 
   async save(
-    r: FormulationRevision,
+    revision: FormulationRevision,
     ctx: RequestContext
   ): Promise<FormulationRevision> {
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) {
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
       const version = await this.prisma.formulationVersion_TE.findUnique({
-        where: { id: r.formulationVersionId },
+        where: { id: revision.formulationVersionId },
         select: { tenantId: true }
       })
-      if (!version || version.tenantId !== tid) throw new ForbiddenException()
+      if (!version || version.tenantId !== tenantId) throw new ForbiddenException()
     }
-    const id = r.id.value
+    if (!tenantId) throw new InternalServerErrorException('tenantId is required')
+    const id = revision.id.value
     const data = PrismaFormulationRevisionMapper.toPersistence(
-      r,
-      tid ?? undefined
+      revision,
+      tenantId
     )
     await this.prisma.formulationRevision_TE.upsert({
       where: { id },
       update: data,
       create: data
     })
-    return r
+    return revision
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
@@ -246,26 +253,27 @@ export class PrismaFormulationItemRepository implements FormulationItemRepositor
   }
 
   async save(
-    i: FormulationItem,
+    item: FormulationItem,
     ctx: RequestContext
   ): Promise<FormulationItem> {
-    const tid = getEffectiveTenantId(ctx)
-    if (tid) {
+    const tenantId = getEffectiveTenantId(ctx)
+    if (tenantId) {
       const revision = await this.prisma.formulationRevision_TE.findUnique({
-        where: { id: i.formulationRevisionId },
+        where: { id: item.formulationRevisionId },
         select: { formulationVersion_TE: { select: { tenantId: true } } }
       })
-      if (!revision || revision.formulationVersion_TE.tenantId !== tid)
+      if (!revision || revision.formulationVersion_TE.tenantId !== tenantId)
         throw new ForbiddenException()
     }
-    const id = i.id.value
-    const data = PrismaFormulationItemMapper.toPersistence(i, tid ?? undefined)
+    if (!tenantId) throw new InternalServerErrorException('tenantId is required')
+    const id = item.id.value
+    const data = PrismaFormulationItemMapper.toPersistence(item, tenantId)
     await this.prisma.formulationItem_TE.upsert({
       where: { id },
       update: data,
       create: data
     })
-    return i
+    return item
   }
 
   async delete(id: string, ctx: RequestContext): Promise<void> {
@@ -292,93 +300,93 @@ export class PrismaFormulationItemRepository implements FormulationItemRepositor
 // MAPPERS
 
 class PrismaFormulationVersionMapper {
-  static toDomain(data: any): FormulationVersion {
+  static toDomain(data: FormulationVersion_TE): FormulationVersion {
     return FormulationVersion.rehydrate({
       id: Id.from(data.id),
       tenantId: data.tenantId,
       productId: data.productId,
       version: data.version,
       notes: data.notes,
-      systemState: data.systemState,
+      systemState: SystemState[data.systemState],
       createdAt: data.createdAt,
       updatedAt: data.updatedAt
     })
   }
   static toPersistence(
-    v: FormulationVersion
+    version: FormulationVersion
   ): Prisma.FormulationVersion_TEUncheckedCreateInput {
     return {
-      id: v.id.value,
-      tenantId: v.tenantId,
-      productId: v.productId,
-      version: v.version,
-      notes: v.notes,
-      systemState: v.systemState,
-      createdAt: v.createdAt,
-      updatedAt: v.updatedAt
+      id: version.id.value,
+      tenantId: version.tenantId,
+      productId: version.productId,
+      version: version.version,
+      notes: version.notes,
+      systemState: version.systemState,
+      createdAt: version.createdAt,
+      updatedAt: version.updatedAt
     }
   }
 }
 
 class PrismaFormulationRevisionMapper {
-  static toDomain(data: any): FormulationRevision {
+  static toDomain(data: FormulationRevision_TE): FormulationRevision {
     return FormulationRevision.rehydrate({
       id: Id.from(data.id),
       formulationVersionId: data.formulationVersionId,
       revision: data.revision,
       notes: data.notes,
-      nutritionalSummary: data.nutritionalSummary,
-      complianceSummary: data.complianceSummary,
-      systemState: data.systemState,
+      nutritionalSummary: null,
+      complianceSummary: null,
+      systemState: SystemState[data.systemState],
       createdAt: data.createdAt,
       updatedAt: data.updatedAt
     })
   }
   static toPersistence(
-    r: FormulationRevision,
-    tenantId?: string
+    revision: FormulationRevision,
+    tenantId: string
   ): Prisma.FormulationRevision_TEUncheckedCreateInput {
     return {
-      id: r.id.value,
-      formulationVersionId: r.formulationVersionId,
-      revision: r.revision,
-      notes: r.notes,
+      id: revision.id.value,
+      formulationVersionId: revision.formulationVersionId,
+      revision: revision.revision,
+      notes: revision.notes,
       status: FormulationRevisionStatus.DRAFT,
       drift: false,
-      tenantId: tenantId ?? '',
-      systemState: r.systemState,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt
+      tenantId,
+      systemState: revision.systemState,
+      createdAt: revision.createdAt,
+      updatedAt: revision.updatedAt
     }
   }
 }
 
 class PrismaFormulationItemMapper {
-  static toDomain(data: any): FormulationItem {
+  static toDomain(data: FormulationItem_TE): FormulationItem {
     return FormulationItem.rehydrate({
       id: Id.from(data.id),
       formulationRevisionId: data.formulationRevisionId,
       ingredientId: data.ingredientId,
       quantity: Number(data.quantity),
-      unit: data.unit,
+      unit: data.unitId,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt
     })
   }
   static toPersistence(
-    i: FormulationItem,
-    tenantId?: string
+    item: FormulationItem,
+    tenantId: string
   ): Prisma.FormulationItem_TEUncheckedCreateInput {
     return {
-      id: i.id.value,
-      formulationRevisionId: i.formulationRevisionId,
-      ingredientId: i.ingredientId,
-      quantity: i.quantity,
-      unitId: i.unit ?? '',
-      tenantId: tenantId ?? '',
+      id: item.id.value,
+      formulationRevisionId: item.formulationRevisionId,
+      ingredientId: item.ingredientId,
+      quantity: item.quantity,
+      unitId: item.unit,
+      tenantId,
       sortOrder: 0,
-      createdAt: i.createdAt,
-      updatedAt: i.updatedAt
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
     }
   }
 }

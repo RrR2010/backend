@@ -74,4 +74,22 @@ export class TechnicalSourceType_TEService {
     source.delete()
     await this.repository.save(source, ctx)
   }
+
+  async activate(id: string, ctx: RequestContext): Promise<TechnicalSourceType_TE> {
+    const source = await this.findById(id, ctx)
+    source.activate()
+    return this.repository.save(source, ctx)
+  }
+
+  async lock(id: string, ctx: RequestContext): Promise<TechnicalSourceType_TE> {
+    const source = await this.findById(id, ctx)
+    source.lock()
+    return this.repository.save(source, ctx)
+  }
+
+  async unlock(id: string, ctx: RequestContext): Promise<TechnicalSourceType_TE> {
+    const source = await this.findById(id, ctx)
+    source.unlock()
+    return this.repository.save(source, ctx)
+  }
 }

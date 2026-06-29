@@ -5,6 +5,8 @@ import { Id } from '@shared/value-objects'
 import { SystemState } from '@shared/behaviours/lockable'
 import {
   UnitOfMeasure_PL as PrismaUnitOfMeasurePL,
+  MeasurementType,
+  MeasurementSystem,
   Prisma
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
@@ -60,10 +62,10 @@ export class PrismaUnitOfMeasure_PLRepository implements UnitOfMeasure_PLReposit
     // Platform-scoped resource — no tenantId
     const where: Prisma.UnitOfMeasure_PLWhereInput = {}
     if (filter.measurementType) {
-      where.measurementType = filter.measurementType as any
+      where.measurementType = filter.measurementType as MeasurementType
     }
     if (filter.measurementSystem) {
-      where.measurementSystem = filter.measurementSystem as any
+      where.measurementSystem = filter.measurementSystem as MeasurementSystem
     }
     if (filter.systemState) {
       where.systemState = filter.systemState

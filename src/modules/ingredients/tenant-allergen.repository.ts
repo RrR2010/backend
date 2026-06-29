@@ -51,7 +51,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
       where
     })
     if (!prismaAllergen) return null
-    return PrismaTenantAllergenMapper.toDomain(prismaAllergen as any)
+    return PrismaTenantAllergenMapper.toDomain(prismaAllergen)
   }
 
   async findAll(
@@ -68,7 +68,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
       orderBy: { createdAt: 'asc' }
     })
     return prismaAllergens.map((allergen) =>
-      PrismaTenantAllergenMapper.toDomain(allergen as any)
+      PrismaTenantAllergenMapper.toDomain(allergen)
     )
   }
 
@@ -101,7 +101,7 @@ export class PrismaTenantAllergenRepository implements TenantAllergenRepository 
 }
 
 class PrismaTenantAllergenMapper {
-  static toDomain(prismaAllergen: any): TenantAllergen {
+  static toDomain(prismaAllergen: PrismaTenantAllergen): TenantAllergen {
     return TenantAllergen.rehydrate({
       id: Id.from(prismaAllergen.id),
       createdAt: prismaAllergen.createdAt,

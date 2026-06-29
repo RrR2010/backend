@@ -109,7 +109,7 @@ import {
   PrismaTechnicalSourceType_TE_Repository
 } from '@ingredients/technical-source-type-te.repository'
 import { TechnicalSourceType_TEService } from '@ingredients/technical-source-type-te.service'
-import { TechnicalSourceTypesController } from '@ingredients/technical-source-type-te.controller'
+import { TechnicalSourceType_TEController } from '@ingredients/technical-source-type-te.controller'
 
 import {
   CompanyRepository,
@@ -195,7 +195,7 @@ import { IngredientTechnicalProfilesController } from '@ingredients/ingredient-t
     FunctionalGroupsController,
     CompaniesController,
     TechnicalInfoSourcesController,
-    TechnicalSourceTypesController,
+    TechnicalSourceType_TEController,
     IngredientsController,
     IngredientTenantAllergensController,
     IngredientTenantNutrientsController,

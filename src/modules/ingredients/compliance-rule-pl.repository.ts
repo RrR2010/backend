@@ -133,7 +133,7 @@ class PrismaComplianceRule_PLMapper {
       category: prismaEntity.category,
       ruleType: prismaEntity.ruleType,
       description: prismaEntity.description,
-      condition: prismaEntity.condition as Record<string, unknown> | null,
+      condition: typeof prismaEntity.condition === 'object' ? prismaEntity.condition as Record<string, unknown> : null,
       severity: prismaEntity.severity,
       regulationId: prismaEntity.regulationId,
       nutrientId: prismaEntity.nutrientId

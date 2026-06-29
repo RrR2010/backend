@@ -71,4 +71,22 @@ export class ProductFamily_TEService {
     family.delete()
     await this.repository.save(family, ctx)
   }
+
+  async activate(id: string, ctx: RequestContext): Promise<ProductFamily_TE> {
+    const family = await this.findById(id, ctx)
+    family.activate()
+    return this.repository.save(family, ctx)
+  }
+
+  async lock(id: string, ctx: RequestContext): Promise<ProductFamily_TE> {
+    const family = await this.findById(id, ctx)
+    family.lock()
+    return this.repository.save(family, ctx)
+  }
+
+  async unlock(id: string, ctx: RequestContext): Promise<ProductFamily_TE> {
+    const family = await this.findById(id, ctx)
+    family.unlock()
+    return this.repository.save(family, ctx)
+  }
 }

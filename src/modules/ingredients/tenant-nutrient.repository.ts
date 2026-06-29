@@ -6,6 +6,8 @@ import { Id } from '@shared/value-objects'
 import {
   IngredientNutrient_TE as PrismaTenantNutrient,
   Prisma,
+  NutrientUnit,
+  NutrientCategory,
 } from '@prisma/client'
 import { RequestContext } from '@authorization/authorization.types'
 import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
@@ -55,7 +57,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
       where
     })
     if (!prismaNutrient) return null
-    return PrismaTenantNutrientMapper.toDomain(prismaNutrient as any)
+    return PrismaTenantNutrientMapper.toDomain(prismaNutrient)
   }
 
   async findAll(
@@ -72,7 +74,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
       orderBy: { createdAt: 'asc' }
     })
     return prismaNutrients.map((nutrient) =>
-      PrismaTenantNutrientMapper.toDomain(nutrient as any)
+      PrismaTenantNutrientMapper.toDomain(nutrient)
     )
   }
 
@@ -105,7 +107,7 @@ export class PrismaTenantNutrientRepository implements TenantNutrientRepository 
 }
 
 class PrismaTenantNutrientMapper {
-  static toDomain(prismaNutrient: any): TenantNutrient {
+  static toDomain(prismaNutrient: PrismaTenantNutrient): TenantNutrient {
     return TenantNutrient.rehydrate({
       id: Id.from(prismaNutrient.id),
       createdAt: prismaNutrient.createdAt,
@@ -113,8 +115,8 @@ class PrismaTenantNutrientMapper {
       systemState: SystemState.ACTIVE,
       tenantId: prismaNutrient.tenantId,
       name: '',
-      unit: 'G' as any,
-      category: 'MANDATORY_DECLARATION' as any,
+      unit: NutrientUnit.G,
+      category: NutrientCategory.MANDATORY_DECLARATION,
       sortOrder: 0,
       isActive: true
     })
