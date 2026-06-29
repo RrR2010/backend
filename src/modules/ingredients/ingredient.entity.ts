@@ -427,7 +427,7 @@ export class Ingredient_TE extends Lockable(Auditable(Base<Ingredient_TEProps>))
   }
 
   setInactive(): void {
-    if (this._props.systemState === SystemState.DELETED) return
+    this.ensureActivated('Ingredient_TE')
     this._props.systemState = SystemState.DELETED
     this.touch()
   }

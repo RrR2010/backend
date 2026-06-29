@@ -67,6 +67,7 @@ export class FormulationRevision_TE extends Lockable(Auditable(Base<FormulationR
   }
 
   submitForApproval(): void {
+    this.ensureActivated('FormulationRevision_TE')
     if (this._props.status !== FormulationRevisionStatus.DRAFT) {
       throw new Error('Only DRAFT revisions can be submitted for approval')
     }
@@ -75,6 +76,7 @@ export class FormulationRevision_TE extends Lockable(Auditable(Base<FormulationR
   }
 
   approve(approverId: string, approvedBy: string): void {
+    this.ensureActivated('FormulationRevision_TE')
     if (this._props.status !== FormulationRevisionStatus.PENDING_APPROVAL) {
       throw new Error('Only PENDING_APPROVAL revisions can be approved')
     }
@@ -86,6 +88,7 @@ export class FormulationRevision_TE extends Lockable(Auditable(Base<FormulationR
   }
 
   rejectToDraft(): void {
+    this.ensureActivated('FormulationRevision_TE')
     if (this._props.status !== FormulationRevisionStatus.PENDING_APPROVAL) {
       throw new Error('Only PENDING_APPROVAL revisions can be returned to draft')
     }
@@ -94,6 +97,7 @@ export class FormulationRevision_TE extends Lockable(Auditable(Base<FormulationR
   }
 
   archive(): void {
+    this.ensureActivated('FormulationRevision_TE')
     if (this._props.status !== FormulationRevisionStatus.ACTIVE) {
       throw new Error('Only ACTIVE revisions can be archived')
     }
