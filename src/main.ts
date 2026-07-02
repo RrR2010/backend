@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { ValidationPipe } from '@nestjs/common'
 import * as cookieParser from 'cookie-parser'
 import * as bodyParser from 'body-parser'
 import { PrismaExceptionFilter } from '@shared/filters/prisma-exception.filter'
@@ -38,6 +39,13 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '5mb' }))
   app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }))
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true
+    })
+  )
   app.useGlobalFilters(new PrismaExceptionFilter())
 
   app.enableCors({

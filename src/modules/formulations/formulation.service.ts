@@ -5,6 +5,7 @@ import { getEffectiveTenantId } from '@shared/helpers/tenant-context.helper'
 import {
   FormulationVersion_TE_Repository, FormulationRevision_TE_Repository, FormulationItem_TE_Repository,
 } from './formulation.repository'
+import { FormulationRevisionStatus } from '@prisma/client'
 import { FormulationVersion_TE, type CreateFormulationVersion_TEProps } from './formulation-version.entity'
 import { FormulationRevision_TE, type CreateFormulationRevision_TEProps } from './formulation-revision.entity'
 import { FormulationItem_TE, type CreateFormulationItem_TEProps } from './formulation-item.entity'
@@ -99,7 +100,19 @@ export class FormulationService {
   async approveRevision(id: string, approverId: string, approvedBy: string, ctx: RequestContext): Promise<FormulationRevision_TE> {
     const revision = await this.findRevisionById(id, ctx)
     revision.approve(approverId, approvedBy)
-    return this.revisionRepo.save(revision, ctx)
+    const saved = await this.revisionRepo.save(revision, ctx)
+
+    // Auto-archive any other ACTIVE revisions for the same version
+    const allRevisions = await this.revisionRepo.findByVersionId(saved.formulationVersionId, ctx)
+    const previousActive = allRevisions.filter(
+      r => r.id.value !== saved.id.value && r.status === FormulationRevisionStatus.ACTIVE
+    )
+    for (const prev of previousActive) {
+      prev.archive()
+      await this.revisionRepo.save(prev, ctx)
+    }
+
+    return saved
   }
 
   async rejectRevision(id: string, ctx: RequestContext): Promise<FormulationRevision_TE> {

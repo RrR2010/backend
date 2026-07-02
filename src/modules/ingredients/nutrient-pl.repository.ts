@@ -32,6 +32,13 @@ export abstract class Nutrient_PLRepository {
     filter: Nutrient_PLFilter,
     _ctx: RequestContext
   ): Promise<Nutrient_PL[]>
+  abstract findByParentId(
+    parentId: string,
+    _ctx: RequestContext
+  ): Promise<Nutrient_PL[]>
+  abstract findRoots(
+    _ctx: RequestContext
+  ): Promise<Nutrient_PL[]>
   abstract save(
     nutrient: Nutrient_PL,
     _ctx: RequestContext
@@ -80,6 +87,39 @@ export class PrismaNutrient_PLRepository implements Nutrient_PLRepository {
       where,
       skip: filter.skip ?? 0,
       take: filter.take ?? 50,
+      orderBy: { sortOrder: 'asc' }
+    })
+    return prismaNutrientsPL.map((nutrient) =>
+      PrismaNutrient_PLMapper.toDomain(nutrient)
+    )
+  }
+
+  async findByParentId(
+    parentId: string,
+    _ctx: RequestContext
+  ): Promise<Nutrient_PL[]> {
+    // Platform-scoped resource — no tenantId
+    const prismaNutrientsPL = await this.prisma.nutrient_PL.findMany({
+      where: {
+        parentId,
+        systemState: { not: SystemState.DELETED }
+      },
+      orderBy: { sortOrder: 'asc' }
+    })
+    return prismaNutrientsPL.map((nutrient) =>
+      PrismaNutrient_PLMapper.toDomain(nutrient)
+    )
+  }
+
+  async findRoots(
+    _ctx: RequestContext
+  ): Promise<Nutrient_PL[]> {
+    // Platform-scoped resource — no tenantId
+    const prismaNutrientsPL = await this.prisma.nutrient_PL.findMany({
+      where: {
+        parentId: null,
+        systemState: { not: SystemState.DELETED }
+      },
       orderBy: { sortOrder: 'asc' }
     })
     return prismaNutrientsPL.map((nutrient) =>

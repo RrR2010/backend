@@ -1,10 +1,12 @@
+// Single source of truth — todo novo modelo deve ser adicionado a um destes sets.
+
 /**
  * Modelos do Prisma por escopo de tenant.
- * 
+ *
  * TENANT_SCOPED_MODELS: possuem coluna `tenantId` direta.
  * HOP_BASED_MODELS: não têm tenantId — resolvem por hop.
  * PLATFORM_SCOPED_MODELS: dados globais, sem tenantId.
- * 
+ *
  * Sincronizado com schema.prisma pós EP-005 refactoring.
  */
 
@@ -39,7 +41,7 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'TenantMembership',
   'Session',
   'AuditLog',
-  'Subscription',
+  'Subscription'
 ])
 
 export const HOP_BASED_MODELS = new Set<string>([
@@ -48,7 +50,7 @@ export const HOP_BASED_MODELS = new Set<string>([
   'Identity',
   'User',
   'SubscriptionEvent',
-  'Tenant',
+  'Tenant'
 ])
 
 export const PLATFORM_SCOPED_MODELS = new Set<string>([
@@ -56,5 +58,5 @@ export const PLATFORM_SCOPED_MODELS = new Set<string>([
   'Allergen_PL',
   'Nutrient_PL',
   'TenantRegistration',
-  'PlatformMembership',
+  'PlatformMembership'
 ])

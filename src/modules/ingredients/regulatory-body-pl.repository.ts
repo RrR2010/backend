@@ -22,6 +22,10 @@ export abstract class RegulatoryBody_PLRepository {
     filter: RegulatoryBody_PLFilter,
     _ctx: RequestContext
   ): Promise<RegulatoryBody_PL[]>
+  abstract findByAbbreviation(
+    abbreviation: string,
+    _ctx: RequestContext
+  ): Promise<RegulatoryBody_PL | null>
   abstract save(
     entity: RegulatoryBody_PL,
     _ctx: RequestContext
@@ -42,6 +46,21 @@ export class PrismaRegulatoryBody_PLRepository
     // Platform-scoped resource — no tenantId
     const prismaEntity = await this.prisma.regulatoryBody_PL.findUnique({
       where: { id }
+    })
+    if (!prismaEntity) return null
+    if (prismaEntity.systemState === 'DELETED') {
+      return null
+    }
+    return PrismaRegulatoryBody_PLMapper.toDomain(prismaEntity)
+  }
+
+  async findByAbbreviation(
+    abbreviation: string,
+    _ctx: RequestContext
+  ): Promise<RegulatoryBody_PL | null> {
+    // Platform-scoped resource — no tenantId
+    const prismaEntity = await this.prisma.regulatoryBody_PL.findFirst({
+      where: { abbreviation }
     })
     if (!prismaEntity) return null
     if (prismaEntity.systemState === 'DELETED') {

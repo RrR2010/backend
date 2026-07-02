@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import * as dotenv from 'dotenv'
@@ -10,7 +11,6 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter })
 
 type SeedPanelGeometricFormat = {
-  id: string
   formatName: string
   valueFields: any
   calculationFormula: string
@@ -18,7 +18,6 @@ type SeedPanelGeometricFormat = {
 
 const panelGeometricFormats: SeedPanelGeometricFormat[] = [
   {
-    id: 'pgf-01',
     formatName: 'Retangular',
     valueFields: [
       { fieldName: 'width', label: 'Largura (cm)' },
@@ -27,7 +26,6 @@ const panelGeometricFormats: SeedPanelGeometricFormat[] = [
     calculationFormula: 'width * height',
   },
   {
-    id: 'pgf-02',
     formatName: 'Quadrado',
     valueFields: [
       { fieldName: 'side', label: 'Lado (cm)' },
@@ -35,7 +33,6 @@ const panelGeometricFormats: SeedPanelGeometricFormat[] = [
     calculationFormula: 'side * side',
   },
   {
-    id: 'pgf-03',
     formatName: 'Cilíndrico',
     valueFields: [
       { fieldName: 'diameter', label: 'Diâmetro (cm)' },
@@ -44,7 +41,6 @@ const panelGeometricFormats: SeedPanelGeometricFormat[] = [
     calculationFormula: 'PI * diameter * height',
   },
   {
-    id: 'pgf-04',
     formatName: 'Cônico',
     valueFields: [
       { fieldName: 'baseDiameter', label: 'Diâmetro base (cm)' },
@@ -62,13 +58,13 @@ async function main() {
   for (const record of panelGeometricFormats) {
     await prisma.panelGeometricFormatType_PL.create({
       data: {
-        id: record.id,
+        id: crypto.randomUUID(),
         formatName: record.formatName,
         valueFields: record.valueFields,
         calculationFormula: record.calculationFormula,
       },
     })
-    console.log(`Created PanelGeometricFormatType_PL: ${record.formatName} (${record.id})`)
+    console.log(`Created PanelGeometricFormatType_PL: ${record.formatName}`)
   }
 
   console.log(`All ${panelGeometricFormats.length} PanelGeometricFormatType_PL records seeded successfully`)

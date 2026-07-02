@@ -6,10 +6,15 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['eslint.config.mjs', 'dist/**', '.env*', '.fallow/**', '.git/**', 'node_modules/**'],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.recommended,
+  ...tseslint.configs.stylistic,
+  {
+    files: ['src/**/*.ts'],
+    extends: [...tseslint.configs.recommendedTypeChecked],
+  },
   eslintPluginPrettierRecommended,
   {
     languageOptions: {
@@ -17,7 +22,6 @@ export default tseslint.config(
         ...globals.node,
         ...globals.jest,
       },
-      sourceType: 'commonjs',
       parserOptions: {
         projectService: {
           allowDefaultProject: ['plopfile.js', '.build/*.ts'],

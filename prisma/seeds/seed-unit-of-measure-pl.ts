@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import * as dotenv from 'dotenv'
@@ -12,7 +13,6 @@ const prisma = new PrismaClient({ adapter })
 // ============== UnitOfMeasure_PL ==============
 
 type SeedUnitOfMeasure = {
-  id: string
   code: string
   symbol: string | null
   measurementType: 'MASS' | 'VOLUME' | 'LENGTH' | 'TIME' | 'TEMPERATURE' | 'UNITY' | 'RATIO' | 'ENERGY'
@@ -20,35 +20,34 @@ type SeedUnitOfMeasure = {
 }
 
 const unitsOfMeasure: SeedUnitOfMeasure[] = [
-  { id: 'uom-01', code: 'G', symbol: 'g', measurementType: 'MASS', measurementSystem: 'METRIC' },
-  { id: 'uom-02', code: 'KG', symbol: 'kg', measurementType: 'MASS', measurementSystem: 'METRIC' },
-  { id: 'uom-03', code: 'MG', symbol: 'mg', measurementType: 'MASS', measurementSystem: 'METRIC' },
-  { id: 'uom-04', code: 'ML', symbol: 'mL', measurementType: 'VOLUME', measurementSystem: 'METRIC' },
-  { id: 'uom-05', code: 'L', symbol: 'L', measurementType: 'VOLUME', measurementSystem: 'METRIC' },
-  { id: 'uom-06', code: 'UN', symbol: 'un', measurementType: 'UNITY', measurementSystem: 'METRIC' },
-  { id: 'uom-07', code: 'PCT', symbol: '%', measurementType: 'RATIO', measurementSystem: 'METRIC' },
+  { code: 'G', symbol: 'g', measurementType: 'MASS', measurementSystem: 'METRIC' },
+  { code: 'KG', symbol: 'kg', measurementType: 'MASS', measurementSystem: 'METRIC' },
+  { code: 'MG', symbol: 'mg', measurementType: 'MASS', measurementSystem: 'METRIC' },
+  { code: 'ML', symbol: 'mL', measurementType: 'VOLUME', measurementSystem: 'METRIC' },
+  { code: 'L', symbol: 'L', measurementType: 'VOLUME', measurementSystem: 'METRIC' },
+  { code: 'UN', symbol: 'un', measurementType: 'UNITY', measurementSystem: 'METRIC' },
+  { code: 'PCT', symbol: '%', measurementType: 'RATIO', measurementSystem: 'METRIC' },
 ]
 
 // ============== UnitConversion_PL ==============
 
 type SeedUnitConversion = {
-  id: string
-  fromUnitId: string
-  toUnitId: string
+  fromUnitCode: string
+  toUnitCode: string
   factor: number
 }
 
 const unitConversions: SeedUnitConversion[] = [
   // MASS
-  { id: 'conv-01', fromUnitId: 'uom-01', toUnitId: 'uom-02', factor: 0.001 },       // G → KG
-  { id: 'conv-02', fromUnitId: 'uom-02', toUnitId: 'uom-01', factor: 1000 },         // KG → G
-  { id: 'conv-03', fromUnitId: 'uom-03', toUnitId: 'uom-01', factor: 0.001 },        // MG → G
-  { id: 'conv-04', fromUnitId: 'uom-01', toUnitId: 'uom-03', factor: 1000 },         // G → MG
-  { id: 'conv-05', fromUnitId: 'uom-03', toUnitId: 'uom-02', factor: 0.000001 },     // MG → KG
-  { id: 'conv-06', fromUnitId: 'uom-02', toUnitId: 'uom-03', factor: 1000000 },      // KG → MG
+  { fromUnitCode: 'G', toUnitCode: 'KG', factor: 0.001 },       // G → KG
+  { fromUnitCode: 'KG', toUnitCode: 'G', factor: 1000 },         // KG → G
+  { fromUnitCode: 'MG', toUnitCode: 'G', factor: 0.001 },        // MG → G
+  { fromUnitCode: 'G', toUnitCode: 'MG', factor: 1000 },         // G → MG
+  { fromUnitCode: 'MG', toUnitCode: 'KG', factor: 0.000001 },    // MG → KG
+  { fromUnitCode: 'KG', toUnitCode: 'MG', factor: 1000000 },     // KG → MG
   // VOLUME
-  { id: 'conv-07', fromUnitId: 'uom-04', toUnitId: 'uom-05', factor: 0.001 },        // ML → L
-  { id: 'conv-08', fromUnitId: 'uom-05', toUnitId: 'uom-04', factor: 1000 },         // L → ML
+  { fromUnitCode: 'ML', toUnitCode: 'L', factor: 0.001 },        // ML → L
+  { fromUnitCode: 'L', toUnitCode: 'ML', factor: 1000 },         // L → ML
 ]
 
 async function main() {
@@ -60,17 +59,29 @@ async function main() {
   await prisma.unitOfMeasure_PL.deleteMany()
   console.log('Cleared existing UnitOfMeasure_PL records')
 
+  // Build a map from unit code to generated UUID
+  const unitIdByCode = new Map<string, string>()
+
   for (const record of unitsOfMeasure) {
-    await prisma.unitOfMeasure_PL.create({ data: record })
-    console.log(`Created UnitOfMeasure_PL: ${record.code} (${record.id})`)
+    const created = await prisma.unitOfMeasure_PL.create({
+      data: { id: crypto.randomUUID(), ...record },
+    })
+    unitIdByCode.set(record.code, created.id)
+    console.log(`Created UnitOfMeasure_PL: ${record.code}`)
   }
 
   console.log(`All ${unitsOfMeasure.length} UnitOfMeasure_PL records seeded successfully`)
 
   // UnitConversion_PL
   for (const record of unitConversions) {
-    await prisma.unitConversion_PL.create({ data: record })
-    console.log(`Created UnitConversion_PL: ${record.id} (${record.fromUnitId} → ${record.toUnitId} = ${record.factor})`)
+    await prisma.unitConversion_PL.create({
+      data: {
+        fromUnitId: unitIdByCode.get(record.fromUnitCode)!,
+        toUnitId: unitIdByCode.get(record.toUnitCode)!,
+        factor: record.factor,
+      },
+    })
+    console.log(`Created UnitConversion_PL: ${record.fromUnitCode} → ${record.toUnitCode} = ${record.factor}`)
   }
 
   console.log(`All ${unitConversions.length} UnitConversion_PL records seeded successfully`)

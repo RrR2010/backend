@@ -7,6 +7,7 @@ import { AdminModule } from '@admin/admin.module'
 import { PrismaModule } from '@shared/prisma/prisma.module'
 import { AuthenticationModule } from '@authentication/authentication.module'
 import { IdentityModule } from '@identities/identity.module'
+import { ClsModule } from '@shared/cls/cls.module'
 import { JwtAuthGuard } from '@authentication/jwt-auth.guard'
 import { TenantContextGuard } from '@authentication/tenant-context.guard'
 import { AuthorizationModule } from '@authorization/authorization.module'
@@ -27,10 +28,12 @@ import { BillingModule } from '@billing/billing.module'
 import { IngredientModule } from '@ingredients/ingredient.module'
 import { ImpersonationModule } from '@impersonation/impersonation.module'
 import { ProductsModule } from '@products/product.module'
+import { FormulationsModule } from '@formulations/formulation.module'
 import { WebhookModule } from '@webhook/webhook.module'
 
 @Module({
   imports: [
+    ClsModule,
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     AuthenticationModule,
@@ -53,6 +56,7 @@ import { WebhookModule } from '@webhook/webhook.module'
     IngredientModule,
     ImpersonationModule,
     ProductsModule,
+    FormulationsModule,
     WebhookModule
     // CaslModule.forRoot({
     //   superuserRole: PlatformRole.ADMIN,

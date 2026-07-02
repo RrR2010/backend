@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import * as dotenv from 'dotenv'
@@ -10,19 +11,18 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter })
 
 type SeedTechnicalSourceType = {
-  id: string
   code: string
   name: string
   description: string | null
 }
 
 const technicalSourceTypes: SeedTechnicalSourceType[] = [
-  { id: 'tst-01', code: 'REGULATORY_TABLE', name: 'REGULATORY_TABLE', description: 'Tabela de composição regulatória' },
-  { id: 'tst-02', code: 'DATASHEET', name: 'DATASHEET', description: 'Ficha técnica do fornecedor' },
-  { id: 'tst-03', code: 'LAB_REPORT', name: 'LAB_REPORT', description: 'Laudo de análise laboratorial' },
-  { id: 'tst-04', code: 'INTERNET', name: 'INTERNET', description: 'Internet' },
-  { id: 'tst-05', code: 'CALCULATED', name: 'CALCULATED', description: 'Calculado (por formulação)' },
-  { id: 'tst-06', code: 'OTHER', name: 'OTHER', description: 'Outros' },
+  { code: 'REGULATORY_TABLE', name: 'REGULATORY_TABLE', description: 'Tabela de composição regulatória' },
+  { code: 'DATASHEET', name: 'DATASHEET', description: 'Ficha técnica do fornecedor' },
+  { code: 'LAB_REPORT', name: 'LAB_REPORT', description: 'Laudo de análise laboratorial' },
+  { code: 'INTERNET', name: 'INTERNET', description: 'Internet' },
+  { code: 'CALCULATED', name: 'CALCULATED', description: 'Calculado (por formulação)' },
+  { code: 'OTHER', name: 'OTHER', description: 'Outros' },
 ]
 
 async function main() {
@@ -30,8 +30,8 @@ async function main() {
   console.log('Cleared existing TechnicalSourceType_PL records')
 
   for (const record of technicalSourceTypes) {
-    await prisma.technicalSourceType_PL.create({ data: record })
-    console.log(`Created TechnicalSourceType_PL: ${record.code} (${record.id})`)
+    await prisma.technicalSourceType_PL.create({ data: { id: crypto.randomUUID(), ...record } })
+    console.log(`Created TechnicalSourceType_PL: ${record.code}`)
   }
 
   console.log(`All ${technicalSourceTypes.length} TechnicalSourceType_PL records seeded successfully`)

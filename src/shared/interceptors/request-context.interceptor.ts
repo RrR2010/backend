@@ -9,9 +9,12 @@ import { Observable } from 'rxjs'
 import { RequestContext } from '@authorization/authorization.types'
 import { AuthenticatedRequest } from '@authentication/jwt-auth.guard'
 import { PlatformRole, TenantRole, UserScope } from '@users/user.types'
+import { ClsContextService } from '@shared/cls/cls-context.service'
 
 @Injectable()
 export class RequestContextInterceptor implements NestInterceptor {
+  constructor(private readonly clsContextService: ClsContextService) {}
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>()
 
@@ -41,6 +44,7 @@ export class RequestContextInterceptor implements NestInterceptor {
       }
 
       let requestContext: RequestContext
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       if (user.scope === UserScope.TENANT) {
         if (typeof user.tenantId !== 'string') {
           throw new BadRequestException(
@@ -65,6 +69,7 @@ export class RequestContextInterceptor implements NestInterceptor {
         }
       }
       request.context = requestContext
+      this.clsContextService.setRequestContext(requestContext)
     }
 
     return next.handle()

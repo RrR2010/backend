@@ -1,0 +1,39 @@
+import type { Config } from 'jest'
+
+const config: Config = {
+  moduleFileExtensions: ['js', 'json', 'ts'],
+  rootDir: '.',
+  testMatch: ['<rootDir>/test/integration/**/*.spec.ts'],
+  transform: {
+    '^.+\\.(t|j)s$': 'ts-jest',
+  },
+  collectCoverageFrom: ['**/*.(t|j)s'],
+  coverageDirectory: './coverage-integration',
+  testEnvironment: 'node',
+  moduleNameMapper: {
+    '^@shared/(.*)$': '<rootDir>/src/shared/$1',
+    '^@authentication/(.*)$': '<rootDir>/src/modules/authentication/$1',
+    '^@authorization/(.*)$': '<rootDir>/src/modules/authorization/$1',
+    '^@identities/(.*)$': '<rootDir>/src/modules/identities/$1',
+    '^@users/(.*)$': '<rootDir>/src/modules/users/$1',
+    '^@tenants/(.*)$': '<rootDir>/src/modules/tenants/$1',
+    '^@platform-memberships/(.*)$': '<rootDir>/src/modules/platform-memberships/$1',
+    '^@tenant-memberships/(.*)$': '<rootDir>/src/modules/tenant-memberships/$1',
+    '^@member-profiles/(.*)$': '<rootDir>/src/modules/member-profiles/$1',
+    '^@member-profile-documents/(.*)$': '<rootDir>/src/modules/member-profile-documents/$1',
+    '^@tenant-sites/(.*)$': '<rootDir>/src/modules/tenant-sites/$1',
+    '^@audit-logs/(.*)$': '<rootDir>/src/modules/audit-logs/$1',
+    '^@admin/(.*)$': '<rootDir>/src/modules/admin/$1',
+    '^@ingredients/(.*)$': '<rootDir>/src/modules/ingredients/$1',
+    '^@phones/(.*)$': '<rootDir>/src/modules/phones/$1',
+    '^@addresses/(.*)$': '<rootDir>/src/modules/addresses/$1',
+    '^@bootstrap/(.*)$': '<rootDir>/src/modules/bootstrap/$1',
+    '^@billing/(.*)$': '<rootDir>/src/modules/billing/$1',
+    '^@webhook/(.*)$': '<rootDir>/src/modules/webhook/$1',
+    '^@impersonation/(.*)$': '<rootDir>/src/modules/impersonation/$1',
+    '^@formulations/(.*)$': '<rootDir>/src/modules/formulations/$1',
+    '^@products/(.*)$': '<rootDir>/src/modules/products/$1',
+  },
+}
+
+export default config
